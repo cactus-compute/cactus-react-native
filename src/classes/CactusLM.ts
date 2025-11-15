@@ -171,6 +171,11 @@ export class CactusLM {
     return this.cactus.stop();
   }
 
+  public async reset(): Promise<void> {
+    await this.stop();
+    return this.cactus.reset();
+  }
+
   public async destroy(): Promise<void> {
     await this.stop();
     await this.cactus.destroy();

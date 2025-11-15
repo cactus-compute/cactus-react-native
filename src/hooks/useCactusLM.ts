@@ -148,6 +148,19 @@ export const useCactusLM = () => {
     }
   }, []);
 
+  const reset = useCallback(async () => {
+    setError(null);
+
+    await stop();
+
+    try {
+      await cactusLMRef.current.reset();
+    } catch (e) {
+      setError(getErrorMessage(e));
+      throw e;
+    }
+  }, [stop]);
+
   const destroy = useCallback(async () => {
     setError(null);
 
@@ -183,6 +196,7 @@ export const useCactusLM = () => {
     init,
     complete,
     embed,
+    reset,
     stop,
     destroy,
     getModels,
