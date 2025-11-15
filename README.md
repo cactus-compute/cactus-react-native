@@ -81,6 +81,9 @@ const App = () => {
 **`stop(): Promise<void>`**
 - Stops ongoing generation
 
+**`reset(): Promise<void>`**
+- Resets the model state
+
 **`destroy(): Promise<void>`**
 - Frees resources
 
@@ -104,6 +107,7 @@ const App = () => {
 - `complete(params: CactusCompletionParams): Promise<CactusCompletionResult>`
 - `embed(params: CactusEmbeddingParams): Promise<CactusEmbeddingResult>`
 - `stop(): Promise<void>`
+- `reset(): Promise<void>`
 - `destroy(): Promise<void>`
 - `getModels(): Promise<CactusModel[]>`
 
