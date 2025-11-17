@@ -48,19 +48,22 @@ const App = () => {
 
 ### CactusLM Class
 
-#### Methods
+#### Constructor
 
-**`download(params?: CactusDownloadParams): Promise<void>`**
-- Downloads a model from the server
+**`new CactusLM(params?: CactusLMParams)`**
 - `model` - Model slug (default: "qwen3-0.6")
-- `onProgress` - Callback for download progress (0-1)
-
-**`init(params?: CactusInitParams): Promise<void>`**
-- Initializes the model for inference
-- `model` - Model slug to initialize (default: "qwen3-0.6")
 - `contextSize` - Context window size (default: 2048)
 
-**`complete(params: CactusCompletionParams): Promise<CactusCompletionResult>`**
+#### Methods
+
+**`download(params?: CactusLMDownloadParams): Promise<void>`**
+- Downloads the model from the server
+- `onProgress` - Callback for download progress (0-1)
+
+**`init(): Promise<void>`**
+- Initializes the model for inference
+
+**`complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>`**
 - Generates text completion (initializes if needed)
 - `messages` - Array of Message objects
 - `options` - Generation options:
@@ -71,13 +74,10 @@ const App = () => {
   - `stopSequences` - Array of strings to stop generation (default: undefined)
 - `tools` - Array of Tool objects for function calling (default: undefined)
 - `onToken` - Callback for streaming tokens
-- `model` - Model slug to use (default: initialized model or "qwen3-0.6")
-- `contextSize` - Context size (default: initialized context size or 2048)
 
-**`embed(params: CactusEmbeddingParams): Promise<CactusEmbeddingResult>`**
+**`embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>`**
 - Generates text embeddings (initializes if needed)
 - `text` - Text to embed
-- `model` - Model slug to use (default: initialized model or "qwen3-0.6")
 
 **`stop(): Promise<void>`**
 - Stops ongoing generation
@@ -88,7 +88,7 @@ const App = () => {
 **`destroy(): Promise<void>`**
 - Frees resources
 
-**`getModels(params?: CactusGetModelsParams): Promise<CactusModel[]>`**
+**`getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>`**
 - Fetches available models and persists the results locally
 - `forceRefresh` - Forces a fetch from the server and updates the local data (default: false)
 
@@ -99,35 +99,36 @@ const App = () => {
 **State:**
 - `completion: string` - Current generated text
 - `isGenerating: boolean` - Whether actively generating
-- `isInitialized: boolean` - Whether model is initialized
+- `isInitializing: boolean` - Whether model is initializing
+- `isDownloaded: boolean` - Whether model is downloaded locally
+- `isDownloading: boolean` - Whether model is downloading
 - `downloadProgress: number` - Download progress (0-1)
 - `error: string | null` - Last error message or null
 
 **Methods:**
-- `download(params?: CactusDownloadParams): Promise<void>`
-- `init(params?: CactusInitParams): Promise<void>`
-- `complete(params: CactusCompletionParams): Promise<CactusCompletionResult>`
-- `embed(params: CactusEmbeddingParams): Promise<CactusEmbeddingResult>`
+- `download(params?: CactusLMDownloadParams): Promise<void>`
+- `init(): Promise<void>`
+- `complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>`
+- `embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>`
 - `stop(): Promise<void>`
 - `reset(): Promise<void>`
 - `destroy(): Promise<void>`
-- `getModels(params?: CactusGetModelsParams): Promise<CactusModel[]>`
+- `getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>`
 
 ## Type Definitions
 
-### CactusDownloadParams
+### CactusLMParams
 ```typescript
-interface CactusDownloadParams {
+interface CactusLMParams {
   model?: string;
-  onProgress?: (progress: number) => void;
+  contextSize?: number;
 }
 ```
 
-### CactusInitParams
+### CactusLMDownloadParams
 ```typescript
-interface CactusInitParams {
-  model?: string;
-  contextSize?: number;
+interface CactusLMDownloadParams {
+  onProgress?: (progress: number) => void;
 }
 ```
 
@@ -169,21 +170,19 @@ interface Tool {
 }
 ```
 
-### CactusCompletionParams
+### CactusLMCompleteParams
 ```typescript
-interface CactusCompletionParams {
+interface CactusLMCompleteParams {
   messages: Message[];
   options?: Options;
   tools?: Tool[];
   onToken?: (token: string) => void;
-  model?: string;
-  contextSize?: number;
 }
 ```
 
-### CactusCompletionResult
+### CactusLMCompleteResult
 ```typescript
-interface CactusCompletionResult {
+interface CactusLMCompleteResult {
   success: boolean;
   response: string;
   functionCalls?: { name: string; arguments: { [key: string]: any } }[];
@@ -196,24 +195,23 @@ interface CactusCompletionResult {
 }
 ```
 
-### CactusEmbeddingParams
+### CactusLMEmbedParams
 ```typescript
-interface CactusEmbeddingParams {
+interface CactusLMEmbedParams {
   text: string;
-  model?: string;
 }
 ```
 
-### CactusEmbeddingResult
+### CactusLMEmbedResult
 ```typescript
-interface CactusEmbeddingResult {
+interface CactusLMEmbedResult {
   embedding: number[];
 }
 ```
 
-### CactusGetModelsParams
+### CactusLMGetModelsParams
 ```typescript
-interface CactusGetModelsParams {
+interface CactusLMGetModelsParams {
   forceRefresh?: boolean;
 }
 ```

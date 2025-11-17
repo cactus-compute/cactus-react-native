@@ -1,11 +1,10 @@
-export interface CactusDownloadParams {
-  model?: string;
-  onProgress?: (progress: number) => void;
-}
-
-export interface CactusInitParams {
+export interface CactusLMParams {
   model?: string;
   contextSize?: number;
+}
+
+export interface CactusLMDownloadParams {
+  onProgress?: (progress: number) => void;
 }
 
 export interface Message {
@@ -37,16 +36,14 @@ export interface Tool {
   };
 }
 
-export interface CactusCompletionParams {
+export interface CactusLMCompleteParams {
   messages: Message[];
   options?: Options;
   tools?: Tool[];
   onToken?: (token: string) => void;
-  model?: string;
-  contextSize?: number;
 }
 
-export interface CactusCompletionResult {
+export interface CactusLMCompleteResult {
   success: boolean;
   response: string;
   functionCalls?: { name: string; arguments: { [key: string]: any } }[];
@@ -58,30 +55,14 @@ export interface CactusCompletionResult {
   totalTokens: number;
 }
 
-export interface CactusEmbeddingParams {
+export interface CactusLMEmbedParams {
   text: string;
-  model?: string;
 }
 
-export interface CactusEmbeddingResult {
+export interface CactusLMEmbedResult {
   embedding: number[];
 }
 
-export interface CactusGetModelsParams {
+export interface CactusLMGetModelsParams {
   forceRefresh?: boolean;
-}
-
-export interface CactusModel {
-  // API
-  name: string;
-  slug: string;
-  quantization: number;
-  sizeMb: number;
-  downloadUrl: string;
-  supportsToolCalling: boolean;
-  supportsVision: boolean;
-  createdAt: Date;
-
-  // Local
-  isDownloaded: boolean;
 }

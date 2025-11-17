@@ -1,8 +1,8 @@
 import { CactusUtil } from '../native';
-import { version as packageVersion } from '../../package.json';
 import type { DeviceInfo } from '../specs/CactusDeviceInfo.nitro';
-import type { CactusModel } from '../types/CactusLM';
 import type { LogRecord } from '../telemetry/Telemetry';
+import { packageVersion } from '../constants/packageVersion';
+import type { CactusModel } from '../types/CactusModel';
 
 interface CactusModelResponse {
   name: string;

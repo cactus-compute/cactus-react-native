@@ -1,7 +1,7 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type { Cactus as CactusSpec } from '../specs/Cactus.nitro';
 import type {
-  CactusCompletionResult,
+  CactusLMCompleteResult,
   Message,
   Options,
   Tool,
@@ -21,7 +21,7 @@ export class Cactus {
     options?: Options,
     tools?: Tool[],
     callback?: (token: string, tokenId: number) => void
-  ): Promise<CactusCompletionResult> {
+  ): Promise<CactusLMCompleteResult> {
     const messagesJson = JSON.stringify(messages);
     const optionsJson = options
       ? JSON.stringify({

@@ -1,6 +1,4 @@
 import { Database } from '../api/Database';
-import type { CactusCompletionResult } from '../types/CactusLM';
-import { version as packageVersion } from '../../package.json';
 import {
   CactusCrypto,
   CactusDeviceInfo,
@@ -8,6 +6,8 @@ import {
   CactusUtil,
 } from '../native';
 import { CactusConfig } from '../config/CactusConfig';
+import { packageVersion } from '../constants/packageVersion';
+import type { CactusLMCompleteResult } from '../types/CactusLM';
 
 export interface LogRecord {
   // Framework
@@ -120,7 +120,7 @@ export class Telemetry {
     model: string,
     success: boolean,
     message?: string,
-    result?: CactusCompletionResult
+    result?: CactusLMCompleteResult
   ): Promise<void> {
     return this.handleLog({
       framework: 'react-native',

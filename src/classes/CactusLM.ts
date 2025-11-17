@@ -1,14 +1,14 @@
 import { Cactus, CactusFileSystem } from '../native';
 import type {
-  CactusDownloadParams,
-  CactusInitParams,
-  CactusCompletionParams,
-  CactusCompletionResult,
-  CactusEmbeddingParams,
-  CactusEmbeddingResult,
-  CactusGetModelsParams,
-  CactusModel,
+  CactusLMDownloadParams,
+  CactusLMCompleteParams,
+  CactusLMCompleteResult,
+  CactusLMEmbedParams,
+  CactusLMEmbedResult,
+  CactusLMGetModelsParams,
+  CactusLMParams,
 } from '../types/CactusLM';
+import type { CactusModel } from '../types/CactusModel';
 import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
 import { Database } from '../api/Database';
@@ -17,78 +17,69 @@ import { getErrorMessage } from '../utils/error';
 export class CactusLM {
   private readonly cactus = new Cactus();
 
+  private readonly model: string;
+  private readonly contextSize: number;
+
+  private isDownloading = false;
+  private isInitialized = false;
+  private isGenerating = false;
+
   private static readonly defaultModel = 'qwen3-0.6';
   private static readonly defaultContextSize = 2048;
-  private static readonly defaultCompletionOptions = {
+  private static readonly defaultCompleteOptions = {
     maxTokens: 512,
   };
-  private static readonly defaultEmbeddingBufferSize = 2048;
+  private static readonly defaultEmbedBufferSize = 2048;
 
   private static readonly modelsInfoPath = 'models/info.json';
 
-  private isDownloading = false;
-  private initialized: { model: string; contextSize: number } | null = null;
-  private isGenerating = false;
+  constructor({ model, contextSize }: CactusLMParams = {}) {
+    this.model = model ?? CactusLM.defaultModel;
+    this.contextSize = contextSize ?? CactusLM.defaultContextSize;
+  }
 
   public async download({
-    model,
     onProgress,
-  }: CactusDownloadParams = {}): Promise<void> {
+  }: CactusLMDownloadParams = {}): Promise<void> {
     if (this.isDownloading) {
       throw new Error('CactusLM is already downloading');
     }
 
-    model = model ?? CactusLM.defaultModel;
-
-    if (await CactusFileSystem.modelExists(model)) {
+    if (await CactusFileSystem.modelExists(this.model)) {
       onProgress?.(1.0);
       return;
     }
 
     this.isDownloading = true;
     try {
-      await CactusFileSystem.downloadModel(model, onProgress);
+      await CactusFileSystem.downloadModel(this.model, onProgress);
       await this.getModels({ forceRefresh: true });
     } finally {
       this.isDownloading = false;
     }
   }
 
-  public async init({
-    model,
-    contextSize,
-  }: CactusInitParams = {}): Promise<void> {
+  public async init(): Promise<void> {
+    if (this.isInitialized) {
+      return;
+    }
+
     if (!Telemetry.isInitialized()) {
       await Telemetry.init(CactusConfig.telemetryToken);
     }
 
-    model = model ?? CactusLM.defaultModel;
-    contextSize = contextSize ?? CactusLM.defaultContextSize;
-
-    if (
-      this.initialized?.model === model &&
-      this.initialized?.contextSize === contextSize
-    ) {
-      return;
+    if (!(await CactusFileSystem.modelExists(this.model))) {
+      throw new Error(`Model "${this.model}" is not downloaded`);
     }
 
-    if (this.initialized) {
-      await this.cactus.destroy();
-    }
-
-    if (!(await CactusFileSystem.modelExists(model))) {
-      throw new Error(`Model "${model}" is not downloaded`);
-    }
+    const modelPath = await CactusFileSystem.getModelPath(this.model);
 
     try {
-      await this.cactus.init(
-        await CactusFileSystem.getModelPath(model),
-        contextSize
-      );
-      Telemetry.logInit(model, true);
-      this.initialized = { model, contextSize };
+      await this.cactus.init(modelPath, this.contextSize);
+      Telemetry.logInit(this.model, true);
+      this.isInitialized = true;
     } catch (error) {
-      Telemetry.logInit(model, false, getErrorMessage(error));
+      Telemetry.logInit(this.model, false, getErrorMessage(error));
       throw error;
     }
   }
@@ -98,27 +89,16 @@ export class CactusLM {
     options,
     tools,
     onToken,
-    model,
-    contextSize,
-  }: CactusCompletionParams): Promise<CactusCompletionResult> {
+  }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
     }
 
-    model = model ?? this.initialized?.model ?? CactusLM.defaultModel;
-    contextSize =
-      contextSize ??
-      this.initialized?.contextSize ??
-      CactusLM.defaultContextSize;
-    options = {
-      ...CactusLM.defaultCompletionOptions,
-      ...options,
-    };
+    await this.init();
 
-    await this.init({ model, contextSize });
-
+    options = { ...CactusLM.defaultCompleteOptions, ...options };
     const responseBufferSize =
-      8 * (options.maxTokens ?? CactusLM.defaultCompletionOptions.maxTokens) +
+      8 * (options.maxTokens ?? CactusLM.defaultCompleteOptions.maxTokens) +
       256;
 
     this.isGenerating = true;
@@ -131,14 +111,14 @@ export class CactusLM {
         onToken
       );
       Telemetry.logCompletion(
-        model,
+        this.model,
         result.success,
         result.success ? undefined : result.response,
         result
       );
       return result;
     } catch (error) {
-      Telemetry.logCompletion(model, false, getErrorMessage(error));
+      Telemetry.logCompletion(this.model, false, getErrorMessage(error));
       throw error;
     } finally {
       this.isGenerating = false;
@@ -147,26 +127,23 @@ export class CactusLM {
 
   public async embed({
     text,
-    model,
-  }: CactusEmbeddingParams): Promise<CactusEmbeddingResult> {
+  }: CactusLMEmbedParams): Promise<CactusLMEmbedResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
     }
 
-    model = model ?? this.initialized?.model ?? CactusLM.defaultModel;
-
-    await this.init({ model });
+    await this.init();
 
     this.isGenerating = true;
     try {
       const embedding = await this.cactus.embed(
         text,
-        CactusLM.defaultEmbeddingBufferSize
+        CactusLM.defaultEmbedBufferSize
       );
-      Telemetry.logEmbedding(model, true);
+      Telemetry.logEmbedding(this.model, true);
       return { embedding };
     } catch (error) {
-      Telemetry.logEmbedding(model, false, getErrorMessage(error));
+      Telemetry.logEmbedding(this.model, false, getErrorMessage(error));
       throw error;
     } finally {
       this.isGenerating = false;
@@ -183,15 +160,19 @@ export class CactusLM {
   }
 
   public async destroy(): Promise<void> {
+    if (!this.isInitialized) {
+      return;
+    }
+
     await this.stop();
     await this.cactus.destroy();
 
-    this.initialized = null;
+    this.isInitialized = false;
   }
 
   public async getModels({
     forceRefresh = false,
-  }: CactusGetModelsParams = {}): Promise<CactusModel[]> {
+  }: CactusLMGetModelsParams = {}): Promise<CactusModel[]> {
     if (
       !forceRefresh &&
       (await CactusFileSystem.fileExists(CactusLM.modelsInfoPath))

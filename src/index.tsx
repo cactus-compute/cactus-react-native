@@ -5,18 +5,18 @@ export { CactusLM } from './classes/CactusLM';
 export { useCactusLM } from './hooks/useCactusLM';
 
 // Types
+export type { CactusModel } from './types/CactusModel';
 export type {
-  CactusDownloadParams,
-  CactusInitParams,
+  CactusLMParams,
+  CactusLMDownloadParams,
   Message,
   Options,
   Tool,
-  CactusCompletionParams,
-  CactusCompletionResult,
-  CactusEmbeddingParams,
-  CactusEmbeddingResult,
-  CactusGetModelsParams,
-  CactusModel,
+  CactusLMCompleteParams,
+  CactusLMCompleteResult,
+  CactusLMEmbedParams,
+  CactusLMEmbedResult,
+  CactusLMGetModelsParams,
 } from './types/CactusLM';
 
 // Config

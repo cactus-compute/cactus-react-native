@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Text, View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
-import { useCactusLM, type CactusCompletionResult } from 'cactus-react-native';
+import { useCactusLM, type CactusLMCompleteResult } from 'cactus-react-native';
 
 export default function App() {
-  const cactusLM = useCactusLM();
+  const cactusLM = useCactusLM({ model: 'qwen3-0.6', contextSize: 2048 });
   const [completionResult, setCompletionResult] =
-    useState<CactusCompletionResult | null>(null);
+    useState<CactusLMCompleteResult | null>(null);
 
   const getModels = async () => {
     try {
@@ -18,7 +18,7 @@ export default function App() {
 
   const download = async () => {
     try {
-      await cactusLM.download({ model: 'qwen3-0.6' });
+      await cactusLM.download();
       console.log('Model downloaded successfully');
     } catch (error) {
       console.error('Error downloading model:', error);
@@ -27,7 +27,7 @@ export default function App() {
 
   const init = async () => {
     try {
-      await cactusLM.init({ model: 'qwen3-0.6', contextSize: 2048 });
+      await cactusLM.init();
       console.log('Model initialized successfully');
     } catch (error) {
       console.error('Error initializing model:', error);
@@ -87,8 +87,12 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <View style={styles.statusContainer}>
         <Text>Error: {cactusLM.error}</Text>
+        <Text>Is Downloaded: {cactusLM.isDownloaded ? 'true' : 'false'}</Text>
+        <Text>Is Downloading: {cactusLM.isDownloading ? 'true' : 'false'}</Text>
         <Text>Download Progress: {cactusLM.downloadProgress}</Text>
-        <Text>Is Initialized: {cactusLM.isInitialized ? 'true' : 'false'}</Text>
+        <Text>
+          Is Initializing: {cactusLM.isInitializing ? 'true' : 'false'}
+        </Text>
         <Text>Is Generating: {cactusLM.isGenerating ? 'true' : 'false'}</Text>
       </View>
 
