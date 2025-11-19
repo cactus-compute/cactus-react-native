@@ -46,7 +46,10 @@ export interface CactusLMCompleteParams {
 export interface CactusLMCompleteResult {
   success: boolean;
   response: string;
-  functionCalls?: { name: string; arguments: { [key: string]: any } }[];
+  functionCalls?: {
+    name: string;
+    arguments: { [key: string]: any };
+  }[];
   timeToFirstTokenMs: number;
   totalTimeMs: number;
   tokensPerSecond: number;

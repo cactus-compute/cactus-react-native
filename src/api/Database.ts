@@ -56,7 +56,7 @@ export class Database {
 
   public static async getModels(): Promise<CactusModel[]> {
     const response = await fetch(
-      `${this.url}/functions/v1/get-models?sdk_name=react&sdk_version=${packageVersion}-beta`,
+      `${this.url}/functions/v1/get-models?sdk_name=react&sdk_version=${packageVersion}`,
       {
         headers: { apikey: this.key, Authorization: `Bearer ${this.key}` },
       }
