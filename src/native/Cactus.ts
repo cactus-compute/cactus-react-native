@@ -11,8 +11,12 @@ export class Cactus {
   private readonly hybridCactus =
     NitroModules.createHybridObject<CactusSpec>('Cactus');
 
-  public init(modelPath: string, contextSize: number): Promise<void> {
-    return this.hybridCactus.init(modelPath, contextSize);
+  public init(
+    modelPath: string,
+    contextSize: number,
+    corpusDir?: string
+  ): Promise<void> {
+    return this.hybridCactus.init(modelPath, contextSize, corpusDir);
   }
 
   public async complete(

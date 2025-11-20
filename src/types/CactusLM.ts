@@ -1,6 +1,7 @@
 export interface CactusLMParams {
   model?: string;
   contextSize?: number;
+  corpusDir?: string;
 }
 
 export interface CactusLMDownloadParams {
@@ -9,7 +10,8 @@ export interface CactusLMDownloadParams {
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  content?: string;
+  images?: string[];
 }
 
 export interface Options {

@@ -1,7 +1,11 @@
 import type { HybridObject } from 'react-native-nitro-modules';
 
 export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
-  init(modelPath: string, contextSize: number): Promise<void>;
+  init(
+    modelPath: string,
+    contextSize: number,
+    corpusDir?: string
+  ): Promise<void>;
   complete(
     messagesJson: string,
     responseBufferSize: number,

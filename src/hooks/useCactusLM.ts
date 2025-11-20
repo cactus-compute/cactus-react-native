@@ -16,9 +16,10 @@ import type { CactusModel } from '../types/CactusModel';
 export const useCactusLM = ({
   model = 'qwen3-0.6',
   contextSize = 2048,
+  corpusDir = undefined,
 }: CactusLMParams = {}) => {
   const [cactusLM, setCactusLM] = useState(
-    () => new CactusLM({ model, contextSize })
+    () => new CactusLM({ model, contextSize, corpusDir })
   );
 
   // State
@@ -38,7 +39,7 @@ export const useCactusLM = ({
   }, [model]);
 
   useEffect(() => {
-    setCactusLM(new CactusLM({ model, contextSize }));
+    setCactusLM(new CactusLM({ model, contextSize, corpusDir }));
 
     setCompletion('');
     setIsGenerating(false);
@@ -67,7 +68,7 @@ export const useCactusLM = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize]);
+  }, [model, contextSize, corpusDir]);
 
   useEffect(() => {
     return () => {
@@ -226,9 +227,9 @@ export const useCactusLM = ({
 
   const reset = useCallback(async () => {
     setError(null);
-    setCompletion('');
     try {
       await cactusLM.reset();
+      setCompletion('');
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
@@ -237,9 +238,9 @@ export const useCactusLM = ({
 
   const destroy = useCallback(async () => {
     setError(null);
-    setCompletion('');
     try {
       await cactusLM.destroy();
+      setCompletion('');
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;

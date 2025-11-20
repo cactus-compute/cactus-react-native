@@ -19,6 +19,7 @@ export class CactusLM {
 
   private readonly model: string;
   private readonly contextSize: number;
+  private readonly corpusDir?: string;
 
   private isDownloading = false;
   private isInitialized = false;
@@ -33,9 +34,10 @@ export class CactusLM {
 
   private static readonly modelsInfoPath = 'models/info.json';
 
-  constructor({ model, contextSize }: CactusLMParams = {}) {
+  constructor({ model, contextSize, corpusDir }: CactusLMParams = {}) {
     this.model = model ?? CactusLM.defaultModel;
     this.contextSize = contextSize ?? CactusLM.defaultContextSize;
+    this.corpusDir = corpusDir;
   }
 
   public async download({
@@ -75,7 +77,7 @@ export class CactusLM {
     const modelPath = await CactusFileSystem.getModelPath(this.model);
 
     try {
-      await this.cactus.init(modelPath, this.contextSize);
+      await this.cactus.init(modelPath, this.contextSize, this.corpusDir);
       Telemetry.logInit(this.model, true);
       this.isInitialized = true;
     } catch (error) {
