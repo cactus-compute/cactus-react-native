@@ -19,6 +19,8 @@ end
 target 'CactusExample' do
   config = use_native_modules!
 
+  pod 'Cactus', :path => '../..'
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
