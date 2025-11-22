@@ -1,6 +1,6 @@
 {
   "name": "cactus-react-native",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Run AI models locally on mobile devices",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
