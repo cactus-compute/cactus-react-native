@@ -229,10 +229,11 @@ export const useCactusLM = ({
     setError(null);
     try {
       await cactusLM.reset();
-      setCompletion('');
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
+    } finally {
+      setCompletion('');
     }
   }, [cactusLM]);
 
@@ -240,10 +241,11 @@ export const useCactusLM = ({
     setError(null);
     try {
       await cactusLM.destroy();
-      setCompletion('');
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
+    } finally {
+      setCompletion('');
     }
   }, [cactusLM]);
 
