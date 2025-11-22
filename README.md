@@ -10,9 +10,77 @@
 npm install cactus-react-native react-native-nitro-modules
 ```
 
+## Quick Start
+
+Get started with Cactus in just a few lines of code:
+
+```typescript
+import { CactusLM, type Message } from 'cactus-react-native';
+
+// Create a new instance
+const cactusLM = new CactusLM();
+
+// Download the model
+await cactusLM.download({
+  onProgress: (progress) => console.log(`Download: ${Math.round(progress * 100)}%`)
+});
+
+// Generate a completion
+const messages: Message[] = [
+  { role: 'user', content: 'What is the capital of France?' }
+];
+
+const result = await cactusLM.complete({ messages });
+console.log(result.response); // "The capital of France is Paris."
+
+// Clean up resources
+await cactusLM.destroy();
+```
+
+**Using the React Hook:**
+
+```tsx
+import { useCactusLM } from 'cactus-react-native';
+
+const App = () => {
+  const cactusLM = useCactusLM();
+
+  useEffect(() => {
+    // Download the model if not already available
+    if (!cactusLM.isDownloaded) {
+      cactusLM.download();
+    }
+  }, []);
+
+  const handleGenerate = () => {
+    // Generate a completion
+    cactusLM.complete({
+      messages: [{ role: 'user', content: 'Hello!' }],
+    });
+  };
+
+  if (cactusLM.isDownloading) {
+    return (
+      <Text>
+        Downloading model: {Math.round(cactusLM.downloadProgress * 100)}%
+      </Text>
+    );
+  }
+
+  return (
+    <>
+      <Button onPress={handleGenerate} title="Generate" />
+      <Text>{cactusLM.completion}</Text>
+    </>
+  );
+};
+```
+
 ## Language Model
 
 ### Completion
+
+Generate text responses from the model by providing a conversation history.
 
 #### Class
 
@@ -22,9 +90,7 @@ import { CactusLM, type Message } from 'cactus-react-native';
 const cactusLM = new CactusLM();
 
 const messages: Message[] = [{ role: 'user', content: 'Hello, World!' }];
-const onToken = (token: string) => {
-  console.log('Received token:', token);
-};
+const onToken = (token: string) => { console.log('Token:', token) };
 
 const result = await cactusLM.complete({ messages, onToken });
 console.log('Completion result:', result);
@@ -54,7 +120,63 @@ const App = () => {
 };
 ```
 
+### Vision
+
+Vision allows you to pass images along with text prompts, enabling the model to analyze and understand visual content.
+
+#### Class
+
+```typescript
+import { CactusLM, type Message } from 'cactus-react-native';
+
+// Vision-capable model
+const cactusLM = new CactusLM({ model: 'lfm2-vl-450m' });
+
+const messages: Message[] = [
+  {
+    role: 'user',
+    content: "What's in the image?",
+    images: ['path/to/your/image'],
+  },
+];
+
+const result = await cactusLM.complete({ messages });
+console.log('Response:', result.response);
+```
+
+#### Hook
+
+```tsx
+import { useCactusLM, type Message } from 'cactus-react-native';
+
+const App = () => {
+  // Vision-capable model
+  const cactusLM = useCactusLM({ model: 'lfm2-vl-450m' });
+
+  const handleAnalyze = async () => {
+    const messages: Message[] = [
+      {
+        role: 'user',
+        content: "What's in the image?",
+        images: ['path/to/your/image'],
+      },
+    ];
+
+    await cactusLM.complete({ messages });
+  };
+
+  return (
+    <>
+      <Button title="Analyze Image" onPress={handleAnalyze} />
+      <Text>{cactusLM.completion}</Text>
+    </>
+  );
+};
+```
+
 ### Tool Calling
+
+Enable the model to generate function calls by defining available tools and their parameters.
 
 #### Class
 
@@ -87,11 +209,12 @@ const messages: Message[] = [
 
 const result = await cactusLM.complete({ messages, tools });
 console.log('Response:', result.response);
+console.log('Function calls:', result.functionCalls);
 ```
 
 #### Hook
 
-```typescript
+```tsx
 import { useCactusLM, type Message, type Tool } from 'cactus-react-native';
 
 const tools: Tool[] = [
@@ -129,7 +252,57 @@ const App = () => {
 };
 ```
 
+### RAG (Retrieval Augmented Generation)
+
+RAG allows you to provide a corpus of documents that the model can reference during generation, enabling it to answer questions based on your data.
+
+#### Class
+
+```typescript
+import { CactusLM, type Message } from 'cactus-react-native';
+
+const cactusLM = new CactusLM({
+  corpusDir: 'path/to/your/corpus', // Directory containing .txt files
+});
+
+const messages: Message[] = [
+  { role: 'user', content: 'What information is in the documents?' },
+];
+
+const result = await cactusLM.complete({ messages });
+console.log(result.response);
+```
+
+#### Hook
+
+```tsx
+import { useCactusLM, type Message } from 'cactus-react-native';
+
+const App = () => {
+  const cactusLM = useCactusLM({
+    corpusDir: 'path/to/your/corpus', // Directory containing .txt files
+  });
+
+  const handleAsk = async () => {
+    const messages: Message[] = [
+      { role: 'user', content: 'What information is in the documents?' },
+    ];
+
+    await cactusLM.complete({ messages });
+  };
+
+  return (
+    <>
+      <Button title="Ask Question" onPress={handleAsk} />
+      <Text>{cactusLM.completion}</Text>
+    </>
+  );
+};
+```
+
 ### Embedding
+
+Convert text into numerical vector representations that capture semantic meaning, useful for similarity search and semantic understanding.
 
 #### Class
 
@@ -145,7 +318,7 @@ console.log('Embedding vector length:', result.embedding.length);
 
 #### Hook
 
-```typescript
+```tsx
 import { useCactusLM } from 'cactus-react-native';
 
 const App = () => {
@@ -163,32 +336,37 @@ const App = () => {
 
 ## API Reference
 
-### `CactusLM` Class
+### CactusLM Class
 
 #### Constructor
 
 **`new CactusLM(params?: CactusLMParams)`**
 
-- `model` - Model slug (default: `'qwen3-0.6'`)
-- `contextSize` - Context window size (default: `2048`)
+**Parameters:**
+- `model` - Model slug (default: `'qwen3-0.6'`).
+- `contextSize` - Context window size (default: `2048`).
+- `corpusDir` - Directory containing text files for RAG (default: `undefined`).
 
 #### Methods
 
 **`download(params?: CactusLMDownloadParams): Promise<void>`**
 
-- Downloads the model.
+Downloads the model. If the model is already downloaded, returns immediately with progress at 100%. Throws an error if a download is already in progress. Automatically refreshes the models list after successful download.
+
+**Parameters:**
 - `onProgress` - Callback for download progress (0-1).
 
 **`init(): Promise<void>`**
 
-- Initializes the model and prepares it for inference.
+Initializes the model and prepares it for inference. Safe to call multiple times (idempotent). Throws an error if the model is not downloaded yet. Automatically initializes telemetry if not already done.
 
 **`complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>`**
 
-- Performs text completion with optional streaming and tool support (initializes the model if needed).
+Performs text completion with optional streaming and tool support. Automatically calls `init()` if not already initialized. Throws an error if a generation (completion or embedding) is already in progress.
+
+**Parameters:**
 - `messages` - Array of `Message` objects.
 - `options` - Generation options:
-
   - `temperature` - Sampling temperature (default: model-optimized).
   - `topP` - Nucleus sampling threshold (default: model-optimized).
   - `topK` - Top-K sampling limit (default: model-optimized).
@@ -199,61 +377,68 @@ const App = () => {
 
 **`embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>`**
 
-- Generates embeddings for the given text (initializes the model if needed).
+Generates embeddings for the given text. Automatically calls `init()` if not already initialized. Throws an error if a generation (completion or embedding) is already in progress.
+
+**Parameters:**
 - `text` - Text to embed.
 
 **`stop(): Promise<void>`**
 
-- Stops ongoing generation.
+Stops ongoing generation.
 
 **`reset(): Promise<void>`**
 
-- Resets the model's internal state, clearing any cached context.
+Resets the model's internal state, clearing any cached context. Automatically calls `stop()` first.
 
 **`destroy(): Promise<void>`**
 
-- Releases all resources associated with the model.
+Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
 **`getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>`**
 
-- Fetches available models and persists the results locally.
-- `forceRefresh` - If `true`, forces a fetch from the server and updates the local data (default: `false`).
+Fetches available models and persists the results locally for caching. Returns cached results if available, unless `forceRefresh` is `true`. Checks the download status for each model and includes it in the results.
 
-### `useCactusLM` Hook
+**Parameters:**
+- `forceRefresh` - If `true`, fetches from the server and updates the local cache (default: `false`).
+
+### useCactusLM Hook
+
+The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When model parameters (`model`, `contextSize`, or `corpusDir`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
 
 #### State
 
-- `completion: string` - Current generated text.
-- `isGenerating: boolean` - Whether the model is currently generating.
+- `completion: string` - Current generated text. Automatically accumulated during streaming. Cleared before each new completion and when calling `reset()` or `destroy()`.
+- `isGenerating: boolean` - Whether the model is currently generating (completion or embedding). Both operations share this flag.
 - `isInitializing: boolean` - Whether the model is initializing.
-- `isDownloaded: boolean` - Whether the model is downloaded locally.
+- `isDownloaded: boolean` - Whether the model is downloaded locally. Automatically checked when the hook mounts or model changes.
 - `isDownloading: boolean` - Whether the model is being downloaded.
-- `downloadProgress: number` - Download progress (0-1). `0` if not downloading.
-- `error: string | null` - Last error message, or `null` if there is no error.
+- `downloadProgress: number` - Download progress (0-1). Reset to `0` after download completes.
+- `error: string | null` - Last error message from any operation, or `null` if there is no error. Cleared before starting new operations.
 
 #### Methods
 
-- `download(params?: CactusLMDownloadParams): Promise<void>`
-- `init(): Promise<void>`
-- `complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>`
-- `embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>`
-- `stop(): Promise<void>`
-- `reset(): Promise<void>`
-- `destroy(): Promise<void>`
-- `getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>`
+- `download(params?: CactusLMDownloadParams): Promise<void>` - Downloads the model. Updates `isDownloading` and `downloadProgress` state during download. Sets `isDownloaded` to `true` on success.
+- `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
+- `complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>` - Generates text completions. Automatically accumulates tokens in the `completion` state during streaming. Sets `isGenerating` to `true` while generating. Clears `completion` before starting.
+- `embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>` - Generates embeddings for the given text. Sets `isGenerating` to `true` during operation.
+- `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
+- `reset(): Promise<void>` - Resets the model's internal state, clearing cached context. Also clears the `completion` state.
+- `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `completion` state. Automatically called when the component unmounts.
+- `getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>` - Fetches available models and returns them. Results are cached locally.
 
 ## Type Definitions
 
-### `CactusLMParams`
+### CactusLMParams
 
 ```typescript
 interface CactusLMParams {
   model?: string;
   contextSize?: number;
+  corpusDir?: string;
 }
 ```
 
-### `CactusLMDownloadParams`
+### CactusLMDownloadParams
 
 ```typescript
 interface CactusLMDownloadParams {
@@ -261,16 +446,17 @@ interface CactusLMDownloadParams {
 }
 ```
 
-### `Message`
+### Message
 
 ```typescript
 interface Message {
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  content?: string;
+  images?: string[];
 }
 ```
 
-### `Options`
+### Options
 
 ```typescript
 interface Options {
@@ -282,7 +468,7 @@ interface Options {
 }
 ```
 
-### `Tool`
+### Tool
 
 ```typescript
 interface Tool {
@@ -302,7 +488,7 @@ interface Tool {
 }
 ```
 
-### `CactusLMCompleteParams`
+### CactusLMCompleteParams
 
 ```typescript
 interface CactusLMCompleteParams {
@@ -313,7 +499,7 @@ interface CactusLMCompleteParams {
 }
 ```
 
-### `CactusLMCompleteResult`
+### CactusLMCompleteResult
 
 ```typescript
 interface CactusLMCompleteResult {
@@ -332,7 +518,7 @@ interface CactusLMCompleteResult {
 }
 ```
 
-### `CactusLMEmbedParams`
+### CactusLMEmbedParams
 
 ```typescript
 interface CactusLMEmbedParams {
@@ -340,7 +526,7 @@ interface CactusLMEmbedParams {
 }
 ```
 
-### `CactusLMEmbedResult`
+### CactusLMEmbedResult
 
 ```typescript
 interface CactusLMEmbedResult {
@@ -348,7 +534,7 @@ interface CactusLMEmbedResult {
 }
 ```
 
-### `CactusLMGetModelsParams`
+### CactusLMGetModelsParams
 
 ```typescript
 interface CactusLMGetModelsParams {
@@ -356,7 +542,7 @@ interface CactusLMGetModelsParams {
 }
 ```
 
-### `CactusModel`
+### CactusModel
 
 ```typescript
 interface CactusModel {
@@ -387,3 +573,13 @@ CactusConfig.telemetryToken = 'your-token-here';
 // Disable telemetry
 CactusConfig.isTelemetryEnabled = false;
 ```
+
+## Performance Tips
+
+- **Model Selection** - Choose smaller models for faster inference on mobile devices.
+- **Context Size** - Reduce the context size to lower memory usage.
+- **Memory Management** - Always call `destroy()` when you're done with models to free up resources.
+
+## Example App
+
+Check out [our example app](/example) for a complete React Native implementation.
