@@ -84,10 +84,15 @@ export const useCactusLM = ({
         throw new Error(message);
       }
 
+      setError(null);
+
+      if (isDownloaded) {
+        return;
+      }
+
       const thisModel = currentModelRef.current;
       const thisDownloadId = ++currentDownloadIdRef.current;
 
-      setError(null);
       setDownloadProgress(0);
       setIsDownloading(true);
       try {
@@ -135,7 +140,7 @@ export const useCactusLM = ({
         setDownloadProgress(0);
       }
     },
-    [cactusLM, isDownloading]
+    [cactusLM, isDownloading, isDownloaded]
   );
 
   const init = useCallback(async () => {
