@@ -25,6 +25,10 @@
     "CactusDeviceInfo": {
       "kotlin": "HybridCactusDeviceInfo",
       "swift": "HybridCactusDeviceInfo"
+    },
+    "CactusImage": {
+      "kotlin": "HybridCactusImage",
+      "swift": "HybridCactusImage"
     }
   },
   "ignorePaths": ["node_modules"]

@@ -19,6 +19,7 @@
 #include "JHybridCactusDeviceInfoSpec.hpp"
 #include "JHybridCactusFileSystemSpec.hpp"
 #include "JFunc_void_double.hpp"
+#include "JHybridCactusImageSpec.hpp"
 #include "HybridCactus.hpp"
 #include "HybridCactusUtil.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
@@ -36,6 +37,7 @@ int initialize(JavaVM* vm) {
     margelo::nitro::cactus::JHybridCactusDeviceInfoSpec::registerNatives();
     margelo::nitro::cactus::JHybridCactusFileSystemSpec::registerNatives();
     margelo::nitro::cactus::JFunc_void_double_cxx::registerNatives();
+    margelo::nitro::cactus::JHybridCactusImageSpec::registerNatives();
 
     // Register Nitro Hybrid Objects
     HybridObjectRegistry::registerHybridObjectConstructor(
@@ -76,6 +78,14 @@ int initialize(JavaVM* vm) {
       "CactusDeviceInfo",
       []() -> std::shared_ptr<HybridObject> {
         static DefaultConstructableObject<JHybridCactusDeviceInfoSpec::javaobject> object("com/margelo/nitro/cactus/HybridCactusDeviceInfo");
+        auto instance = object.create();
+        return instance->cthis()->shared();
+      }
+    );
+    HybridObjectRegistry::registerHybridObjectConstructor(
+      "CactusImage",
+      []() -> std::shared_ptr<HybridObject> {
+        static DefaultConstructableObject<JHybridCactusImageSpec::javaobject> object("com/margelo/nitro/cactus/HybridCactusImage");
         auto instance = object.create();
         return instance->cthis()->shared();
       }

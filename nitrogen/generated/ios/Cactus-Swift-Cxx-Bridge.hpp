@@ -16,6 +16,8 @@ namespace margelo::nitro::cactus { class HybridCactusCryptoSpec; }
 namespace margelo::nitro::cactus { class HybridCactusDeviceInfoSpec; }
 // Forward declaration of `HybridCactusFileSystemSpec` to properly resolve imports.
 namespace margelo::nitro::cactus { class HybridCactusFileSystemSpec; }
+// Forward declaration of `HybridCactusImageSpec` to properly resolve imports.
+namespace margelo::nitro::cactus { class HybridCactusImageSpec; }
 
 // Forward declarations of Swift defined types
 // Forward declaration of `HybridCactusCryptoSpec_cxx` to properly resolve imports.
@@ -24,12 +26,15 @@ namespace Cactus { class HybridCactusCryptoSpec_cxx; }
 namespace Cactus { class HybridCactusDeviceInfoSpec_cxx; }
 // Forward declaration of `HybridCactusFileSystemSpec_cxx` to properly resolve imports.
 namespace Cactus { class HybridCactusFileSystemSpec_cxx; }
+// Forward declaration of `HybridCactusImageSpec_cxx` to properly resolve imports.
+namespace Cactus { class HybridCactusImageSpec_cxx; }
 
 // Include C++ defined types
 #include "DeviceInfo.hpp"
 #include "HybridCactusCryptoSpec.hpp"
 #include "HybridCactusDeviceInfoSpec.hpp"
 #include "HybridCactusFileSystemSpec.hpp"
+#include "HybridCactusImageSpec.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
@@ -369,5 +374,17 @@ namespace margelo::nitro::cactus::bridge::swift {
   inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<void>>>::withError(error);
   }
+  
+  // pragma MARK: std::shared_ptr<HybridCactusImageSpec>
+  /**
+   * Specialized version of `std::shared_ptr<HybridCactusImageSpec>`.
+   */
+  using std__shared_ptr_HybridCactusImageSpec_ = std::shared_ptr<HybridCactusImageSpec>;
+  std::shared_ptr<HybridCactusImageSpec> create_std__shared_ptr_HybridCactusImageSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
+  void* NON_NULL get_std__shared_ptr_HybridCactusImageSpec_(std__shared_ptr_HybridCactusImageSpec_ cppType);
+  
+  // pragma MARK: std::weak_ptr<HybridCactusImageSpec>
+  using std__weak_ptr_HybridCactusImageSpec_ = std::weak_ptr<HybridCactusImageSpec>;
+  inline std__weak_ptr_HybridCactusImageSpec_ weakify_std__shared_ptr_HybridCactusImageSpec_(const std::shared_ptr<HybridCactusImageSpec>& strong) noexcept { return strong; }
 
 } // namespace margelo::nitro::cactus::bridge::swift

@@ -15,6 +15,7 @@
 #include "HybridCactusFileSystemSpecSwift.hpp"
 #include "HybridCactusCryptoSpecSwift.hpp"
 #include "HybridCactusDeviceInfoSpecSwift.hpp"
+#include "HybridCactusImageSpecSwift.hpp"
 
 @interface CactusAutolinking : NSObject
 @end
@@ -61,6 +62,13 @@
     "CactusDeviceInfo",
     []() -> std::shared_ptr<HybridObject> {
       std::shared_ptr<HybridCactusDeviceInfoSpec> hybridObject = Cactus::CactusAutolinking::createCactusDeviceInfo();
+      return hybridObject;
+    }
+  );
+  HybridObjectRegistry::registerHybridObjectConstructor(
+    "CactusImage",
+    []() -> std::shared_ptr<HybridObject> {
+      std::shared_ptr<HybridCactusImageSpec> hybridObject = Cactus::CactusAutolinking::createCactusImage();
       return hybridObject;
     }
   );

@@ -12,6 +12,7 @@
 #include "HybridCactusCryptoSpecSwift.hpp"
 #include "HybridCactusDeviceInfoSpecSwift.hpp"
 #include "HybridCactusFileSystemSpecSwift.hpp"
+#include "HybridCactusImageSpecSwift.hpp"
 
 namespace margelo::nitro::cactus::bridge::swift {
 
@@ -116,6 +117,22 @@ namespace margelo::nitro::cactus::bridge::swift {
     }
     #endif
     Cactus::HybridCactusFileSystemSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
+    return swiftPart.toUnsafe();
+  }
+  
+  // pragma MARK: std::shared_ptr<HybridCactusImageSpec>
+  std::shared_ptr<HybridCactusImageSpec> create_std__shared_ptr_HybridCactusImageSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
+    Cactus::HybridCactusImageSpec_cxx swiftPart = Cactus::HybridCactusImageSpec_cxx::fromUnsafe(swiftUnsafePointer);
+    return std::make_shared<margelo::nitro::cactus::HybridCactusImageSpecSwift>(swiftPart);
+  }
+  void* NON_NULL get_std__shared_ptr_HybridCactusImageSpec_(std__shared_ptr_HybridCactusImageSpec_ cppType) {
+    std::shared_ptr<margelo::nitro::cactus::HybridCactusImageSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::cactus::HybridCactusImageSpecSwift>(cppType);
+    #ifdef NITRO_DEBUG
+    if (swiftWrapper == nullptr) [[unlikely]] {
+      throw std::runtime_error("Class \"HybridCactusImageSpec\" is not implemented in Swift!");
+    }
+    #endif
+    Cactus::HybridCactusImageSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
     return swiftPart.toUnsafe();
   }
 

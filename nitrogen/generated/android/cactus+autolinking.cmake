@@ -37,11 +37,13 @@ target_sources(
   ../nitrogen/generated/shared/c++/HybridCactusCryptoSpec.cpp
   ../nitrogen/generated/shared/c++/HybridCactusDeviceInfoSpec.cpp
   ../nitrogen/generated/shared/c++/HybridCactusFileSystemSpec.cpp
+  ../nitrogen/generated/shared/c++/HybridCactusImageSpec.cpp
   ../nitrogen/generated/shared/c++/HybridCactusUtilSpec.cpp
   # Android-specific Nitrogen C++ sources
   ../nitrogen/generated/android/c++/JHybridCactusCryptoSpec.cpp
   ../nitrogen/generated/android/c++/JHybridCactusDeviceInfoSpec.cpp
   ../nitrogen/generated/android/c++/JHybridCactusFileSystemSpec.cpp
+  ../nitrogen/generated/android/c++/JHybridCactusImageSpec.cpp
 )
 
 # From node_modules/react-native/ReactAndroid/cmake-utils/folly-flags.cmake
