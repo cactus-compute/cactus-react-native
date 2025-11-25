@@ -8,17 +8,20 @@ import com.margelo.nitro.core.Promise
 class HybridCactusDeviceInfo : HybridCactusDeviceInfoSpec() {
   private val context = NitroModules.applicationContext ?: error("Android context not found")
 
-  override fun getAppIdentifier(): Promise<String?> {
-    return Promise.async { context.packageName }
-  }
+  override fun getAppIdentifier(): Promise<String?> = Promise.async { context.packageName }
 
-  override fun getDeviceInfo(): Promise<DeviceInfo> {
-    return Promise.async {
+  override fun getDeviceInfo(): Promise<DeviceInfo> =
+    Promise.async {
       DeviceInfo(
-        brand = Build.MANUFACTURER, model = Build.MODEL, device_id = Settings.Secure.getString(
-          context.contentResolver, Settings.Secure.ANDROID_ID
-        ), os = "Android", os_version = Build.VERSION.RELEASE
+        brand = Build.MANUFACTURER,
+        model = Build.MODEL,
+        device_id =
+          Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ANDROID_ID,
+          ),
+        os = "Android",
+        os_version = Build.VERSION.RELEASE,
       )
     }
-  }
 }

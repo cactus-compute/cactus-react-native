@@ -16,29 +16,28 @@ import kotlin.math.floor
 class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
   private val context = NitroModules.applicationContext ?: error("Android context not found")
 
-  override fun getCactusDirectory(): Promise<String> {
-    return Promise.async { cactusFile().absolutePath }
-  }
+  override fun getCactusDirectory(): Promise<String> = Promise.async { cactusFile().absolutePath }
 
-  override fun fileExists(path: String): Promise<Boolean> {
-    return Promise.async {
+  override fun fileExists(path: String): Promise<Boolean> =
+    Promise.async {
       val cactusDir = cactusFile()
       val file = File(cactusDir, path)
       file.exists()
     }
-  }
 
-  override fun writeFile(path: String, content: String): Promise<Unit> {
-    return Promise.async {
+  override fun writeFile(
+    path: String,
+    content: String,
+  ): Promise<Unit> =
+    Promise.async {
       val cactusDir = cactusFile()
       val file = File(cactusDir, path)
       file.parentFile?.mkdirs()
       file.writeText(content)
     }
-  }
 
-  override fun readFile(path: String): Promise<String> {
-    return Promise.async {
+  override fun readFile(path: String): Promise<String> =
+    Promise.async {
       val cactusDir = cactusFile()
       val file = File(cactusDir, path)
 
@@ -48,10 +47,9 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
 
       file.readText()
     }
-  }
 
-  override fun deleteFile(path: String): Promise<Unit> {
-    return Promise.async {
+  override fun deleteFile(path: String): Promise<Unit> =
+    Promise.async {
       val cactusDir = cactusFile()
       val file = File(cactusDir, path)
 
@@ -61,18 +59,15 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
 
       file.deleteRecursively()
     }
-  }
 
-  override fun modelExists(model: String): Promise<Boolean> {
-    return Promise.async { modelFile(model).exists() }
-  }
+  override fun modelExists(model: String): Promise<Boolean> = Promise.async { modelFile(model).exists() }
 
-  override fun getModelPath(model: String): Promise<String> {
-    return Promise.async { modelFile(model).absolutePath }
-  }
+  override fun getModelPath(model: String): Promise<String> = Promise.async { modelFile(model).absolutePath }
 
   override fun downloadModel(
-    model: String, from: String, callback: ((progress: Double) -> Unit)?
+    model: String,
+    from: String,
+    callback: ((progress: Double) -> Unit)?,
   ): Promise<Unit> {
     return Promise.async {
       val modelFile = modelFile(model)
@@ -82,21 +77,23 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
         return@async
       }
 
-      val url = try {
-        URL(from)
-      } catch (_: Throwable) {
-        throw Error("Invalid URL")
-      }
+      val url =
+        try {
+          URL(from)
+        } catch (_: Throwable) {
+          throw Error("Invalid URL")
+        }
 
       val tmpZip = File.createTempFile("dl_", ".zip", context.cacheDir)
       var connection: HttpURLConnection? = null
 
       try {
-        connection = (url.openConnection() as HttpURLConnection).apply {
-          connectTimeout = 30_000
-          readTimeout = 5 * 60_000
-          instanceFollowRedirects = true
-        }
+        connection =
+          (url.openConnection() as HttpURLConnection).apply {
+            connectTimeout = 30_000
+            readTimeout = 5 * 60_000
+            instanceFollowRedirects = true
+          }
         connection.connect()
         val code = connection.responseCode
 
@@ -129,11 +126,13 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
 
                   if (contentLength > 0) {
                     // cap at 0.99; 1.0 will be sent after unzip
-                    val pct = floor(
-                      (downloaded.toDouble() / contentLength.toDouble()).coerceIn(
-                        0.0, 1.0
-                      ) * 99
-                    ) / 100.0
+                    val pct =
+                      floor(
+                        (downloaded.toDouble() / contentLength.toDouble()).coerceIn(
+                          0.0,
+                          1.0,
+                        ) * 99,
+                      ) / 100.0
 
                     if (pct - lastPct >= 0.01) {
                       callback?.invoke(pct)
@@ -160,7 +159,10 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
     }
   }
 
-  private fun unzipItem(zipFile: File, outDir: File) {
+  private fun unzipItem(
+    zipFile: File,
+    outDir: File,
+  ) {
     val outRoot = outDir.canonicalFile
     ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
       var entry: ZipEntry? = zis.nextEntry
@@ -196,8 +198,8 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
     }
   }
 
-  override fun deleteModel(model: String): Promise<Unit> {
-    return Promise.async {
+  override fun deleteModel(model: String): Promise<Unit> =
+    Promise.async {
       val modelFile = modelFile(model)
 
       if (!modelFile.exists()) {
@@ -206,7 +208,6 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
 
       modelFile.deleteRecursively()
     }
-  }
 
   private fun cactusFile(): File {
     val documentsDir =

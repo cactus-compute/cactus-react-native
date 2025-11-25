@@ -2,18 +2,18 @@ package com.margelo.nitro.cactus
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.core.graphics.createBitmap
 import com.margelo.nitro.NitroModules
 import com.margelo.nitro.core.Promise
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
-import androidx.core.graphics.createBitmap
 
 class HybridCactusImage : HybridCactusImageSpec() {
   private val context = NitroModules.applicationContext ?: error("Android context not found")
 
-  override fun base64(path: String): Promise<String> {
-    return Promise.async {
+  override fun base64(path: String): Promise<String> =
+    Promise.async {
       val file = File(path)
 
       if (!file.exists()) {
@@ -23,10 +23,14 @@ class HybridCactusImage : HybridCactusImageSpec() {
       val imageData = file.readBytes()
       android.util.Base64.encodeToString(imageData, android.util.Base64.NO_WRAP)
     }
-  }
 
-  override fun resize(path: String, height: Double, width: Double, quality: Double): Promise<String> {
-    return Promise.async {
+  override fun resize(
+    path: String,
+    height: Double,
+    width: Double,
+    quality: Double,
+  ): Promise<String> =
+    Promise.async {
       val file = File(path)
 
       if (!file.exists()) {
@@ -39,16 +43,18 @@ class HybridCactusImage : HybridCactusImageSpec() {
       }
       val resizedBitmap = createBitmap(width.toInt(), height.toInt(), Bitmap.Config.RGB_565)
       val canvas = android.graphics.Canvas(resizedBitmap)
-      val paint = android.graphics.Paint().apply {
-        isFilterBitmap = true
-        isAntiAlias = true
-      }
+      val paint =
+        android.graphics.Paint().apply {
+          isFilterBitmap = true
+          isAntiAlias = true
+        }
 
       val scaleX = width.toFloat() / bitmap.width
       val scaleY = height.toFloat() / bitmap.height
-      val matrix = android.graphics.Matrix().apply {
-        setScale(scaleX, scaleY)
-      }
+      val matrix =
+        android.graphics.Matrix().apply {
+          setScale(scaleX, scaleY)
+        }
 
       canvas.drawBitmap(bitmap, matrix, paint)
       bitmap.recycle()
@@ -72,5 +78,4 @@ class HybridCactusImage : HybridCactusImageSpec() {
         throw Error("Failed to save resized image: ${e.message}")
       }
     }
-  }
 }
