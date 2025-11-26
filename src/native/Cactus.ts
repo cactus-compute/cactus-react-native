@@ -6,6 +6,7 @@ import type {
   Options,
   Tool,
 } from '../types/CactusLM';
+import { CactusImage } from './CactusImage';
 
 export class Cactus {
   private readonly hybridCactus =
@@ -26,7 +27,26 @@ export class Cactus {
     tools?: Tool[],
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusLMCompleteResult> {
-    const messagesJson = JSON.stringify(messages);
+    const messagesInternal: Message[] = [];
+    for (const message of messages) {
+      if (!message.images) {
+        messagesInternal.push(message);
+        continue;
+      }
+      const images: string[] = [];
+      for (const image of message.images) {
+        const resizedImage = await CactusImage.resize(
+          image.replace('file://', ''),
+          128,
+          128,
+          1
+        );
+        images.push(resizedImage);
+      }
+      messagesInternal.push({ ...message, images });
+    }
+
+    const messagesJson = JSON.stringify(messagesInternal);
     const optionsJson = options
       ? JSON.stringify({
           temperature: options.temperature,

@@ -15,7 +15,6 @@ import {
   type CactusLMCompleteResult,
 } from 'cactus-react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 const VisionScreen = () => {
   const cactusLM = useCactusLM({ model: 'lfm2-vl-450m' });
@@ -37,21 +36,12 @@ const VisionScreen = () => {
     });
 
     if (imageResult.assets?.[0]?.uri) {
-      const imagePath = imageResult.assets[0].uri.replace('file://', '');
-      setSelectedImage(imagePath);
+      setSelectedImage(imageResult.assets[0].uri);
     }
   };
 
   const handleAnalyze = async () => {
     if (!selectedImage) return;
-
-    const resizedImage = await ImageResizer.createResizedImage(
-      selectedImage,
-      128,
-      128,
-      'JPEG',
-      100
-    );
 
     const messages: Message[] = [
       {
@@ -61,7 +51,7 @@ const VisionScreen = () => {
       {
         role: 'user',
         content: input,
-        images: [resizedImage.uri.replace('file://', '')],
+        images: [selectedImage],
       },
     ];
 

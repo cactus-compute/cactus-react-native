@@ -10,7 +10,6 @@
     "build:ios": "react-native build-ios --mode Debug"
   },
   "dependencies": {
-    "@bam.tech/react-native-image-resizer": "^3.0.11",
     "@dr.pogodin/react-native-fs": "^2.36.1",
     "react": "19.1.0",
     "react-native": "0.81.1",
