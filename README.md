@@ -185,7 +185,6 @@ import { CactusLM, type Message, type Tool } from 'cactus-react-native';
 
 const tools: Tool[] = [
   {
-    type: 'function',
     name: 'get_weather',
     description: 'Get current weather for a location',
     parameters: {
@@ -219,7 +218,6 @@ import { useCactusLM, type Message, type Tool } from 'cactus-react-native';
 
 const tools: Tool[] = [
   {
-    type: 'function',
     name: 'get_weather',
     description: 'Get current weather for a location',
     parameters: {
@@ -334,6 +332,57 @@ const App = () => {
 };
 ```
 
+### Hybrid Mode (Cloud Fallback)
+
+The CactusLM supports a hybrid completion mode that falls back to a cloud-based LLM provider `OpenRouter` if local inference fails.
+
+#### Class
+
+```typescript
+import { CactusLM, type Message } from 'cactus-react-native';
+
+const cactusLM = new CactusLM();
+
+const messages: Message[] = [
+  { role: 'user', content: 'Hello, World!' }
+];
+
+// Falls back to remote if local fails
+const result = await cactusLM.complete({
+  messages,
+  mode: 'hybrid'
+});
+```
+
+#### Hook
+
+```tsx
+import { useCactusLM, type Message } from 'cactus-react-native';
+
+const App = () => {
+  const cactusLM = useCactusLM();
+
+  const handleComplete = async () => {
+    const messages: Message[] = [
+      { role: 'user', content: 'Hello, World!' }
+    ];
+
+    // Falls back to remote if local fails
+    await cactusLM.complete({
+      messages,
+      mode: 'hybrid'
+    });
+  };
+
+  return (
+    <>
+      <Button title="Complete" onPress={handleComplete} />
+      <Text>{cactusLM.completion}</Text>
+    </>
+  );
+};
+```
+
 ## API Reference
 
 ### CactusLM Class
@@ -374,6 +423,7 @@ Performs text completion with optional streaming and tool support. Automatically
   - `stopSequences` - Array of strings to stop generation (default: `undefined`).
 - `tools` - Array of `Tool` objects for function calling (default: `undefined`).
 - `onToken` - Callback for streaming tokens.
+- `mode` - Completion mode (default: `local`)
 
 **`embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>`**
 
@@ -472,7 +522,6 @@ interface Options {
 
 ```typescript
 interface Tool {
-  type: 'function';
   name: string;
   description: string;
   parameters: {
@@ -496,6 +545,7 @@ interface CactusLMCompleteParams {
   options?: Options;
   tools?: Tool[];
   onToken?: (token: string) => void;
+  mode?: 'local' | 'hybrid';
 }
 ```
 
@@ -568,10 +618,21 @@ Cactus offers powerful telemetry for all your projects. Create a token on the [C
 import { CactusConfig } from 'cactus-react-native';
 
 // Enable Telemetry for your project
-CactusConfig.telemetryToken = 'your-token-here';
+CactusConfig.telemetryToken = 'your-telemetry-token-here';
 
 // Disable telemetry
 CactusConfig.isTelemetryEnabled = false;
+```
+
+### Hybrid Mode
+
+Enable cloud fallback.
+
+```typescript
+import { CactusConfig } from 'cactus-react-native';
+
+// Set your Cactus token for hybrid mode
+CactusConfig.cactusToken = 'your-cactus-token-here';
 ```
 
 ## Performance Tips

@@ -71,9 +71,7 @@ export class CactusLM {
     }
 
     if (!(await CactusFileSystem.modelExists(this.model))) {
-      throw new Error(`Model "${this.model}" is not downloaded`, {
-        cause: 'ModelNotDownloaded',
-      });
+      throw new Error(`Model "${this.model}" is not downloaded`);
     }
 
     const modelPath = await CactusFileSystem.getModelPath(this.model);
@@ -129,13 +127,6 @@ export class CactusLM {
       );
       return result;
     } catch (localError) {
-      if (
-        localError instanceof Error &&
-        localError.cause === 'ModelNotDownloaded'
-      ) {
-        throw localError;
-      }
-
       if (mode === 'local') {
         Telemetry.logCompletion(this.model, false, getErrorMessage(localError));
         throw localError;
