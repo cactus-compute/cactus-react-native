@@ -45,6 +45,10 @@ export class Telemetry {
   };
 
   private static async handleLog(logRecord: LogRecord) {
+    if (!this.isInitialized()) {
+      return;
+    }
+
     if (!CactusConfig.isTelemetryEnabled) {
       return;
     }
@@ -78,6 +82,10 @@ export class Telemetry {
   }
 
   public static async init(cactusTelemetryToken?: string): Promise<void> {
+    if (this.isInitialized()) {
+      return;
+    }
+
     if (!CactusConfig.isTelemetryEnabled) {
       return;
     }

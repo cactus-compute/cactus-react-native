@@ -13,6 +13,7 @@ import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
 import { Database } from '../api/Database';
 import { getErrorMessage } from '../utils/error';
+import { RemoteLM } from '../api/RemoteLM';
 
 export class CactusLM {
   private readonly cactus = new Cactus();
@@ -30,11 +31,14 @@ export class CactusLM {
   private static readonly defaultCompleteOptions = {
     maxTokens: 512,
   };
+  private static readonly defaultCompleteMode = 'local';
   private static readonly defaultEmbedBufferSize = 2048;
 
   private static readonly modelsInfoPath = 'models/info.json';
 
   constructor({ model, contextSize, corpusDir }: CactusLMParams = {}) {
+    Telemetry.init(CactusConfig.telemetryToken);
+
     this.model = model ?? CactusLM.defaultModel;
     this.contextSize = contextSize ?? CactusLM.defaultContextSize;
     this.corpusDir = corpusDir;
@@ -66,12 +70,10 @@ export class CactusLM {
       return;
     }
 
-    if (!Telemetry.isInitialized()) {
-      await Telemetry.init(CactusConfig.telemetryToken);
-    }
-
     if (!(await CactusFileSystem.modelExists(this.model))) {
-      throw new Error(`Model "${this.model}" is not downloaded`);
+      throw new Error(`Model "${this.model}" is not downloaded`, {
+        cause: 'ModelNotDownloaded',
+      });
     }
 
     const modelPath = await CactusFileSystem.getModelPath(this.model);
@@ -91,25 +93,32 @@ export class CactusLM {
     options,
     tools,
     onToken,
+    mode,
   }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
     }
 
-    await this.init();
-
     options = { ...CactusLM.defaultCompleteOptions, ...options };
+    const toolsInternal = tools?.map((tool) => ({
+      type: 'function' as const,
+      function: tool,
+    }));
+    mode = mode ?? CactusLM.defaultCompleteMode;
+
     const responseBufferSize =
       8 * (options.maxTokens ?? CactusLM.defaultCompleteOptions.maxTokens) +
       256;
 
-    this.isGenerating = true;
     try {
+      await this.init();
+
+      this.isGenerating = true;
       const result = await this.cactus.complete(
         messages,
         responseBufferSize,
         options,
-        tools,
+        toolsInternal,
         onToken
       );
       Telemetry.logCompletion(
@@ -119,9 +128,32 @@ export class CactusLM {
         result
       );
       return result;
-    } catch (error) {
-      Telemetry.logCompletion(this.model, false, getErrorMessage(error));
-      throw error;
+    } catch (localError) {
+      if (
+        localError instanceof Error &&
+        localError.cause === 'ModelNotDownloaded'
+      ) {
+        throw localError;
+      }
+
+      if (mode === 'local') {
+        Telemetry.logCompletion(this.model, false, getErrorMessage(localError));
+        throw localError;
+      }
+
+      Telemetry.logCompletion(
+        this.model,
+        false,
+        `Local completion error: ${getErrorMessage(localError)}. Falling back to remote completion.`
+      );
+
+      try {
+        return RemoteLM.complete(messages, options, toolsInternal, onToken);
+      } catch (remoteError) {
+        throw new Error(
+          `Remote completion error: ${getErrorMessage(remoteError)}`
+        );
+      }
     } finally {
       this.isGenerating = false;
     }

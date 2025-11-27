@@ -168,6 +168,7 @@ export const useCactusLM = ({
       options,
       tools,
       onToken,
+      mode,
     }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> => {
       if (isGenerating) {
         const message = 'CactusLM is already generating';
@@ -187,6 +188,7 @@ export const useCactusLM = ({
             setCompletion((prev) => prev + token);
             onToken?.(token);
           },
+          mode,
         });
       } catch (e) {
         setError(getErrorMessage(e));

@@ -23,7 +23,6 @@ export interface Options {
 }
 
 export interface Tool {
-  type: 'function';
   name: string;
   description: string;
   parameters: {
@@ -43,6 +42,7 @@ export interface CactusLMCompleteParams {
   options?: Options;
   tools?: Tool[];
   onToken?: (token: string) => void;
+  mode?: 'local' | 'hybrid';
 }
 
 export interface CactusLMCompleteResult {

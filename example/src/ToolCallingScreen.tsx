@@ -17,7 +17,6 @@ import {
 
 const tools: Tool[] = [
   {
-    type: 'function',
     name: 'get_weather',
     description: 'Get current weather for a location',
     parameters: {
@@ -34,7 +33,7 @@ const tools: Tool[] = [
 ];
 
 const ToolCallingScreen = () => {
-  const cactusLM = useCactusLM({ model: 'qwen3-1.7' });
+  const cactusLM = useCactusLM({ model: 'qwen3-0.6' });
   const [input, setInput] = useState("What's the weather in San Francisco?");
   const [result, setResult] = useState<CactusLMCompleteResult | null>(null);
 

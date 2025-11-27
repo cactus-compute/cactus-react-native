@@ -24,7 +24,7 @@ export class Cactus {
     messages: Message[],
     responseBufferSize: number,
     options?: Options,
-    tools?: Tool[],
+    tools?: { type: 'function'; function: Tool }[],
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusLMCompleteResult> {
     const messagesInternal: Message[] = [];
