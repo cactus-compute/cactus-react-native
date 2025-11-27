@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
+#include <iostream>
 #include <filesystem>
 #include <cctype>
 
@@ -177,8 +179,8 @@ inline void parse_options_json(const std::string& json,
                                float& temperature, float& top_p, 
                                size_t& top_k, size_t& max_tokens,
                                std::vector<std::string>& stop_sequences) {
-    temperature = -1.0f; 
-    top_p = -1.0f;       
+    temperature = 0.0f;
+    top_p = 0.0f;       
     top_k = 0;           
     max_tokens = 100;    
     stop_sequences.clear();
@@ -233,15 +235,14 @@ inline std::string format_tools_for_prompt(const std::vector<ToolFunction>& tool
     std::string formatted_tools_json;
     for (size_t i = 0; i < tools.size(); i++) {
         if (i > 0) formatted_tools_json += ",\n";
-        formatted_tools_json += "  {\n";
-        formatted_tools_json += "    \"type\": \"function\",\n";
-        formatted_tools_json += "    \"function\": {\n";
-        formatted_tools_json += "      \"name\": \"" + tools[i].name + "\",\n";
-        formatted_tools_json += "      \"description\": \"" + tools[i].description + "\"";
+        formatted_tools_json += "{\"type\":\"function\",\"function\":{\"name\":\""
+                              + tools[i].name
+                              + "\",\"description\":\""
+                              + tools[i].description + "\"";
         if (tools[i].parameters.find("schema") != tools[i].parameters.end()) {
-            formatted_tools_json += ",\n      \"parameters\": " + tools[i].parameters.at("schema");
+            formatted_tools_json += ",\"parameters\":" + tools[i].parameters.at("schema");
         }
-        formatted_tools_json += "\n    }\n  }";
+        formatted_tools_json += "}}";
     }
     return formatted_tools_json;
 }

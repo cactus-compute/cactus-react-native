@@ -32,7 +32,7 @@ enum class OpType {
     SUM, MEAN, VARIANCE, MIN, MAX,
     RMS_NORM, ROPE, SOFTMAX, ATTENTION, CONV1D_CAUSAL, CONV1D_K3,
     SCALAR_ADD, SCALAR_SUBTRACT, SCALAR_MULTIPLY, SCALAR_DIVIDE, SCALAR_EXP, SCALAR_SQRT, SCALAR_COS, SCALAR_SIN,
-    SILU, GELU,
+    SILU, GELU, GELU_ERF,
     SAMPLE, CONCAT,
     SCATTER_TOPK,
     TOPK, LAYERNORM,
@@ -219,6 +219,7 @@ public:
     
     size_t silu(size_t input);
     size_t gelu(size_t input);
+    size_t gelu_erf(size_t input);
     
     size_t matmul(size_t input1, size_t input2, bool pretransposed_rhs = false, ComputeBackend backend = ComputeBackend::CPU);
     size_t transpose(size_t input, ComputeBackend backend = ComputeBackend::CPU);
@@ -236,6 +237,7 @@ public:
     size_t gather(size_t embeddings, size_t indices);
     size_t mmap_embeddings(const std::string& filename);
     size_t mmap_weights(const std::string& filename);
+    size_t load_weights(const std::string& filename); 
     void set_quantization_scale(size_t node_id, float scale);
     size_t embedding(const std::string& filename, size_t indices);
     size_t embedding(size_t embedding_tensor, size_t indices);
