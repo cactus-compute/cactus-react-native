@@ -460,7 +460,7 @@ const App = () => {
   return (
     <>
       <Button onPress={handleTranscribe} title="Transcribe" />
-      <Text>{cactusSTT.response}</Text>
+      <Text>{cactusSTT.transcription}</Text>
     </>
   );
 };
@@ -672,7 +672,7 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 
 #### State
 
-- `response: string` - Current transcription text. Automatically accumulated during streaming. Cleared before each new transcription and when calling `reset()` or `destroy()`.
+- `transcription: string` - Current transcription text. Automatically accumulated during streaming. Cleared before each new transcription and when calling `reset()` or `destroy()`.
 - `isGenerating: boolean` - Whether the model is currently generating (transcription or embedding). Both operations share this flag.
 - `isInitializing: boolean` - Whether the model is initializing.
 - `isDownloaded: boolean` - Whether the model is downloaded locally. Automatically checked when the hook mounts or model changes.
@@ -684,11 +684,11 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 
 - `download(params?: CactusSTTDownloadParams): Promise<void>` - Downloads the model. Updates `isDownloading` and `downloadProgress` state during download. Sets `isDownloaded` to `true` on success.
 - `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
-- `transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>` - Transcribes audio to text. Automatically accumulates tokens in the `response` state during streaming. Sets `isGenerating` to `true` while generating. Clears `response` before starting.
+- `transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>` - Transcribes audio to text. Automatically accumulates tokens in the `transcription` state during streaming. Sets `isGenerating` to `true` while generating. Clears `transcription` before starting.
 - `audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>` - Generates embeddings for the given audio. Sets `isGenerating` to `true` during operation.
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
-- `reset(): Promise<void>` - Resets the model's internal state. Also clears the `response` state.
-- `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `response` state. Automatically called when the component unmounts.
+- `reset(): Promise<void>` - Resets the model's internal state. Also clears the `transcription` state.
+- `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription` state. Automatically called when the component unmounts.
 - `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status. Results are cached in memory and reused on subsequent calls.
 
 ## Type Definitions
