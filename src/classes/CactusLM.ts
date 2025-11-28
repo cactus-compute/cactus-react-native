@@ -5,7 +5,8 @@ import type {
   CactusLMCompleteResult,
   CactusLMEmbedParams,
   CactusLMEmbedResult,
-  CactusLMGetModelsParams,
+  CactusLMImageEmbedParams,
+  CactusLMImageEmbedResult,
   CactusLMParams,
 } from '../types/CactusLM';
 import type { CactusModel } from '../types/CactusModel';
@@ -34,7 +35,7 @@ export class CactusLM {
   private static readonly defaultCompleteMode = 'local';
   private static readonly defaultEmbedBufferSize = 2048;
 
-  private static readonly modelsInfoPath = 'models/info.json';
+  private static cactusModelsCache: CactusModel[] | null = null;
 
   constructor({ model, contextSize, corpusDir }: CactusLMParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
@@ -58,8 +59,12 @@ export class CactusLM {
 
     this.isDownloading = true;
     try {
-      await CactusFileSystem.downloadModel(this.model, onProgress);
-      await this.getModels({ forceRefresh: true });
+      const model = await Database.getModel(this.model);
+      await CactusFileSystem.downloadModel(
+        this.model,
+        model.downloadUrl,
+        onProgress
+      );
     } finally {
       this.isDownloading = false;
     }
@@ -175,6 +180,31 @@ export class CactusLM {
     }
   }
 
+  public async imageEmbed({
+    imagePath,
+  }: CactusLMImageEmbedParams): Promise<CactusLMImageEmbedResult> {
+    if (this.isGenerating) {
+      throw new Error('CactusLM is already generating');
+    }
+
+    await this.init();
+
+    this.isGenerating = true;
+    try {
+      const embedding = await this.cactus.imageEmbed(
+        imagePath,
+        CactusLM.defaultEmbedBufferSize
+      );
+      Telemetry.logImageEmbedding(this.model, true);
+      return { embedding };
+    } catch (error) {
+      Telemetry.logImageEmbedding(this.model, false, getErrorMessage(error));
+      throw error;
+    } finally {
+      this.isGenerating = false;
+    }
+  }
+
   public stop(): Promise<void> {
     return this.cactus.stop();
   }
@@ -195,34 +225,15 @@ export class CactusLM {
     this.isInitialized = false;
   }
 
-  public async getModels({
-    forceRefresh = false,
-  }: CactusLMGetModelsParams = {}): Promise<CactusModel[]> {
-    if (
-      !forceRefresh &&
-      (await CactusFileSystem.fileExists(CactusLM.modelsInfoPath))
-    ) {
-      try {
-        return JSON.parse(
-          await CactusFileSystem.readFile(CactusLM.modelsInfoPath)
-        );
-      } catch {
-        // Delete corrupted models info
-        await CactusFileSystem.deleteFile(CactusLM.modelsInfoPath);
-      }
+  public async getModels(): Promise<CactusModel[]> {
+    if (CactusLM.cactusModelsCache) {
+      return CactusLM.cactusModelsCache;
     }
-
     const models = await Database.getModels();
-
     for (const model of models) {
       model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
     }
-
-    await CactusFileSystem.writeFile(
-      CactusLM.modelsInfoPath,
-      JSON.stringify(models)
-    );
-
+    CactusLM.cactusModelsCache = models;
     return models;
   }
 }

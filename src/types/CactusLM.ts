@@ -14,7 +14,7 @@ export interface Message {
   images?: string[];
 }
 
-export interface Options {
+export interface CompleteOptions {
   temperature?: number;
   topP?: number;
   topK?: number;
@@ -39,7 +39,7 @@ export interface Tool {
 
 export interface CactusLMCompleteParams {
   messages: Message[];
-  options?: Options;
+  options?: CompleteOptions;
   tools?: Tool[];
   onToken?: (token: string) => void;
   mode?: 'local' | 'hybrid';
@@ -68,6 +68,10 @@ export interface CactusLMEmbedResult {
   embedding: number[];
 }
 
-export interface CactusLMGetModelsParams {
-  forceRefresh?: boolean;
+export interface CactusLMImageEmbedParams {
+  imagePath: string;
+}
+
+export interface CactusLMImageEmbedResult {
+  embedding: number[];
 }

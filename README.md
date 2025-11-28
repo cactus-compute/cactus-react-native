@@ -300,9 +300,11 @@ const App = () => {
 
 ### Embedding
 
-Convert text into numerical vector representations that capture semantic meaning, useful for similarity search and semantic understanding.
+Convert text and images into numerical vector representations that capture semantic meaning, useful for similarity search and semantic understanding.
 
-#### Class
+#### Text Embedding
+
+##### Class
 
 ```typescript
 import { CactusLM } from 'cactus-react-native';
@@ -314,7 +316,7 @@ console.log('Embedding vector:', result.embedding);
 console.log('Embedding vector length:', result.embedding.length);
 ```
 
-#### Hook
+##### Hook
 
 ```tsx
 import { useCactusLM } from 'cactus-react-native';
@@ -329,6 +331,38 @@ const App = () => {
   };
 
   return <Button title="Embed" onPress={handleEmbed} />;
+};
+```
+
+#### Image Embedding
+
+##### Class
+
+```typescript
+import { CactusLM } from 'cactus-react-native';
+
+const cactusLM = new CactusLM({ model: 'lfm2-vl-450m' });
+
+const result = await cactusLM.imageEmbed({ imagePath: 'path/to/your/image.jpg' });
+console.log('Image embedding vector:', result.embedding);
+console.log('Embedding vector length:', result.embedding.length);
+```
+
+##### Hook
+
+```tsx
+import { useCactusLM } from 'cactus-react-native';
+
+const App = () => {
+  const cactusLM = useCactusLM({ model: 'lfm2-vl-450m' });
+
+  const handleImageEmbed = async () => {
+    const result = await cactusLM.imageEmbed({ imagePath: 'path/to/your/image.jpg' });
+    console.log('Image embedding vector:', result.embedding);
+    console.log('Embedding vector length:', result.embedding.length);
+  };
+
+  return <Button title="Embed Image" onPress={handleImageEmbed} />;
 };
 ```
 
@@ -383,6 +417,96 @@ const App = () => {
 };
 ```
 
+## Speech-to-Text (STT)
+
+The `CactusSTT` class provides audio transcription and audio embedding capabilities using Whisper models.
+
+### Transcription
+
+Transcribe audio files to text with streaming support.
+
+#### Class
+
+```typescript
+import { CactusSTT } from 'cactus-react-native';
+
+const cactusSTT = new CactusSTT({ model: 'whisper-small' });
+
+await cactusSTT.init();
+
+const result = await cactusSTT.transcribe({
+  audioFilePath: 'path/to/audio.wav',
+  onToken: (token) => console.log('Token:', token)
+});
+
+console.log('Transcription:', result.response);
+```
+
+#### Hook
+
+```tsx
+import { useCactusSTT } from 'cactus-react-native';
+
+const App = () => {
+  const cactusSTT = useCactusSTT({ model: 'whisper-small' });
+
+  const handleTranscribe = async () => {
+    const result = await cactusSTT.transcribe({
+      audioFilePath: 'path/to/audio.wav',
+    });
+    console.log('Transcription:', result.response);
+  };
+
+  return (
+    <>
+      <Button onPress={handleTranscribe} title="Transcribe" />
+      <Text>{cactusSTT.response}</Text>
+    </>
+  );
+};
+```
+
+### Audio Embedding
+
+Generate embeddings from audio files for audio understanding.
+
+#### Class
+
+```typescript
+import { CactusSTT } from 'cactus-react-native';
+
+const cactusSTT = new CactusSTT();
+
+await cactusSTT.init();
+
+const result = await cactusSTT.audioEmbed({
+  audioPath: 'path/to/audio.wav'
+});
+
+console.log('Audio embedding vector:', result.embedding);
+console.log('Embedding vector length:', result.embedding.length);
+```
+
+#### Hook
+
+```tsx
+import { useCactusSTT } from 'cactus-react-native';
+
+const App = () => {
+  const cactusSTT = useCactusSTT();
+
+  const handleAudioEmbed = async () => {
+    const result = await cactusSTT.audioEmbed({
+      audioPath: 'path/to/audio.wav'
+    });
+    console.log('Audio embedding vector:', result.embedding);
+    console.log('Embedding vector length:', result.embedding.length);
+  };
+
+  return <Button title="Embed Audio" onPress={handleAudioEmbed} />;
+};
+```
+
 ## API Reference
 
 ### CactusLM Class
@@ -400,14 +524,14 @@ const App = () => {
 
 **`download(params?: CactusLMDownloadParams): Promise<void>`**
 
-Downloads the model. If the model is already downloaded, returns immediately with progress at 100%. Throws an error if a download is already in progress. Automatically refreshes the models list after successful download.
+Downloads the model. If the model is already downloaded, returns immediately with progress `1`. Throws an error if a download is already in progress.
 
 **Parameters:**
 - `onProgress` - Callback for download progress (0-1).
 
 **`init(): Promise<void>`**
 
-Initializes the model and prepares it for inference. Safe to call multiple times (idempotent). Throws an error if the model is not downloaded yet. Automatically initializes telemetry if not already done.
+Initializes the model and prepares it for inference. Safe to call multiple times (idempotent). Throws an error if the model is not downloaded yet.
 
 **`complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>`**
 
@@ -423,7 +547,7 @@ Performs text completion with optional streaming and tool support. Automatically
   - `stopSequences` - Array of strings to stop generation (default: `undefined`).
 - `tools` - Array of `Tool` objects for function calling (default: `undefined`).
 - `onToken` - Callback for streaming tokens.
-- `mode` - Completion mode (default: `local`)
+- `mode` - Completion mode: `'local'` | `'hybrid'` (default: `'local'`)
 
 **`embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>`**
 
@@ -431,6 +555,13 @@ Generates embeddings for the given text. Automatically calls `init()` if not alr
 
 **Parameters:**
 - `text` - Text to embed.
+
+**`imageEmbed(params: CactusLMImageEmbedParams): Promise<CactusLMImageEmbedResult>`**
+
+Generates embeddings for the given image. Requires a vision-capable model. Automatically calls `init()` if not already initialized. Throws an error if a generation (completion or embedding) is already in progress.
+
+**Parameters:**
+- `imagePath` - Path to the image file.
 
 **`stop(): Promise<void>`**
 
@@ -444,12 +575,9 @@ Resets the model's internal state, clearing any cached context. Automatically ca
 
 Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
-**`getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>`**
+**`getModels(): Promise<CactusModel[]>`**
 
-Fetches available models and persists the results locally for caching. Returns cached results if available, unless `forceRefresh` is `true`. Checks the download status for each model and includes it in the results.
-
-**Parameters:**
-- `forceRefresh` - If `true`, fetches from the server and updates the local cache (default: `false`).
+Fetches available models from the database and checks their download status. Results are cached in memory after the first call and subsequent calls return the cached results.
 
 ### useCactusLM Hook
 
@@ -471,10 +599,97 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 - `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
 - `complete(params: CactusLMCompleteParams): Promise<CactusLMCompleteResult>` - Generates text completions. Automatically accumulates tokens in the `completion` state during streaming. Sets `isGenerating` to `true` while generating. Clears `completion` before starting.
 - `embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>` - Generates embeddings for the given text. Sets `isGenerating` to `true` during operation.
+- `imageEmbed(params: CactusLMImageEmbedParams): Promise<CactusLMImageEmbedResult>` - Generates embeddings for the given image. Sets `isGenerating` to `true` while generating.
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state, clearing cached context. Also clears the `completion` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `completion` state. Automatically called when the component unmounts.
-- `getModels(params?: CactusLMGetModelsParams): Promise<CactusModel[]>` - Fetches available models and returns them. Results are cached locally.
+- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status. Results are cached in memory and reused on subsequent calls.
+
+### CactusSTT Class
+
+#### Constructor
+
+**`new CactusSTT(params?: CactusSTTParams)`**
+
+**Parameters:**
+- `model` - Model slug (default: `'whisper-small'`).
+- `contextSize` - Context window size (default: `2048`).
+
+#### Methods
+
+**`download(params?: CactusSTTDownloadParams): Promise<void>`**
+
+Downloads the model. If the model is already downloaded, returns immediately with progress `1`. Throws an error if a download is already in progress.
+
+**Parameters:**
+- `onProgress` - Callback for download progress (0-1).
+
+**`init(): Promise<void>`**
+
+Initializes the model and prepares it for inference. Safe to call multiple times (idempotent). Throws an error if the model is not downloaded yet.
+
+**`transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>`**
+
+Transcribes audio to text with optional streaming support. Automatically calls `init()` if not already initialized. Throws an error if a generation is already in progress.
+
+**Parameters:**
+- `audioFilePath` - Path to the audio file.
+- `prompt` - Optional prompt to guide transcription (default: `'<|startoftranscript|><|en|><|transcribe|><|notimestamps|>'`).
+- `options` - Transcription options:
+  - `temperature` - Sampling temperature (default: model-optimized).
+  - `topP` - Nucleus sampling threshold (default: model-optimized).
+  - `topK` - Top-K sampling limit (default: model-optimized).
+  - `maxTokens` - Maximum number of tokens to generate (default: `512`).
+  - `stopSequences` - Array of strings to stop generation (default: `undefined`).
+- `onToken` - Callback for streaming tokens.
+
+**`audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>`**
+
+Generates embeddings for the given audio file. Automatically calls `init()` if not already initialized. Throws an error if a generation is already in progress.
+
+**Parameters:**
+- `audioPath` - Path to the audio file.
+
+**`stop(): Promise<void>`**
+
+Stops ongoing transcription or embedding generation.
+
+**`reset(): Promise<void>`**
+
+Resets the model's internal state. Automatically calls `stop()` first.
+
+**`destroy(): Promise<void>`**
+
+Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
+
+**`getModels(): Promise<CactusModel[]>`**
+
+Fetches available models from the database and checks their download status. Results are cached in memory after the first call and subsequent calls return the cached results.
+
+### useCactusSTT Hook
+
+The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When model parameters (`model`, `contextSize`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
+
+#### State
+
+- `response: string` - Current transcription text. Automatically accumulated during streaming. Cleared before each new transcription and when calling `reset()` or `destroy()`.
+- `isGenerating: boolean` - Whether the model is currently generating (transcription or embedding). Both operations share this flag.
+- `isInitializing: boolean` - Whether the model is initializing.
+- `isDownloaded: boolean` - Whether the model is downloaded locally. Automatically checked when the hook mounts or model changes.
+- `isDownloading: boolean` - Whether the model is being downloaded.
+- `downloadProgress: number` - Download progress (0-1). Reset to `0` after download completes.
+- `error: string | null` - Last error message from any operation, or `null` if there is no error. Cleared before starting new operations.
+
+#### Methods
+
+- `download(params?: CactusSTTDownloadParams): Promise<void>` - Downloads the model. Updates `isDownloading` and `downloadProgress` state during download. Sets `isDownloaded` to `true` on success.
+- `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
+- `transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>` - Transcribes audio to text. Automatically accumulates tokens in the `response` state during streaming. Sets `isGenerating` to `true` while generating. Clears `response` before starting.
+- `audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>` - Generates embeddings for the given audio. Sets `isGenerating` to `true` during operation.
+- `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
+- `reset(): Promise<void>` - Resets the model's internal state. Also clears the `response` state.
+- `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `response` state. Automatically called when the component unmounts.
+- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status. Results are cached in memory and reused on subsequent calls.
 
 ## Type Definitions
 
@@ -506,10 +721,10 @@ interface Message {
 }
 ```
 
-### Options
+### CompleteOptions
 
 ```typescript
-interface Options {
+interface CompleteOptions {
   temperature?: number;
   topP?: number;
   topK?: number;
@@ -542,7 +757,7 @@ interface Tool {
 ```typescript
 interface CactusLMCompleteParams {
   messages: Message[];
-  options?: Options;
+  options?: CompleteOptions;
   tools?: Tool[];
   onToken?: (token: string) => void;
   mode?: 'local' | 'hybrid';
@@ -584,11 +799,19 @@ interface CactusLMEmbedResult {
 }
 ```
 
-### CactusLMGetModelsParams
+### CactusLMImageEmbedParams
 
 ```typescript
-interface CactusLMGetModelsParams {
-  forceRefresh?: boolean;
+interface CactusLMImageEmbedParams {
+  imagePath: string;
+}
+```
+
+### CactusLMImageEmbedResult
+
+```typescript
+interface CactusLMImageEmbedResult {
+  embedding: number[];
 }
 ```
 
@@ -605,6 +828,79 @@ interface CactusModel {
   supportsVision: boolean;
   createdAt: Date;
   isDownloaded: boolean;
+}
+```
+
+### CactusSTTParams
+
+```typescript
+interface CactusSTTParams {
+  model?: string;
+  contextSize?: number;
+}
+```
+
+### CactusSTTDownloadParams
+
+```typescript
+interface CactusSTTDownloadParams {
+  onProgress?: (progress: number) => void;
+}
+
+```
+
+### TranscribeOptions
+
+```ts
+interface TranscribeOptions {
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  maxTokens?: number;
+  stopSequences?: string[];
+}
+```
+
+### CactusSTTTranscribeParams
+
+```typescript
+interface CactusSTTTranscribeParams {
+  audioFilePath: string;
+  prompt?: string;
+  options?: TranscribeOptions;
+  onToken?: (token: string) => void;
+}
+```
+
+### CactusSTTTranscribeResult
+
+```typescript
+interface CactusSTTTranscribeResult {
+  success: boolean;
+  response: string;
+  timeToFirstTokenMs: number;
+  totalTimeMs: number;
+  tokensPerSecond: number;
+  prefillTokens: number;
+  decodeTokens: number;
+  totalTokens: number;
+}
+
+```
+
+### CactusSTTAudioEmbedParams
+
+```typescript
+interface CactusSTTAudioEmbedParams {
+  audioPath: string;
+}
+```
+
+### CactusSTTAudioEmbedResult
+
+```typescript
+interface CactusSTTAudioEmbedResult {
+  embedding: number[];
 }
 ```
 

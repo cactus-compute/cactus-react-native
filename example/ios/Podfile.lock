@@ -1,6 +1,6 @@
 PODS:
   - boost (1.84.0)
-  - Cactus (1.0.2):
+  - Cactus (1.1.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -1808,6 +1808,34 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
+  - react-native-document-picker (11.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-image-picker (8.2.1):
     - boost
     - DoubleConversion
@@ -2417,6 +2445,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - "react-native-document-picker (from `../node_modules/@react-native-documents/picker`)"
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -2543,6 +2572,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-document-picker:
+    :path: "../node_modules/@react-native-documents/picker"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
   React-NativeModulesApple:
@@ -2612,7 +2643,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  Cactus: 45d4b8148a963a719617a71b06add8bb2ef8721c
+  Cactus: 2949301f1229677c0bbeba6856d3c78e5798aace
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: b8f1312d48447cca7b4abc21ed155db14742bd03
@@ -2653,6 +2684,7 @@ SPEC CHECKSUMS:
   React-logger: d27dd2000f520bf891d24f6e141cde34df41f0ee
   React-Mapbuffer: 0746ffab5ac0f49b7c9347338e3d0c1d9dd634c8
   React-microtasksnativemodule: b0fb3f97372df39bda3e657536039f1af227cc29
+  react-native-document-picker: 63639c144fbdc4bf7b12d31a3827ae2bfbaf7ad4
   react-native-image-picker: 43e6cd4231e670030fe09b079d696fa5a634ccfc
   React-NativeModulesApple: 9ec9240159974c94886ebbe4caec18e3395f6aef
   React-oscompat: b12c633e9c00f1f99467b1e0e0b8038895dae436

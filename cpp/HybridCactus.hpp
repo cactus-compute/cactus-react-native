@@ -23,8 +23,21 @@ public:
                                              double /* tokenId */)>> &callback)
       override;
 
+  std::shared_ptr<Promise<std::string>> transcribe(
+      const std::string &audioFilePath, const std::string &prompt,
+      double responseBufferSize, const std::optional<std::string> &optionsJson,
+      const std::optional<std::function<void(const std::string & /* token */,
+                                             double /* tokenId */)>> &callback)
+      override;
+
   std::shared_ptr<Promise<std::vector<double>>>
   embed(const std::string &text, double embeddingBufferSize) override;
+
+  std::shared_ptr<Promise<std::vector<double>>>
+  imageEmbed(const std::string &imagePath, double embeddingBufferSize) override;
+
+  std::shared_ptr<Promise<std::vector<double>>>
+  audioEmbed(const std::string &audioPath, double embeddingBufferSize) override;
 
   std::shared_ptr<Promise<void>> reset() override;
 

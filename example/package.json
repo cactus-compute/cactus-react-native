@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@dr.pogodin/react-native-fs": "^2.36.1",
+    "@react-native-documents/picker": "^11.0.0",
     "react": "19.1.0",
     "react-native": "0.81.1",
     "react-native-image-picker": "^8.2.1",

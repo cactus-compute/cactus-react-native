@@ -1,12 +1,16 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type { Cactus as CactusSpec } from '../specs/Cactus.nitro';
+import { CactusImage } from './CactusImage';
 import type {
   CactusLMCompleteResult,
   Message,
-  Options,
+  CompleteOptions,
   Tool,
 } from '../types/CactusLM';
-import { CactusImage } from './CactusImage';
+import type {
+  CactusSTTTranscribeResult,
+  TranscribeOptions,
+} from '../types/CactusSTT';
 
 export class Cactus {
   private readonly hybridCactus =
@@ -23,7 +27,7 @@ export class Cactus {
   public async complete(
     messages: Message[],
     responseBufferSize: number,
-    options?: Options,
+    options?: CompleteOptions,
     tools?: { type: 'function'; function: Tool }[],
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusLMCompleteResult> {
@@ -33,17 +37,17 @@ export class Cactus {
         messagesInternal.push(message);
         continue;
       }
-      const images: string[] = [];
-      for (const image of message.images) {
+      const resizedImages: string[] = [];
+      for (const imagePath of message.images) {
         const resizedImage = await CactusImage.resize(
-          image.replace('file://', ''),
+          imagePath.replace('file://', ''),
           128,
           128,
           1
         );
-        images.push(resizedImage);
+        resizedImages.push(resizedImage);
       }
-      messagesInternal.push({ ...message, images });
+      messagesInternal.push({ ...message, images: resizedImages });
     }
 
     const messagesJson = JSON.stringify(messagesInternal);
@@ -85,8 +89,74 @@ export class Cactus {
     }
   }
 
+  public async transcribe(
+    audioFilePath: string,
+    prompt: string,
+    responseBufferSize: number,
+    options?: TranscribeOptions,
+    callback?: (token: string, tokenId: number) => void
+  ): Promise<CactusSTTTranscribeResult> {
+    const optionsJson = options
+      ? JSON.stringify({
+          temperature: options.temperature,
+          top_p: options.topP,
+          top_k: options.topK,
+          max_tokens: options.maxTokens,
+          stop_sequences: options.stopSequences,
+        })
+      : undefined;
+
+    const response = await this.hybridCactus.transcribe(
+      audioFilePath.replace('file://', ''),
+      prompt,
+      responseBufferSize,
+      optionsJson,
+      callback
+    );
+
+    try {
+      const parsed = JSON.parse(response);
+
+      return {
+        success: parsed.success,
+        response: parsed.response,
+        timeToFirstTokenMs: parsed.time_to_first_token_ms,
+        totalTimeMs: parsed.total_time_ms,
+        tokensPerSecond: parsed.tokens_per_second,
+        prefillTokens: parsed.prefill_tokens,
+        decodeTokens: parsed.decode_tokens,
+        totalTokens: parsed.total_tokens,
+      };
+    } catch {
+      throw new Error('Unable to parse transcription response');
+    }
+  }
+
   public embed(text: string, embeddingBufferSize: number): Promise<number[]> {
     return this.hybridCactus.embed(text, embeddingBufferSize);
+  }
+
+  public async imageEmbed(
+    imagePath: string,
+    embeddingBufferSize: number
+  ): Promise<number[]> {
+    const resizedImage = await CactusImage.resize(
+      imagePath.replace('file://', ''),
+      128,
+      128,
+      1
+    );
+    return this.hybridCactus.imageEmbed(resizedImage, embeddingBufferSize);
+  }
+
+  public audioEmbed(
+    audioPath: string,
+    embeddingBufferSize: number
+  ): Promise<number[]> {
+    return this.hybridCactus.audioEmbed(
+      audioPath.replace('file://', ''),
+      embeddingBufferSize
+    );
   }
 
   public reset(): Promise<void> {

@@ -2,69 +2,93 @@ import { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import {
-  useCactusLM,
-  type Message,
-  type CactusLMCompleteResult,
-  type CactusLMEmbedResult,
+  useCactusSTT,
+  type CactusSTTTranscribeResult,
+  type CactusSTTAudioEmbedResult,
 } from 'cactus-react-native';
+import * as DocumentPicker from '@react-native-documents/picker';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 
-const CompletionScreen = () => {
-  const cactusLM = useCactusLM({ model: 'qwen3-0.6' });
-  const [input, setInput] = useState('What is the capital of France?');
-  const [result, setResult] = useState<CactusLMCompleteResult | null>(null);
-  const [embedResult, setEmbedResult] = useState<CactusLMEmbedResult | null>(
-    null
-  );
+const STTScreen = () => {
+  const cactusSTT = useCactusSTT({ model: 'whisper-small' });
+  const [audioFile, setAudioFile] = useState<string | null>(null);
+  const [audioFileName, setAudioFileName] = useState<string>('');
+  const [result, setResult] = useState<CactusSTTTranscribeResult | null>(null);
+  const [embeddingResult, setEmbeddingResult] =
+    useState<CactusSTTAudioEmbedResult | null>(null);
 
   useEffect(() => {
-    if (!cactusLM.isDownloaded) {
-      cactusLM.download();
+    if (!cactusSTT.isDownloaded) {
+      cactusSTT.download();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cactusLM.isDownloaded]);
+  }, [cactusSTT.isDownloaded]);
 
   const handleInit = () => {
-    cactusLM.init();
+    cactusSTT.init();
   };
 
-  const handleComplete = async () => {
-    const messages: Message[] = [
-      { role: 'system', content: 'You are a helpful assistant.' },
-      { role: 'user', content: input },
-    ];
-    const completionResult = await cactusLM.complete({ messages });
-    setResult(completionResult);
+  const handleSelectAudio = async () => {
+    try {
+      const res = await DocumentPicker.pick({
+        type: [DocumentPicker.types.audio],
+      });
+      if (res && res.length > 0) {
+        const fileName = `audio_${Date.now()}.wav`;
+        const destPath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+        await RNFS.copyFile(res[0].uri, destPath);
+        setAudioFile(destPath);
+        setAudioFileName(res[0].name || 'Unknown');
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleEmbed = async () => {
-    setEmbedResult(await cactusLM.embed({ text: input }));
+  const handleTranscribe = async () => {
+    if (!audioFile) {
+      return;
+    }
+    const transcribeResult = await cactusSTT.transcribe({
+      audioFilePath: audioFile,
+    });
+    setResult(transcribeResult);
+  };
+
+  const handleAudioEmbed = async () => {
+    if (!audioFile) {
+      return;
+    }
+    const embedResult = await cactusSTT.audioEmbed({
+      audioPath: audioFile,
+    });
+    setEmbeddingResult(embedResult);
   };
 
   const handleStop = () => {
-    cactusLM.stop();
+    cactusSTT.stop();
   };
 
   const handleReset = () => {
-    cactusLM.reset();
+    cactusSTT.reset();
   };
 
   const handleDestroy = () => {
-    cactusLM.destroy();
+    cactusSTT.destroy();
   };
 
-  if (cactusLM.isDownloading) {
+  if (cactusSTT.isDownloading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" />
         <Text style={styles.progressText}>
-          Downloading model: {Math.round(cactusLM.downloadProgress * 100)}%
+          Downloading model: {Math.round(cactusSTT.downloadProgress * 100)}%
         </Text>
       </View>
     );
@@ -72,13 +96,11 @@ const CompletionScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <TextInput
-        style={styles.input}
-        value={input}
-        onChangeText={setInput}
-        placeholder="Type your message..."
-        multiline
-      />
+      <TouchableOpacity style={styles.selectButton} onPress={handleSelectAudio}>
+        <Text style={styles.selectButtonText}>
+          {audioFile ? `Selected: ${audioFileName}` : 'Select Audio File'}
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleInit}>
@@ -86,21 +108,19 @@ const CompletionScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.button}
-          onPress={handleComplete}
-          disabled={cactusLM.isGenerating}
+          style={[styles.button, !audioFile && styles.buttonDisabled]}
+          onPress={handleTranscribe}
+          disabled={cactusSTT.isGenerating || !audioFile}
         >
-          <Text style={styles.buttonText}>
-            {cactusLM.isGenerating ? 'Completing...' : 'Complete'}
-          </Text>
+          <Text style={styles.buttonText}>Transcribe</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.button}
-          onPress={handleEmbed}
-          disabled={cactusLM.isGenerating}
+          style={[styles.button, !audioFile && styles.buttonDisabled]}
+          onPress={handleAudioEmbed}
+          disabled={cactusSTT.isGenerating || !audioFile}
         >
-          <Text style={styles.buttonText}>Embed</Text>
+          <Text style={styles.buttonText}>Audio Embed</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleStop}>
@@ -116,18 +136,18 @@ const CompletionScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {cactusLM.completion && (
-        <View style={styles.completionContainer}>
-          <Text style={styles.completionLabel}>Streaming:</Text>
-          <View style={styles.completionBox}>
-            <Text style={styles.completionText}>{cactusLM.completion}</Text>
+      {cactusSTT.response && (
+        <View style={styles.responseContainer}>
+          <Text style={styles.responseLabel}>Streaming:</Text>
+          <View style={styles.responseBox}>
+            <Text style={styles.responseText}>{cactusSTT.response}</Text>
           </View>
         </View>
       )}
 
       {result && (
         <View style={styles.resultContainer}>
-          <Text style={styles.resultLabel}>CactusLMCompleteResult:</Text>
+          <Text style={styles.resultLabel}>CactusSTTTranscribeResult:</Text>
           <View style={styles.resultBox}>
             <Text style={styles.resultFieldLabel}>success:</Text>
             <Text style={styles.resultFieldValue}>
@@ -138,15 +158,6 @@ const CompletionScreen = () => {
               response:
             </Text>
             <Text style={styles.resultFieldValue}>{result.response}</Text>
-
-            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
-              functionCalls:
-            </Text>
-            <Text style={styles.resultFieldValue}>
-              {result.functionCalls
-                ? JSON.stringify(result.functionCalls, null, 2)
-                : 'undefined'}
-            </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               timeToFirstTokenMs:
@@ -187,36 +198,42 @@ const CompletionScreen = () => {
         </View>
       )}
 
-      {embedResult && (
+      {embeddingResult && (
         <View style={styles.resultContainer}>
-          <Text style={styles.resultLabel}>CactusLMEmbedResult:</Text>
+          <Text style={styles.resultLabel}>CactusSTTAudioEmbedResult:</Text>
           <View style={styles.resultBox}>
             <Text style={styles.resultFieldLabel}>embedding:</Text>
-            <ScrollView horizontal>
+            <ScrollView
+              horizontal
+              style={styles.embeddingScrollView}
+              showsHorizontalScrollIndicator={true}
+            >
               <Text style={styles.resultFieldValue}>
-                [
-                {embedResult.embedding
-                  .slice(0, 20)
-                  .map((v) => v.toFixed(4))
-                  .join(', ')}
-                {embedResult.embedding.length > 20 ? ', ...' : ''}] (length:{' '}
-                {embedResult.embedding.length})
+                [{embeddingResult.embedding.slice(0, 10).join(', ')}
+                {embeddingResult.embedding.length > 10 ? ', ...' : ''}]
               </Text>
             </ScrollView>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              dimensions:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {embeddingResult.embedding.length}
+            </Text>
           </View>
         </View>
       )}
 
-      {cactusLM.error && (
+      {cactusSTT.error && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{cactusLM.error}</Text>
+          <Text style={styles.errorText}>{cactusSTT.error}</Text>
         </View>
       )}
     </ScrollView>
   );
 };
 
-export default CompletionScreen;
+export default STTScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -237,15 +254,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+  selectButton: {
+    backgroundColor: '#f3f3f3',
+    padding: 16,
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    textAlignVertical: 'top',
     marginBottom: 16,
+  },
+  selectButtonText: {
+    fontSize: 16,
     color: '#000',
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -260,27 +278,30 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  buttonDisabled: {
+    backgroundColor: '#ccc',
+  },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  completionContainer: {
+  responseContainer: {
     marginTop: 16,
   },
-  completionLabel: {
+  responseLabel: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
     color: '#000',
   },
-  completionBox: {
+  responseBox: {
     backgroundColor: '#f3f3f3',
     padding: 12,
     borderRadius: 8,
     minHeight: 100,
   },
-  completionText: {
+  responseText: {
     fontSize: 14,
     color: '#000',
     lineHeight: 20,
@@ -309,6 +330,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     lineHeight: 20,
+  },
+  embeddingScrollView: {
+    maxHeight: 60,
   },
   marginTop: {
     marginTop: 12,

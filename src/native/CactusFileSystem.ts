@@ -35,10 +35,10 @@ export class CactusFileSystem {
 
   public static downloadModel(
     model: string,
+    url: string,
     onProgress?: (progress: number) => void
   ): Promise<void> {
-    const from = `https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/${model}.zip`;
-    return this.hybridCactusFileSystem.downloadModel(model, from, onProgress);
+    return this.hybridCactusFileSystem.downloadModel(model, url, onProgress);
   }
 
   public static deleteModel(model: string): Promise<void> {

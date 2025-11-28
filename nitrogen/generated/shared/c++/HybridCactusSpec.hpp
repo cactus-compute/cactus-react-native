@@ -54,7 +54,10 @@ namespace margelo::nitro::cactus {
       // Methods
       virtual std::shared_ptr<Promise<void>> init(const std::string& modelPath, double contextSize, const std::optional<std::string>& corpusDir) = 0;
       virtual std::shared_ptr<Promise<std::string>> complete(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
+      virtual std::shared_ptr<Promise<std::string>> transcribe(const std::string& audioFilePath, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> embed(const std::string& text, double embeddingBufferSize) = 0;
+      virtual std::shared_ptr<Promise<std::vector<double>>> imageEmbed(const std::string& imagePath, double embeddingBufferSize) = 0;
+      virtual std::shared_ptr<Promise<std::vector<double>>> audioEmbed(const std::string& audioPath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> stop() = 0;
       virtual std::shared_ptr<Promise<void>> destroy() = 0;

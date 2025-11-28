@@ -13,6 +13,7 @@ import {
   useCactusLM,
   type Message,
   type CactusLMCompleteResult,
+  type CactusLMEmbedResult,
 } from 'cactus-react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 
@@ -21,6 +22,10 @@ const VisionScreen = () => {
   const [input, setInput] = useState("What's in the image?");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [result, setResult] = useState<CactusLMCompleteResult | null>(null);
+  const [textEmbedResult, setTextEmbedResult] =
+    useState<CactusLMEmbedResult | null>(null);
+  const [imageEmbedResult, setImageEmbedResult] =
+    useState<CactusLMEmbedResult | null>(null);
 
   useEffect(() => {
     if (!cactusLM.isDownloaded) {
@@ -57,6 +62,17 @@ const VisionScreen = () => {
 
     const completionResult = await cactusLM.complete({ messages });
     setResult(completionResult);
+  };
+
+  const handleEmbedText = async () => {
+    setTextEmbedResult(await cactusLM.embed({ text: input }));
+  };
+
+  const handleEmbedImage = async () => {
+    if (!selectedImage) return;
+    setImageEmbedResult(
+      await cactusLM.imageEmbed({ imagePath: selectedImage })
+    );
   };
 
   const handleInit = () => {
@@ -117,6 +133,22 @@ const VisionScreen = () => {
           <Text style={styles.buttonText}>
             {cactusLM.isGenerating ? 'Analyzing...' : 'Analyze'}
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleEmbedText}
+          disabled={cactusLM.isGenerating}
+        >
+          <Text style={styles.buttonText}>Embed Text</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, !selectedImage && styles.buttonDisabled]}
+          onPress={handleEmbedImage}
+          disabled={!selectedImage || cactusLM.isGenerating}
+        >
+          <Text style={styles.buttonText}>Embed Image</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleStop}>
@@ -190,6 +222,46 @@ const VisionScreen = () => {
               totalTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.totalTokens}</Text>
+          </View>
+        </View>
+      )}
+
+      {textEmbedResult && (
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultLabel}>Text Embedding Result:</Text>
+          <View style={styles.resultBox}>
+            <Text style={styles.resultFieldLabel}>embedding:</Text>
+            <ScrollView horizontal>
+              <Text style={styles.resultFieldValue}>
+                [
+                {textEmbedResult.embedding
+                  .slice(0, 20)
+                  .map((v) => v.toFixed(4))
+                  .join(', ')}
+                {textEmbedResult.embedding.length > 20 ? ', ...' : ''}] (length:{' '}
+                {textEmbedResult.embedding.length})
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {imageEmbedResult && (
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultLabel}>Image Embedding Result:</Text>
+          <View style={styles.resultBox}>
+            <Text style={styles.resultFieldLabel}>embedding:</Text>
+            <ScrollView horizontal>
+              <Text style={styles.resultFieldValue}>
+                [
+                {imageEmbedResult.embedding
+                  .slice(0, 20)
+                  .map((v) => v.toFixed(4))
+                  .join(', ')}
+                {imageEmbedResult.embedding.length > 20 ? ', ...' : ''}]
+                (length: {imageEmbedResult.embedding.length})
+              </Text>
+            </ScrollView>
           </View>
         </View>
       )}

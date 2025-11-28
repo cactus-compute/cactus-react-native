@@ -8,6 +8,7 @@ import {
 import { CactusConfig } from '../config/CactusConfig';
 import { packageVersion } from '../constants/packageVersion';
 import type { CactusLMCompleteResult } from '../types/CactusLM';
+import type { CactusSTTTranscribeResult } from '../types/CactusSTT';
 
 export interface LogRecord {
   // Framework
@@ -15,7 +16,13 @@ export interface LogRecord {
   framework_version: string;
 
   // Event
-  event_type: 'init' | 'completion' | 'embedding';
+  event_type:
+    | 'init'
+    | 'completion'
+    | 'transcription'
+    | 'embedding'
+    | 'image_embedding'
+    | 'audio_embedding';
   model: string;
   success: boolean;
   message?: string;
@@ -41,7 +48,10 @@ export class Telemetry {
   private static readonly logBufferPaths = {
     init: 'logs/init.json',
     completion: 'logs/completion.json',
+    transcription: 'logs/transcription.json',
     embedding: 'logs/embedding.json',
+    image_embedding: 'logs/image_embedding.json',
+    audio_embedding: 'logs/audio_embedding.json',
   };
 
   private static async handleLog(logRecord: LogRecord) {
@@ -147,6 +157,29 @@ export class Telemetry {
     });
   }
 
+  public static logTranscribe(
+    model: string,
+    success: boolean,
+    message?: string,
+    result?: CactusSTTTranscribeResult
+  ): Promise<void> {
+    return this.handleLog({
+      framework: 'react-native',
+      framework_version: packageVersion,
+      event_type: 'transcription',
+      model,
+      success,
+      message,
+      telemetry_token: this.cactusTelemetryToken,
+      project_id: this.projectId,
+      device_id: this.deviceId,
+      tokens: result?.totalTokens,
+      response_time: result?.totalTimeMs,
+      ttft: result?.timeToFirstTokenMs,
+      tps: result?.tokensPerSecond,
+    });
+  }
+
   public static logEmbedding(
     model: string,
     success: boolean,
@@ -156,6 +189,42 @@ export class Telemetry {
       framework: 'react-native',
       framework_version: packageVersion,
       event_type: 'embedding',
+      model,
+      success,
+      message,
+      telemetry_token: this.cactusTelemetryToken,
+      project_id: this.projectId,
+      device_id: this.deviceId,
+    });
+  }
+
+  public static logImageEmbedding(
+    model: string,
+    success: boolean,
+    message?: string
+  ): Promise<void> {
+    return this.handleLog({
+      framework: 'react-native',
+      framework_version: packageVersion,
+      event_type: 'image_embedding',
+      model,
+      success,
+      message,
+      telemetry_token: this.cactusTelemetryToken,
+      project_id: this.projectId,
+      device_id: this.deviceId,
+    });
+  }
+
+  public static logAudioEmbedding(
+    model: string,
+    success: boolean,
+    message?: string
+  ): Promise<void> {
+    return this.handleLog({
+      framework: 'react-native',
+      framework_version: packageVersion,
+      event_type: 'audio_embedding',
       model,
       success,
       message,

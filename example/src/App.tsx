@@ -11,7 +11,7 @@ import CompletionScreen from './CompletionScreen';
 import VisionScreen from './VisionScreen';
 import ToolCallingScreen from './ToolCallingScreen';
 import RAGScreen from './RAGScreen';
-import EmbeddingScreen from './EmbeddingScreen';
+import STTScreen from './STTScreen';
 import ChatScreen from './ChatScreen';
 import PerformanceScreen from './PerformanceScreen';
 
@@ -21,7 +21,7 @@ type Screen =
   | 'Vision'
   | 'ToolCalling'
   | 'RAG'
-  | 'Embedding'
+  | 'STT'
   | 'Chat'
   | 'Performance';
 
@@ -48,8 +48,8 @@ const App = () => {
     setSelectedScreen('RAG');
   };
 
-  const handleGoToEmbedding = () => {
-    setSelectedScreen('Embedding');
+  const handleGoToSTT = () => {
+    setSelectedScreen('STT');
   };
 
   const handleGoToChat = () => {
@@ -70,8 +70,8 @@ const App = () => {
         return <ToolCallingScreen />;
       case 'RAG':
         return <RAGScreen />;
-      case 'Embedding':
-        return <EmbeddingScreen />;
+      case 'STT':
+        return <STTScreen />;
       case 'Chat':
         return <ChatScreen />;
       case 'Performance':
@@ -106,7 +106,7 @@ const App = () => {
           >
             <Text style={styles.menuButtonTitle}>Completion</Text>
             <Text style={styles.menuButtonDescription}>
-              Generate text with streaming
+              Text generation and embeddings
             </Text>
           </TouchableOpacity>
 
@@ -115,7 +115,9 @@ const App = () => {
             onPress={handleGoToVision}
           >
             <Text style={styles.menuButtonTitle}>Vision</Text>
-            <Text style={styles.menuButtonDescription}>Analyze images</Text>
+            <Text style={styles.menuButtonDescription}>
+              Image analysis and embeddings
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -133,12 +135,11 @@ const App = () => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={handleGoToEmbedding}
-          >
-            <Text style={styles.menuButtonTitle}>Embedding</Text>
-            <Text style={styles.menuButtonDescription}>Text to vectors</Text>
+          <TouchableOpacity style={styles.menuButton} onPress={handleGoToSTT}>
+            <Text style={styles.menuButtonTitle}>Speech-to-Text</Text>
+            <Text style={styles.menuButtonDescription}>
+              Audio transcription and embeddings
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuButton} onPress={handleGoToChat}>

@@ -16,7 +16,10 @@ namespace margelo::nitro::cactus {
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridMethod("init", &HybridCactusSpec::init);
       prototype.registerHybridMethod("complete", &HybridCactusSpec::complete);
+      prototype.registerHybridMethod("transcribe", &HybridCactusSpec::transcribe);
       prototype.registerHybridMethod("embed", &HybridCactusSpec::embed);
+      prototype.registerHybridMethod("imageEmbed", &HybridCactusSpec::imageEmbed);
+      prototype.registerHybridMethod("audioEmbed", &HybridCactusSpec::audioEmbed);
       prototype.registerHybridMethod("reset", &HybridCactusSpec::reset);
       prototype.registerHybridMethod("stop", &HybridCactusSpec::stop);
       prototype.registerHybridMethod("destroy", &HybridCactusSpec::destroy);

@@ -75,6 +75,53 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
   });
 }
 
+std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
+    const std::string &audioFilePath, const std::string &prompt,
+    double responseBufferSize, const std::optional<std::string> &optionsJson,
+    const std::optional<std::function<void(const std::string & /* token */,
+                                           double /* tokenId */)>> &callback) {
+  return Promise<std::string>::async([this, audioFilePath, prompt, optionsJson,
+                                      callback,
+                                      responseBufferSize]() -> std::string {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_model) {
+      throw std::runtime_error("Cactus model is not initialized");
+    }
+
+    struct CallbackCtx {
+      const std::function<void(const std::string & /* token */,
+                               double /* tokenId */)> *callback;
+    } callbackCtx{callback.has_value() ? &callback.value() : nullptr};
+
+    auto cactusTokenCallback = [](const char *token, uint32_t tokenId,
+                                  void *userData) {
+      auto *callbackCtx = static_cast<CallbackCtx *>(userData);
+      if (!callbackCtx || !callbackCtx->callback || !(*callbackCtx->callback))
+        return;
+      (*callbackCtx->callback)(token, tokenId);
+    };
+
+    std::string responseBuffer;
+    responseBuffer.resize(responseBufferSize);
+
+    int result =
+        cactus_transcribe(this->_model, audioFilePath.c_str(), prompt.c_str(),
+                          responseBuffer.data(), responseBufferSize,
+                          optionsJson ? optionsJson->c_str() : nullptr,
+                          cactusTokenCallback, &callbackCtx);
+
+    if (result < 0) {
+      throw std::runtime_error("Cactus transcription failed");
+    }
+
+    // Remove null terminator
+    responseBuffer.resize(strlen(responseBuffer.c_str()));
+
+    return responseBuffer;
+  });
+}
+
 std::shared_ptr<Promise<std::vector<double>>>
 HybridCactus::embed(const std::string &text, double embeddingBufferSize) {
   return Promise<std::vector<double>>::async(
@@ -94,6 +141,64 @@ HybridCactus::embed(const std::string &text, double embeddingBufferSize) {
 
         if (result < 0) {
           throw std::runtime_error("Cactus embedding failed");
+        }
+
+        embeddingBuffer.resize(embeddingDim);
+
+        return std::vector<double>(embeddingBuffer.begin(),
+                                   embeddingBuffer.end());
+      });
+}
+
+std::shared_ptr<Promise<std::vector<double>>>
+HybridCactus::imageEmbed(const std::string &imagePath,
+                         double embeddingBufferSize) {
+  return Promise<std::vector<double>>::async(
+      [this, imagePath, embeddingBufferSize]() -> std::vector<double> {
+        std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+        if (!this->_model) {
+          throw std::runtime_error("Cactus model is not initialized");
+        }
+
+        std::vector<float> embeddingBuffer(embeddingBufferSize);
+        size_t embeddingDim;
+
+        int result = cactus_image_embed(
+            this->_model, imagePath.c_str(), embeddingBuffer.data(),
+            embeddingBufferSize * sizeof(float), &embeddingDim);
+
+        if (result < 0) {
+          throw std::runtime_error("Cactus image embedding failed");
+        }
+
+        embeddingBuffer.resize(embeddingDim);
+
+        return std::vector<double>(embeddingBuffer.begin(),
+                                   embeddingBuffer.end());
+      });
+}
+
+std::shared_ptr<Promise<std::vector<double>>>
+HybridCactus::audioEmbed(const std::string &audioPath,
+                         double embeddingBufferSize) {
+  return Promise<std::vector<double>>::async(
+      [this, audioPath, embeddingBufferSize]() -> std::vector<double> {
+        std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+        if (!this->_model) {
+          throw std::runtime_error("Cactus model is not initialized");
+        }
+
+        std::vector<float> embeddingBuffer(embeddingBufferSize);
+        size_t embeddingDim;
+
+        int result = cactus_audio_embed(
+            this->_model, audioPath.c_str(), embeddingBuffer.data(),
+            embeddingBufferSize * sizeof(float), &embeddingDim);
+
+        if (result < 0) {
+          throw std::runtime_error("Cactus audio embedding failed");
         }
 
         embeddingBuffer.resize(embeddingDim);

@@ -3,7 +3,7 @@ import { CactusImage } from '../native/CactusImage';
 import type {
   CactusLMCompleteResult,
   Message,
-  Options,
+  CompleteOptions,
   Tool,
 } from '../types/CactusLM';
 
@@ -15,7 +15,7 @@ export class RemoteLM {
 
   public static async complete(
     messages: Message[],
-    options?: Options,
+    options?: CompleteOptions,
     tools?: { type: 'function'; function: Tool }[],
     callback?: (token: string) => void
   ): Promise<CactusLMCompleteResult> {

@@ -1,30 +1,27 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { CactusLM } from '../classes/CactusLM';
+import { CactusSTT } from '../classes/CactusSTT';
 import { CactusFileSystem } from '../native';
 import { getErrorMessage } from '../utils/error';
 import type {
-  CactusLMParams,
-  CactusLMCompleteResult,
-  CactusLMEmbedParams,
-  CactusLMEmbedResult,
-  CactusLMImageEmbedParams,
-  CactusLMImageEmbedResult,
-  CactusLMCompleteParams,
-  CactusLMDownloadParams,
-} from '../types/CactusLM';
+  CactusSTTParams,
+  CactusSTTTranscribeResult,
+  CactusSTTTranscribeParams,
+  CactusSTTDownloadParams,
+  CactusSTTAudioEmbedParams,
+  CactusSTTAudioEmbedResult,
+} from '../types/CactusSTT';
 import type { CactusModel } from '../types/CactusModel';
 
-export const useCactusLM = ({
-  model = 'qwen3-0.6',
+export const useCactusSTT = ({
+  model = 'whisper-small',
   contextSize = 2048,
-  corpusDir = undefined,
-}: CactusLMParams = {}) => {
-  const [cactusLM, setCactusLM] = useState(
-    () => new CactusLM({ model, contextSize, corpusDir })
+}: CactusSTTParams = {}) => {
+  const [cactusSTT, setCactusSTT] = useState(
+    () => new CactusSTT({ model, contextSize })
   );
 
   // State
-  const [completion, setCompletion] = useState('');
+  const [response, setResponse] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
@@ -40,9 +37,9 @@ export const useCactusLM = ({
   }, [model]);
 
   useEffect(() => {
-    setCactusLM(new CactusLM({ model, contextSize, corpusDir }));
+    setCactusSTT(new CactusSTT({ model, contextSize }));
 
-    setCompletion('');
+    setResponse('');
     setIsGenerating(false);
     setIsInitializing(false);
     setIsDownloaded(false);
@@ -69,18 +66,18 @@ export const useCactusLM = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize, corpusDir]);
+  }, [model, contextSize]);
 
   useEffect(() => {
     return () => {
-      cactusLM.destroy().catch(() => {});
+      cactusSTT.destroy().catch(() => {});
     };
-  }, [cactusLM]);
+  }, [cactusSTT]);
 
   const download = useCallback(
-    async ({ onProgress }: CactusLMDownloadParams = {}) => {
+    async ({ onProgress }: CactusSTTDownloadParams = {}) => {
       if (isDownloading) {
-        const message = 'CactusLM is already downloading';
+        const message = 'CactusSTT is already downloading';
         setError(message);
         throw new Error(message);
       }
@@ -97,7 +94,7 @@ export const useCactusLM = ({
       setDownloadProgress(0);
       setIsDownloading(true);
       try {
-        await cactusLM.download({
+        await cactusSTT.download({
           onProgress: (progress) => {
             if (
               currentModelRef.current !== thisModel ||
@@ -141,12 +138,12 @@ export const useCactusLM = ({
         setDownloadProgress(0);
       }
     },
-    [cactusLM, isDownloading, isDownloaded]
+    [cactusSTT, isDownloading, isDownloaded]
   );
 
   const init = useCallback(async () => {
     if (isInitializing) {
-      const message = 'CactusLM is already initializing';
+      const message = 'CactusSTT is already initializing';
       setError(message);
       throw new Error(message);
     }
@@ -154,42 +151,40 @@ export const useCactusLM = ({
     setError(null);
     setIsInitializing(true);
     try {
-      await cactusLM.init();
+      await cactusSTT.init();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     } finally {
       setIsInitializing(false);
     }
-  }, [cactusLM, isInitializing]);
+  }, [cactusSTT, isInitializing]);
 
-  const complete = useCallback(
+  const transcribe = useCallback(
     async ({
-      messages,
+      audioFilePath,
+      prompt,
       options,
-      tools,
       onToken,
-      mode,
-    }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> => {
+    }: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult> => {
       if (isGenerating) {
-        const message = 'CactusLM is already generating';
+        const message = 'CactusSTT is already generating';
         setError(message);
         throw new Error(message);
       }
 
       setError(null);
-      setCompletion('');
+      setResponse('');
       setIsGenerating(true);
       try {
-        return await cactusLM.complete({
-          messages,
+        return await cactusSTT.transcribe({
+          audioFilePath,
+          prompt,
           options,
-          tools,
           onToken: (token) => {
-            setCompletion((prev) => prev + token);
+            setResponse((prev) => prev + token);
             onToken?.(token);
           },
-          mode,
         });
       } catch (e) {
         setError(getErrorMessage(e));
@@ -198,37 +193,15 @@ export const useCactusLM = ({
         setIsGenerating(false);
       }
     },
-    [cactusLM, isGenerating]
+    [cactusSTT, isGenerating]
   );
 
-  const embed = useCallback(
-    async ({ text }: CactusLMEmbedParams): Promise<CactusLMEmbedResult> => {
-      if (isGenerating) {
-        const message = 'CactusLM is already generating';
-        setError(message);
-        throw new Error(message);
-      }
-
-      setError(null);
-      setIsGenerating(true);
-      try {
-        return await cactusLM.embed({ text });
-      } catch (e) {
-        setError(getErrorMessage(e));
-        throw e;
-      } finally {
-        setIsGenerating(false);
-      }
-    },
-    [cactusLM, isGenerating]
-  );
-
-  const imageEmbed = useCallback(
+  const audioEmbed = useCallback(
     async ({
-      imagePath,
-    }: CactusLMImageEmbedParams): Promise<CactusLMImageEmbedResult> => {
+      audioPath,
+    }: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult> => {
       if (isGenerating) {
-        const message = 'CactusLM is already generating';
+        const message = 'CactusSTT is already generating';
         setError(message);
         throw new Error(message);
       }
@@ -236,7 +209,7 @@ export const useCactusLM = ({
       setError(null);
       setIsGenerating(true);
       try {
-        return await cactusLM.imageEmbed({ imagePath });
+        return await cactusSTT.audioEmbed({ audioPath });
       } catch (e) {
         setError(getErrorMessage(e));
         throw e;
@@ -244,55 +217,55 @@ export const useCactusLM = ({
         setIsGenerating(false);
       }
     },
-    [cactusLM, isGenerating]
+    [cactusSTT, isGenerating]
   );
 
   const stop = useCallback(async () => {
     setError(null);
     try {
-      await cactusLM.stop();
+      await cactusSTT.stop();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     }
-  }, [cactusLM]);
+  }, [cactusSTT]);
 
   const reset = useCallback(async () => {
     setError(null);
     try {
-      await cactusLM.reset();
+      await cactusSTT.reset();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     } finally {
-      setCompletion('');
+      setResponse('');
     }
-  }, [cactusLM]);
+  }, [cactusSTT]);
 
   const destroy = useCallback(async () => {
     setError(null);
     try {
-      await cactusLM.destroy();
+      await cactusSTT.destroy();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     } finally {
-      setCompletion('');
+      setResponse('');
     }
-  }, [cactusLM]);
+  }, [cactusSTT]);
 
   const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
-      return await cactusLM.getModels();
+      return await cactusSTT.getModels();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     }
-  }, [cactusLM]);
+  }, [cactusSTT]);
 
   return {
-    completion,
+    response,
     isGenerating,
     isInitializing,
     isDownloaded,
@@ -302,9 +275,8 @@ export const useCactusLM = ({
 
     download,
     init,
-    complete,
-    embed,
-    imageEmbed,
+    transcribe,
+    audioEmbed,
     reset,
     stop,
     destroy,

@@ -54,6 +54,33 @@ export class Database {
     return await CactusUtil.registerApp(await response.text());
   }
 
+  public static async getModel(slug: string): Promise<CactusModel> {
+    const response = await fetch(
+      `${this.url}/functions/v1/get-models?slug=${slug}&sdk_name=react&sdk_version=${packageVersion}`,
+      {
+        headers: { apikey: this.key, Authorization: `Bearer ${this.key}` },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Getting model failed');
+    }
+
+    const model = (await response.json()) as CactusModelResponse;
+
+    return {
+      name: model.name,
+      slug: model.slug,
+      quantization: model.quantization,
+      sizeMb: model.size_mb,
+      downloadUrl: model.download_url,
+      supportsToolCalling: model.supports_tool_calling,
+      supportsVision: model.supports_vision,
+      createdAt: model.created_at,
+      isDownloaded: false,
+    };
+  }
+
   public static async getModels(): Promise<CactusModel[]> {
     const response = await fetch(
       `${this.url}/functions/v1/get-models?sdk_name=react&sdk_version=${packageVersion}`,
