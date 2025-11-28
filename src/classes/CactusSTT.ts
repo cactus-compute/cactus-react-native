@@ -25,10 +25,12 @@ export class CactusSTT {
 
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultContextSize = 2048;
+  private static readonly defaultPrompt =
+    '<|startoftranscript|><|en|><|transcribe|><|notimestamps|>';
   private static readonly defaultTranscribeOptions = {
     maxTokens: 512,
   };
-  private static readonly defaultEmbedBufferSize = 32768;
+  private static readonly defaultEmbedBufferSize = 4096;
 
   private static cactusModelsCache: CactusModel[] | null = null;
 
@@ -86,7 +88,7 @@ export class CactusSTT {
 
   public async transcribe({
     audioFilePath,
-    prompt = '<|startoftranscript|><|en|><|transcribe|><|notimestamps|>',
+    prompt,
     options,
     onToken,
   }: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult> {
@@ -96,8 +98,12 @@ export class CactusSTT {
 
     await this.init();
 
+    prompt = prompt ?? CactusSTT.defaultPrompt;
     options = { ...CactusSTT.defaultTranscribeOptions, ...options };
-    const responseBufferSize = 32768;
+
+    const responseBufferSize =
+      8 * (options.maxTokens ?? CactusSTT.defaultTranscribeOptions.maxTokens) +
+      256;
 
     this.isGenerating = true;
     try {

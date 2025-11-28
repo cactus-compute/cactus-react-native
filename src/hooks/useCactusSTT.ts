@@ -21,7 +21,7 @@ export const useCactusSTT = ({
   );
 
   // State
-  const [response, setResponse] = useState('');
+  const [transcription, setTranscription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
@@ -39,7 +39,7 @@ export const useCactusSTT = ({
   useEffect(() => {
     setCactusSTT(new CactusSTT({ model, contextSize }));
 
-    setResponse('');
+    setTranscription('');
     setIsGenerating(false);
     setIsInitializing(false);
     setIsDownloaded(false);
@@ -174,7 +174,7 @@ export const useCactusSTT = ({
       }
 
       setError(null);
-      setResponse('');
+      setTranscription('');
       setIsGenerating(true);
       try {
         return await cactusSTT.transcribe({
@@ -182,7 +182,7 @@ export const useCactusSTT = ({
           prompt,
           options,
           onToken: (token) => {
-            setResponse((prev) => prev + token);
+            setTranscription((prev) => prev + token);
             onToken?.(token);
           },
         });
@@ -238,7 +238,7 @@ export const useCactusSTT = ({
       setError(getErrorMessage(e));
       throw e;
     } finally {
-      setResponse('');
+      setTranscription('');
     }
   }, [cactusSTT]);
 
@@ -250,7 +250,7 @@ export const useCactusSTT = ({
       setError(getErrorMessage(e));
       throw e;
     } finally {
-      setResponse('');
+      setTranscription('');
     }
   }, [cactusSTT]);
 
@@ -265,7 +265,7 @@ export const useCactusSTT = ({
   }, [cactusSTT]);
 
   return {
-    response,
+    transcription,
     isGenerating,
     isInitializing,
     isDownloaded,

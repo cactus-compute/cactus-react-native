@@ -136,11 +136,11 @@ const STTScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {cactusSTT.response && (
+      {cactusSTT.transcription && (
         <View style={styles.responseContainer}>
           <Text style={styles.responseLabel}>Streaming:</Text>
           <View style={styles.responseBox}>
-            <Text style={styles.responseText}>{cactusSTT.response}</Text>
+            <Text style={styles.responseText}>{cactusSTT.transcription}</Text>
           </View>
         </View>
       )}
