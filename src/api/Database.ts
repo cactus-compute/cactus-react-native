@@ -22,7 +22,6 @@ interface CactusSTTModelResponse {
   download_url: string;
   size_mb: number;
   created_at: Date;
-  file_name: string;
 }
 
 export class Database {
