@@ -7,11 +7,11 @@ import type {
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
 } from '../types/CactusSTT';
-import type { CactusModel } from '../types/CactusModel';
 import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
 import { Database } from '../api/Database';
 import { getErrorMessage } from '../utils/error';
+import type { CactusSTTModel } from '../types/CactusSTTModel';
 
 export class CactusSTT {
   private readonly cactus = new Cactus();
@@ -31,8 +31,6 @@ export class CactusSTT {
     maxTokens: 512,
   };
   private static readonly defaultEmbedBufferSize = 4096;
-
-  private static cactusModelsCache: CactusModel[] | null = null;
 
   constructor({ model, contextSize }: CactusSTTParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
@@ -55,9 +53,10 @@ export class CactusSTT {
 
     this.isDownloading = true;
     try {
+      const model = await Database.getSTTModel(this.model);
       await CactusFileSystem.downloadModel(
         this.model,
-        `https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/voice-models/${this.model}.zip`,
+        model.downloadUrl,
         onProgress
       );
     } finally {
@@ -174,15 +173,11 @@ export class CactusSTT {
     this.isInitialized = false;
   }
 
-  public async getModels(): Promise<CactusModel[]> {
-    if (CactusSTT.cactusModelsCache) {
-      return CactusSTT.cactusModelsCache;
-    }
-    const models = await Database.getModels();
+  public async getModels(): Promise<CactusSTTModel[]> {
+    const models = await Database.getSTTModels();
     for (const model of models) {
       model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
     }
-    CactusSTT.cactusModelsCache = models;
     return models;
   }
 }

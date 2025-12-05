@@ -35,8 +35,6 @@ export class CactusLM {
   private static readonly defaultCompleteMode = 'local';
   private static readonly defaultEmbedBufferSize = 2048;
 
-  private static cactusModelsCache: CactusModel[] | null = null;
-
   constructor({ model, contextSize, corpusDir }: CactusLMParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
 
@@ -226,14 +224,10 @@ export class CactusLM {
   }
 
   public async getModels(): Promise<CactusModel[]> {
-    if (CactusLM.cactusModelsCache) {
-      return CactusLM.cactusModelsCache;
-    }
     const models = await Database.getModels();
     for (const model of models) {
       model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
     }
-    CactusLM.cactusModelsCache = models;
     return models;
   }
 }

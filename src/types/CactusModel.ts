@@ -7,6 +7,7 @@ export interface CactusModel {
   downloadUrl: string;
   supportsToolCalling: boolean;
   supportsVision: boolean;
+  supportsCompletion: boolean;
   createdAt: Date;
 
   // Local

@@ -32,11 +32,18 @@ export class Cactus {
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusLMCompleteResult> {
     const messagesInternal: Message[] = [];
-    for (const message of messages) {
-      if (!message.images) {
-        messagesInternal.push(message);
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i]!;
+      const isLastMessage = i === messages.length - 1;
+
+      if (!message.images || !isLastMessage) {
+        messagesInternal.push({
+          ...message,
+          images: undefined,
+        });
         continue;
       }
+
       const resizedImages: string[] = [];
       for (const imagePath of message.images) {
         const resizedImage = await CactusImage.resize(
@@ -47,6 +54,7 @@ export class Cactus {
         );
         resizedImages.push(resizedImage);
       }
+
       messagesInternal.push({ ...message, images: resizedImages });
     }
 

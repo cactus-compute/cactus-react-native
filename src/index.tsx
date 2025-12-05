@@ -8,6 +8,7 @@ export { useCactusSTT } from './hooks/useCactusSTT';
 
 // Types
 export type { CactusModel } from './types/CactusModel';
+export type { CactusSTTModel } from './types/CactusSTTModel';
 export type {
   CactusLMParams,
   CactusLMDownloadParams,

@@ -577,7 +577,7 @@ Releases all resources associated with the model. Automatically calls `stop()` f
 
 **`getModels(): Promise<CactusModel[]>`**
 
-Fetches available models from the database and checks their download status. Results are cached in memory after the first call and subsequent calls return the cached results.
+Fetches available models from the database and checks their download status.
 
 ### useCactusLM Hook
 
@@ -603,7 +603,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state, clearing cached context. Also clears the `completion` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `completion` state. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status. Results are cached in memory and reused on subsequent calls.
+- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status.
 
 ### CactusSTT Class
 
@@ -662,9 +662,9 @@ Resets the model's internal state. Automatically calls `stop()` first.
 
 Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
-**`getModels(): Promise<CactusModel[]>`**
+**`getModels(): Promise<CactusSTTModel[]>`**
 
-Fetches available models from the database and checks their download status. Results are cached in memory after the first call and subsequent calls return the cached results.
+Fetches available STT models from the database and checks their download status.
 
 ### useCactusSTT Hook
 
@@ -689,7 +689,7 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state. Also clears the `transcription` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription` state. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status. Results are cached in memory and reused on subsequent calls.
+- `getModels(): Promise<CactusSTTModel[]>` - Fetches available STT models from the database and checks their download status.
 
 ## Type Definitions
 
@@ -826,6 +826,19 @@ interface CactusModel {
   downloadUrl: string;
   supportsToolCalling: boolean;
   supportsVision: boolean;
+  supportsCompletion: boolean;
+  createdAt: Date;
+  isDownloaded: boolean;
+}
+```
+
+### CactusSTTModel
+
+```typescript
+interface CactusSTTModel {
+  slug: string;
+  sizeMb: number;
+  downloadUrl: string;
   createdAt: Date;
   isDownloaded: boolean;
 }

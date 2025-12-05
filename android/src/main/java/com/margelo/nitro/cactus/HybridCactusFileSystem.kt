@@ -210,9 +210,7 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
     }
 
   private fun cactusFile(): File {
-    val documentsDir =
-      context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
-    val cactusDir = File(documentsDir, "cactus")
+    val cactusDir = File(context.filesDir, "cactus")
 
     if (!cactusDir.exists()) {
       cactusDir.mkdirs()

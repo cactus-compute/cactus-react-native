@@ -10,7 +10,7 @@ import type {
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
 } from '../types/CactusSTT';
-import type { CactusModel } from '../types/CactusModel';
+import type { CactusSTTModel } from '../types/CactusSTTModel';
 
 export const useCactusSTT = ({
   model = 'whisper-small',
@@ -254,7 +254,7 @@ export const useCactusSTT = ({
     }
   }, [cactusSTT]);
 
-  const getModels = useCallback(async (): Promise<CactusModel[]> => {
+  const getModels = useCallback(async (): Promise<CactusSTTModel[]> => {
     setError(null);
     try {
       return await cactusSTT.getModels();

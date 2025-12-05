@@ -3,6 +3,7 @@ import type { DeviceInfo } from '../specs/CactusDeviceInfo.nitro';
 import type { LogRecord } from '../telemetry/Telemetry';
 import { packageVersion } from '../constants/packageVersion';
 import type { CactusModel } from '../types/CactusModel';
+import type { CactusSTTModel } from '../types/CactusSTTModel';
 
 interface CactusModelResponse {
   name: string;
@@ -12,7 +13,16 @@ interface CactusModelResponse {
   download_url: string;
   supports_tool_calling: boolean;
   supports_vision: boolean;
+  supports_completion: boolean;
   created_at: Date;
+}
+
+interface CactusSTTModelResponse {
+  slug: string;
+  download_url: string;
+  size_mb: number;
+  created_at: Date;
+  file_name: string;
 }
 
 export class Database {
@@ -76,6 +86,38 @@ export class Database {
       downloadUrl: model.download_url,
       supportsToolCalling: model.supports_tool_calling,
       supportsVision: model.supports_vision,
+      supportsCompletion: model.supports_completion,
+      createdAt: model.created_at,
+      isDownloaded: false,
+    };
+  }
+
+  public static async getSTTModel(slug: string): Promise<CactusSTTModel> {
+    const response = await fetch(
+      `${this.url}/rest/v1/whisper?slug=eq.${slug}&select=*`,
+      {
+        headers: {
+          'apikey': this.key,
+          'Authorization': `Bearer ${this.key}`,
+          'Accept-Profile': 'cactus',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Getting STT model failed');
+    }
+
+    const [model] = (await response.json()) as CactusSTTModelResponse[];
+
+    if (!model) {
+      throw new Error(`STT model with slug "${slug}" not found`);
+    }
+
+    return {
+      slug: model.slug,
+      downloadUrl: model.download_url,
+      sizeMb: model.size_mb,
       createdAt: model.created_at,
       isDownloaded: false,
     };
@@ -103,6 +145,31 @@ export class Database {
       downloadUrl: model.download_url,
       supportsToolCalling: model.supports_tool_calling,
       supportsVision: model.supports_vision,
+      supportsCompletion: model.supports_completion,
+      createdAt: model.created_at,
+      isDownloaded: false,
+    }));
+  }
+
+  public static async getSTTModels(): Promise<CactusSTTModel[]> {
+    const response = await fetch(`${this.url}/rest/v1/whisper?select=*`, {
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Accept-Profile': 'cactus',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Getting STT models failed');
+    }
+
+    const models = (await response.json()) as CactusSTTModelResponse[];
+
+    return models.map((model) => ({
+      slug: model.slug,
+      downloadUrl: model.download_url,
+      sizeMb: model.size_mb,
       createdAt: model.created_at,
       isDownloaded: false,
     }));
