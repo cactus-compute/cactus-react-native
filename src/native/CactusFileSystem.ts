@@ -41,6 +41,10 @@ export class CactusFileSystem {
     return this.hybridCactusFileSystem.downloadModel(model, url, onProgress);
   }
 
+  public static stopDownload(model: string): Promise<void> {
+    return this.hybridCactusFileSystem.stopDownload(model);
+  }
+
   public static deleteModel(model: string): Promise<void> {
     return this.hybridCactusFileSystem.deleteModel(model);
   }

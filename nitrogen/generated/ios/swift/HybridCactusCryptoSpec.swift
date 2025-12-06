@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /// See ``HybridCactusCryptoSpec``
 public protocol HybridCactusCryptoSpec_protocol: HybridObject {

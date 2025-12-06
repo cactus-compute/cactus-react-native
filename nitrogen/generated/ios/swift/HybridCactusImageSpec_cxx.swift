@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /**
  * A class implementation that bridges HybridCactusImageSpec over to C++.

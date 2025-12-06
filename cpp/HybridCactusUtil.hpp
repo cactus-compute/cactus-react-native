@@ -4,6 +4,8 @@
 #include "cactus_util.h"
 
 #include <mutex>
+#include <variant>
+#include <NitroModules/Null.hpp>
 
 namespace margelo::nitro::cactus {
 
@@ -14,7 +16,7 @@ public:
   std::shared_ptr<Promise<std::string>>
   registerApp(const std::string &encryptedData) override;
 
-  std::shared_ptr<Promise<std::optional<std::string>>> getDeviceId() override;
+  std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> getDeviceId() override;
 
   std::shared_ptr<Promise<void>>
   setAndroidDataDirectory(const std::string &dataDir) override;

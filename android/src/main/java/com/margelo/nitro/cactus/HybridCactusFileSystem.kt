@@ -1,5 +1,6 @@
 package com.margelo.nitro.cactus
 
+import android.util.Log
 import com.margelo.nitro.NitroModules
 import com.margelo.nitro.core.Promise
 import java.io.BufferedInputStream
@@ -15,6 +16,11 @@ import kotlin.math.floor
 
 class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
   private val context = NitroModules.applicationContext ?: error("Android context not found")
+  
+  @Volatile
+  private var activeConnection: HttpURLConnection? = null
+  @Volatile
+  private var isCancelled: Boolean = false
 
   override fun getCactusDirectory(): Promise<String> = Promise.async { cactusFile().absolutePath }
 
@@ -86,6 +92,7 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
 
       val tmpZip = File.createTempFile("dl_", ".zip", context.cacheDir)
       var connection: HttpURLConnection? = null
+      isCancelled = false
 
       try {
         connection =
@@ -94,6 +101,7 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
             readTimeout = 5 * 60_000
             instanceFollowRedirects = true
           }
+        activeConnection = connection
         connection.connect()
         val code = connection.responseCode
 
@@ -115,6 +123,10 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
                 val buf = ByteArray(256 * 1024)
 
                 while (true) {
+                  if (isCancelled) {
+                    throw InterruptedException("Download cancelled")
+                  }
+                  
                   val read = bis.read(buf)
 
                   if (read == -1) {
@@ -155,6 +167,17 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
       } finally {
         tmpZip.delete()
         connection?.disconnect()
+        activeConnection = null
+      }
+    }
+  }
+
+  override fun stopDownload(model: String): Promise<Unit> {
+    return Promise.async {
+      if (activeConnection != null) {
+        isCancelled = true
+        activeConnection?.disconnect()
+        activeConnection = null
       }
     }
   }

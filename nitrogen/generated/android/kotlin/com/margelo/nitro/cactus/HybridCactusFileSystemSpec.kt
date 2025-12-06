@@ -74,6 +74,10 @@ abstract class HybridCactusFileSystemSpec: HybridObject() {
   @Keep
   abstract fun getModelPath(model: String): Promise<String>
   
+  @DoNotStrip
+  @Keep
+  abstract fun stopDownload(model: String): Promise<Unit>
+  
   abstract fun downloadModel(model: String, from: String, callback: ((progress: Double) -> Unit)?): Promise<Unit>
   
   @DoNotStrip

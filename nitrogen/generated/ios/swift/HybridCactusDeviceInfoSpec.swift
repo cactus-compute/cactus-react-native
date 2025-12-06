@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /// See ``HybridCactusDeviceInfoSpec``
 public protocol HybridCactusDeviceInfoSpec_protocol: HybridObject {

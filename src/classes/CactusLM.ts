@@ -68,6 +68,10 @@ export class CactusLM {
     }
   }
 
+  public async stopDownload(): Promise<void> {
+    return CactusFileSystem.stopDownload(this.model);
+  }
+
   public async init(): Promise<void> {
     if (this.isInitialized) {
       return;

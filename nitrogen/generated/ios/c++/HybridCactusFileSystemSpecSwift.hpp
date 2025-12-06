@@ -119,6 +119,14 @@ namespace margelo::nitro::cactus {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline std::shared_ptr<Promise<void>> stopDownload(const std::string& model) override {
+      auto __result = _swiftPart.stopDownload(model);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
     inline std::shared_ptr<Promise<void>> downloadModel(const std::string& model, const std::string& from, const std::optional<std::function<void(double /* progress */)>>& callback) override {
       auto __result = _swiftPart.downloadModel(model, from, callback);
       if (__result.hasError()) [[unlikely]] {

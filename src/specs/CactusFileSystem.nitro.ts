@@ -1,7 +1,9 @@
 import type { HybridObject } from 'react-native-nitro-modules';
 
-export interface CactusFileSystem
-  extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
+export interface CactusFileSystem extends HybridObject<{
+  ios: 'swift';
+  android: 'kotlin';
+}> {
   // General
   getCactusDirectory(): Promise<string>;
   // File
@@ -12,6 +14,7 @@ export interface CactusFileSystem
   // Model
   modelExists(model: string): Promise<boolean>;
   getModelPath(model: string): Promise<string>;
+  stopDownload(model: string): Promise<void>;
   downloadModel(
     model: string,
     from: string,

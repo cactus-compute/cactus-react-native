@@ -21,6 +21,7 @@ namespace margelo::nitro::cactus {
       prototype.registerHybridMethod("deleteFile", &HybridCactusFileSystemSpec::deleteFile);
       prototype.registerHybridMethod("modelExists", &HybridCactusFileSystemSpec::modelExists);
       prototype.registerHybridMethod("getModelPath", &HybridCactusFileSystemSpec::getModelPath);
+      prototype.registerHybridMethod("stopDownload", &HybridCactusFileSystemSpec::stopDownload);
       prototype.registerHybridMethod("downloadModel", &HybridCactusFileSystemSpec::downloadModel);
       prototype.registerHybridMethod("deleteModel", &HybridCactusFileSystemSpec::deleteModel);
     });

@@ -44,6 +44,7 @@ const PerformanceScreen = () => {
 
     // Cleanup on unmount
     return () => {
+      cactusLM.stopDownload().catch(() => {});
       cactusLM.destroy();
     };
   }, []);

@@ -22,14 +22,17 @@ HybridCactusUtil::registerApp(const std::string &encryptedData) {
   });
 }
 
-std::shared_ptr<Promise<std::optional<std::string>>>
+std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>>
 HybridCactusUtil::getDeviceId() {
-  return Promise<std::optional<std::string>>::async(
-      [this]() -> std::optional<std::string> {
+  return Promise<std::variant<nitro::NullType, std::string>>::async(
+      [this]() -> std::variant<nitro::NullType, std::string> {
         std::lock_guard<std::mutex> lock(this->_mutex);
 
         const char *deviceId = get_device_id();
-        return deviceId ? std::optional<std::string>(deviceId) : std::nullopt;
+        if (deviceId) {
+          return std::string(deviceId);
+        }
+        return nitro::NullType();
       });
 }
 

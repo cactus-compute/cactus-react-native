@@ -58,6 +58,7 @@ namespace margelo::nitro::cactus {
       virtual std::shared_ptr<Promise<void>> deleteFile(const std::string& path) = 0;
       virtual std::shared_ptr<Promise<bool>> modelExists(const std::string& model) = 0;
       virtual std::shared_ptr<Promise<std::string>> getModelPath(const std::string& model) = 0;
+      virtual std::shared_ptr<Promise<void>> stopDownload(const std::string& model) = 0;
       virtual std::shared_ptr<Promise<void>> downloadModel(const std::string& model, const std::string& from, const std::optional<std::function<void(double /* progress */)>>& callback) = 0;
       virtual std::shared_ptr<Promise<void>> deleteModel(const std::string& model) = 0;
 

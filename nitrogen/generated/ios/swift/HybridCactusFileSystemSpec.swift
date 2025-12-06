@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /// See ``HybridCactusFileSystemSpec``
 public protocol HybridCactusFileSystemSpec_protocol: HybridObject {
@@ -22,6 +21,7 @@ public protocol HybridCactusFileSystemSpec_protocol: HybridObject {
   func deleteFile(path: String) throws -> Promise<Void>
   func modelExists(model: String) throws -> Promise<Bool>
   func getModelPath(model: String) throws -> Promise<String>
+  func stopDownload(model: String) throws -> Promise<Void>
   func downloadModel(model: String, from: String, callback: ((_ progress: Double) -> Void)?) throws -> Promise<Void>
   func deleteModel(model: String) throws -> Promise<Void>
 }

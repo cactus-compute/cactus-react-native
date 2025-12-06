@@ -94,10 +94,12 @@ class HybridCactusFileSystem: HybridCactusFileSystemSpec {
 
       let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
       let task = session.downloadTask(with: url)
-
+      self.activeTask = task
       callback?(0.0)
 
       let (fileURL, response) = try await delegate.awaitCompletion(for: task)
+      
+      self.activeTask = nil
 
       guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -118,6 +120,17 @@ class HybridCactusFileSystem: HybridCactusFileSystemSpec {
         try? FileManager.default.removeItem(at: fileURL)
 
         throw RuntimeError.error(withMessage: "Failed to download and unzip model: \(error)")
+      }
+    }
+  }
+
+  private var activeTask: URLSessionDownloadTask?
+
+  func stopDownload(model: String) throws -> Promise<Void> {
+    return Promise.async {
+      if let task = self.activeTask {
+        task.cancel()
+        self.activeTask = nil
       }
     }
   }
@@ -145,7 +158,6 @@ class HybridCactusFileSystem: HybridCactusFileSystemSpec {
     if !FileManager.default.fileExists(atPath: cactusURL.path) {
       try FileManager.default.createDirectory(at: cactusURL, withIntermediateDirectories: true)
 
-      // Exclude from iCloud backup
       var resourceValues = URLResourceValues()
       resourceValues.isExcludedFromBackup = true
       try cactusURL.setResourceValues(resourceValues)

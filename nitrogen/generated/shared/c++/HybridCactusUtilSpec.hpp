@@ -17,7 +17,8 @@
 
 #include <string>
 #include <NitroModules/Promise.hpp>
-#include <optional>
+#include <NitroModules/Null.hpp>
+#include <variant>
 
 namespace margelo::nitro::cactus {
 
@@ -51,7 +52,7 @@ namespace margelo::nitro::cactus {
     public:
       // Methods
       virtual std::shared_ptr<Promise<std::string>> registerApp(const std::string& encryptedData) = 0;
-      virtual std::shared_ptr<Promise<std::optional<std::string>>> getDeviceId() = 0;
+      virtual std::shared_ptr<Promise<std::variant<nitro::NullType, std::string>>> getDeviceId() = 0;
       virtual std::shared_ptr<Promise<void>> setAndroidDataDirectory(const std::string& dataDir) = 0;
 
     protected:
