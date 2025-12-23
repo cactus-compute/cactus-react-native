@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <cstdint>
 
@@ -32,6 +33,9 @@ extern "C" {
 class CactusGraph;
 
 namespace cactus {
+namespace npu {
+    class NPUPrefill;
+}
 namespace engine {
 
 class Siglip2Preprocessor;
@@ -349,6 +353,13 @@ struct KVCache {
     void update_from_graph(CactusGraph* gb, const std::vector<size_t>& k_nodes,
                           const std::vector<size_t>& v_nodes, size_t seq_len,
                           size_t num_layers, size_t kv_heads, size_t head_dim);
+
+    // Update KV cache from NPU prefill outputs
+    // NPU outputs are in shape [num_tokens, num_kv_heads, head_dim]
+    // This handles transposition to cache format and sliding window
+    void update_from_npu(size_t layer_idx, const __fp16* k_data, const __fp16* v_data,
+                         size_t num_tokens, size_t kv_heads, size_t head_dim);
+
     bool is_empty() const { return current_seq_len == 0; }
     void* get_key_ptr(size_t layer);
     void* get_value_ptr(size_t layer);
@@ -363,6 +374,85 @@ struct KVCache {
 
     CircularView get_key_view(size_t layer);
     CircularView get_value_view(size_t layer);
+};
+
+class ToolCallConstrainer {
+public:
+    enum class State {
+        START,                  // -> expect {
+        EXPECT_FC_KEY,          // -> expect "function_call"
+        EXPECT_FC_COLON,        // -> expect :
+        EXPECT_FC_OPEN_BRACE,   // -> expect {
+        EXPECT_NAME_KEY,        // -> expect "name"
+        EXPECT_NAME_COLON,      // -> expect :
+        EXPECT_NAME_VALUE,      // -> expect "<function_name>"
+        EXPECT_COMMA,           // -> expect ,
+        EXPECT_ARGS_KEY,        // -> expect "arguments"
+        EXPECT_ARGS_COLON,      // -> expect :
+        IN_ARGUMENTS,           // -> free JSON, track brace depth
+        EXPECT_INNER_CLOSE,     // -> expect } to close inner object
+        EXPECT_OUTER_CLOSE,     // -> expect } to close outer object
+        DONE,                   // complete
+
+        LFM_START,              // -> expect <|tool_call_start|>
+        LFM_EXPECT_BRACKET,     // -> expect [
+        LFM_IN_FUNC_NAME,       // -> expect function name
+        LFM_EXPECT_PAREN,       // -> expect (
+        LFM_IN_ARGUMENTS,       // -> arguments until )
+        LFM_EXPECT_BRACKET_CLOSE, // -> expect ]
+        LFM_EXPECT_END          // -> expect <|tool_call_end|>
+    };
+
+    void init(Config::ModelType model_type,
+              const std::vector<std::string>& function_names,
+              Tokenizer* tokenizer);
+
+    const std::unordered_map<uint32_t, float>& get_bias() const { return current_bias_; }
+
+    void update(uint32_t token_id, const std::string& decoded_text);
+
+    void reset();
+
+    bool is_active() const { return active_; }
+
+private:
+    bool active_ = false;
+    State state_ = State::START;
+    Config::ModelType model_type_ = Config::ModelType::QWEN;
+    Tokenizer* tokenizer_ = nullptr;
+
+    std::vector<std::string> function_names_;
+    std::string generated_text_;
+    int brace_depth_ = 0;  // Track nested braces in arguments
+
+    // Pre-tokenized token sets for each grammar element
+    std::unordered_set<uint32_t> open_brace_tokens_;      // {
+    std::unordered_set<uint32_t> close_brace_tokens_;     // }
+    std::unordered_set<uint32_t> colon_tokens_;           // :
+    std::unordered_set<uint32_t> comma_tokens_;           // ,
+    std::unordered_set<uint32_t> fc_key_tokens_;          // "function_call"
+    std::unordered_set<uint32_t> name_key_tokens_;        // "name"
+    std::unordered_set<uint32_t> args_key_tokens_;        // "arguments"
+    std::unordered_set<uint32_t> quote_tokens_;           // "
+    std::unordered_set<uint32_t> backtick_tokens_;        // ` (to block markdown code fences)
+    std::unordered_set<uint32_t> response_starter_tokens_; // Common response starters to block (I, I'm, Sorry, etc.)
+    std::unordered_set<uint32_t> all_func_name_tokens_;   // All function name tokens combined
+    std::unordered_map<std::string, std::vector<uint32_t>> func_name_sequences_;  // Full token sequence per function
+
+    // LFM2-specific tokens
+    std::unordered_set<uint32_t> tool_start_tokens_;
+    std::unordered_set<uint32_t> tool_end_tokens_;
+    std::unordered_set<uint32_t> bracket_open_tokens_;    // [
+    std::unordered_set<uint32_t> bracket_close_tokens_;   // ]
+    std::unordered_set<uint32_t> paren_open_tokens_;      // (
+    std::unordered_set<uint32_t> paren_close_tokens_;     // )
+    std::unordered_set<uint32_t> equals_tokens_;          // =
+
+    std::unordered_map<uint32_t, float> current_bias_;
+
+    void compute_bias();
+    void tokenize_grammar_elements();
+    void add_tokens_for_string(const std::string& str, std::unordered_set<uint32_t>& token_set);
 };
 
 class Model {
@@ -386,25 +476,35 @@ public:
     virtual bool init(CactusGraph* external_graph, const std::string& model_folder, size_t context_size,
               const std::string& system_prompt = "", bool do_warmup = true);
 
-    virtual uint32_t generate(const std::vector<uint32_t>& tokens, float temperature = -1.0f, float top_p = -1.0f,
-                      size_t top_k = 0, const std::string& profile_file = "", bool prefill_only = false);
-
-    virtual uint32_t generate_with_images(const std::vector<uint32_t>& tokens, const std::vector<std::string>& image_paths,
-                                          float temperature = -1.0f, float top_p = -1.0f,
-                                          size_t top_k = 0, const std::string& profile_file = "");
-    
-    virtual uint32_t generate_with_audio(const std::vector<uint32_t>& tokens, const std::vector<float>& mel_bins, float temperature = 0.0f, float top_p = 0.0f,
+    virtual uint32_t decode(const std::vector<uint32_t>& tokens, float temperature = -1.0f, float top_p = -1.0f,
                       size_t top_k = 0, const std::string& profile_file = "");
 
-    std::vector<float> get_embeddings(const std::vector<uint32_t>& tokens, bool pooled = true, const std::string& profile_file = "");
+    virtual void prefill(const std::vector<uint32_t>& tokens, size_t chunk_size = 256, const std::string& profile_file = "");
+
+    virtual uint32_t decode_with_images(const std::vector<uint32_t>& tokens, const std::vector<std::string>& image_paths,
+                                          float temperature = -1.0f, float top_p = -1.0f,
+                                          size_t top_k = 0, const std::string& profile_file = "");
+
+    virtual uint32_t decode_with_audio(const std::vector<uint32_t>& tokens, const std::vector<float>& mel_bins, float temperature = 0.0f, float top_p = 0.0f,
+                      size_t top_k = 0, const std::string& profile_file = "");
+
+    std::vector<float> get_embeddings(const std::vector<uint32_t>& tokens, bool pooled = true, bool normalize = false, const std::string& profile_file = "");
     
     virtual std::vector<float> get_image_embeddings(const std::string& image_path);
     
     virtual std::vector<float> get_audio_embeddings(const std::vector<float>& mel_bins);
 
     virtual void reset_cache() { kv_cache_.reset(); }
-    
+
     void set_cache_window(size_t window_size, size_t sink_size = 4) { kv_cache_.set_window_size(window_size, sink_size); }
+
+    bool load_npu_prefill(const std::string& model_path);
+    bool has_npu_prefill() const;
+    size_t get_prefill_chunk_size() const;
+
+    void set_tool_constraints(const std::vector<std::string>& function_names);
+    void clear_tool_constraints();
+    void update_tool_constraints(uint32_t token_id);
 
     void* graph_handle_;
 
@@ -449,6 +549,12 @@ protected:
     bool init_internal(CactusGraph* gb, const std::string& model_folder, size_t context_size,
                        const std::string& system_prompt, bool do_warmup);
     bool owns_graph_;
+
+    std::unique_ptr<npu::NPUPrefill> npu_prefill_;
+    void prefill_npu(const std::vector<uint32_t>& tokens);
+    virtual std::vector<__fp16> get_token_embeddings(const std::vector<uint32_t>& tokens);
+
+    ToolCallConstrainer tool_constrainer_;
 };
 
 std::unique_ptr<Model> create_model(const std::string& model_folder);
