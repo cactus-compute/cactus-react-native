@@ -86,7 +86,7 @@ export class CactusSTT {
   }
 
   public async transcribe({
-    audioFilePath,
+    audio,
     prompt,
     options,
     onToken,
@@ -107,7 +107,7 @@ export class CactusSTT {
     this.isGenerating = true;
     try {
       const result = await this.cactus.transcribe(
-        audioFilePath,
+        audio,
         prompt,
         responseBufferSize,
         options,

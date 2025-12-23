@@ -1,6 +1,7 @@
 #include "HybridCactus.hpp"
 
 namespace margelo::nitro::cactus {
+
 HybridCactus::HybridCactus() : HybridObject(TAG) {}
 
 std::shared_ptr<Promise<void>>
@@ -19,7 +20,8 @@ HybridCactus::init(const std::string &modelPath, double contextSize,
                         corpusDir ? corpusDir->c_str() : nullptr);
 
         if (!model) {
-          throw std::runtime_error("Failed to initialize Cactus model");
+          throw std::runtime_error("Cactus init failed: " +
+                                   std::string(cactus_get_last_error()));
         }
 
         this->_model = model;
@@ -65,7 +67,8 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
                                  cactusTokenCallback, &callbackCtx);
 
     if (result < 0) {
-      throw std::runtime_error("Cactus completion failed");
+      throw std::runtime_error("Cactus complete failed: " +
+                               std::string(cactus_get_last_error()));
     }
 
     // Remove null terminator
@@ -76,11 +79,12 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
 }
 
 std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
-    const std::string &audioFilePath, const std::string &prompt,
-    double responseBufferSize, const std::optional<std::string> &optionsJson,
+    const std::variant<std::vector<double>, std::string> &audio,
+    const std::string &prompt, double responseBufferSize,
+    const std::optional<std::string> &optionsJson,
     const std::optional<std::function<void(const std::string & /* token */,
                                            double /* tokenId */)>> &callback) {
-  return Promise<std::string>::async([this, audioFilePath, prompt, optionsJson,
+  return Promise<std::string>::async([this, audio, prompt, optionsJson,
                                       callback,
                                       responseBufferSize]() -> std::string {
     std::lock_guard<std::mutex> lock(this->_modelMutex);
@@ -105,14 +109,34 @@ std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
     std::string responseBuffer;
     responseBuffer.resize(responseBufferSize);
 
-    int result =
-        cactus_transcribe(this->_model, audioFilePath.c_str(), prompt.c_str(),
-                          responseBuffer.data(), responseBufferSize,
-                          optionsJson ? optionsJson->c_str() : nullptr,
-                          cactusTokenCallback, &callbackCtx);
+    int result;
+    if (std::holds_alternative<std::string>(audio)) {
+      result = cactus_transcribe(
+          this->_model, std::get<std::string>(audio).c_str(), prompt.c_str(),
+          responseBuffer.data(), responseBufferSize,
+          optionsJson ? optionsJson->c_str() : nullptr, cactusTokenCallback,
+          &callbackCtx, nullptr, 0);
+    } else {
+      const auto &audioDoubles = std::get<std::vector<double>>(audio);
+
+      std::vector<uint8_t> audioBytes;
+      audioBytes.reserve(audioDoubles.size());
+
+      for (double d : audioDoubles) {
+        d = std::clamp(d, 0.0, 255.0);
+        audioBytes.emplace_back(static_cast<uint8_t>(d));
+      }
+      
+      result = cactus_transcribe(
+          this->_model, nullptr, prompt.c_str(), responseBuffer.data(),
+          responseBufferSize, optionsJson ? optionsJson->c_str() : nullptr,
+          cactusTokenCallback, &callbackCtx,
+          audioBytes.data(), audioBytes.size());
+    }
 
     if (result < 0) {
-      throw std::runtime_error("Cactus transcription failed");
+      throw std::runtime_error("Cactus transcribe failed: " +
+                               std::string(cactus_get_last_error()));
     }
 
     // Remove null terminator
@@ -123,9 +147,10 @@ std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
 }
 
 std::shared_ptr<Promise<std::vector<double>>>
-HybridCactus::embed(const std::string &text, double embeddingBufferSize) {
+HybridCactus::embed(const std::string &text, double embeddingBufferSize,
+                    bool normalize) {
   return Promise<std::vector<double>>::async(
-      [this, text, embeddingBufferSize]() -> std::vector<double> {
+      [this, text, embeddingBufferSize, normalize]() -> std::vector<double> {
         std::lock_guard<std::mutex> lock(this->_modelMutex);
 
         if (!this->_model) {
@@ -135,12 +160,13 @@ HybridCactus::embed(const std::string &text, double embeddingBufferSize) {
         std::vector<float> embeddingBuffer(embeddingBufferSize);
         size_t embeddingDim;
 
-        int result =
-            cactus_embed(this->_model, text.c_str(), embeddingBuffer.data(),
-                         embeddingBufferSize * sizeof(float), &embeddingDim);
+        int result = cactus_embed(
+            this->_model, text.c_str(), embeddingBuffer.data(),
+            embeddingBufferSize * sizeof(float), &embeddingDim, normalize);
 
         if (result < 0) {
-          throw std::runtime_error("Cactus embedding failed");
+          throw std::runtime_error("Cactus embed failed: " +
+                                   std::string(cactus_get_last_error()));
         }
 
         embeddingBuffer.resize(embeddingDim);
@@ -169,7 +195,8 @@ HybridCactus::imageEmbed(const std::string &imagePath,
             embeddingBufferSize * sizeof(float), &embeddingDim);
 
         if (result < 0) {
-          throw std::runtime_error("Cactus image embedding failed");
+          throw std::runtime_error("Cactus image embed failed: " +
+                                   std::string(cactus_get_last_error()));
         }
 
         embeddingBuffer.resize(embeddingDim);
@@ -198,7 +225,8 @@ HybridCactus::audioEmbed(const std::string &audioPath,
             embeddingBufferSize * sizeof(float), &embeddingDim);
 
         if (result < 0) {
-          throw std::runtime_error("Cactus audio embedding failed");
+          throw std::runtime_error("Cactus audio embed failed: " +
+                                   std::string(cactus_get_last_error()));
         }
 
         embeddingBuffer.resize(embeddingDim);
@@ -235,6 +263,14 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
     cactus_destroy(this->_model);
     this->_model = nullptr;
   });
+}
+
+void HybridCactus::setTelemetryToken(const std::string &token) {
+  cactus_set_telemetry_token(token.c_str());
+}
+
+void HybridCactus::setProKey(const std::string &proKey) {
+  cactus_set_pro_key(proKey.c_str());
 }
 
 } // namespace margelo::nitro::cactus

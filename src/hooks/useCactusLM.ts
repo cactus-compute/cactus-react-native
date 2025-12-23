@@ -202,7 +202,10 @@ export const useCactusLM = ({
   );
 
   const embed = useCallback(
-    async ({ text }: CactusLMEmbedParams): Promise<CactusLMEmbedResult> => {
+    async ({
+      text,
+      normalize = false,
+    }: CactusLMEmbedParams): Promise<CactusLMEmbedResult> => {
       if (isGenerating) {
         const message = 'CactusLM is already generating';
         setError(message);
@@ -212,7 +215,7 @@ export const useCactusLM = ({
       setError(null);
       setIsGenerating(true);
       try {
-        return await cactusLM.embed({ text });
+        return await cactusLM.embed({ text, normalize });
       } catch (e) {
         setError(getErrorMessage(e));
         throw e;

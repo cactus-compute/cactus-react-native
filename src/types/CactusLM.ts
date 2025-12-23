@@ -62,6 +62,7 @@ export interface CactusLMCompleteResult {
 
 export interface CactusLMEmbedParams {
   text: string;
+  normalize?: boolean;
 }
 
 export interface CactusLMEmbedResult {

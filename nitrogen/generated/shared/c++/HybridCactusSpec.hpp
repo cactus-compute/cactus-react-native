@@ -20,6 +20,7 @@
 #include <optional>
 #include <functional>
 #include <vector>
+#include <variant>
 
 namespace margelo::nitro::cactus {
 
@@ -54,13 +55,15 @@ namespace margelo::nitro::cactus {
       // Methods
       virtual std::shared_ptr<Promise<void>> init(const std::string& modelPath, double contextSize, const std::optional<std::string>& corpusDir) = 0;
       virtual std::shared_ptr<Promise<std::string>> complete(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
-      virtual std::shared_ptr<Promise<std::string>> transcribe(const std::string& audioFilePath, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
-      virtual std::shared_ptr<Promise<std::vector<double>>> embed(const std::string& text, double embeddingBufferSize) = 0;
+      virtual std::shared_ptr<Promise<std::string>> transcribe(const std::variant<std::vector<double>, std::string>& audio, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
+      virtual std::shared_ptr<Promise<std::vector<double>>> embed(const std::string& text, double embeddingBufferSize, bool normalize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> imageEmbed(const std::string& imagePath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> audioEmbed(const std::string& audioPath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> stop() = 0;
       virtual std::shared_ptr<Promise<void>> destroy() = 0;
+      virtual void setTelemetryToken(const std::string& token) = 0;
+      virtual void setProKey(const std::string& proKey) = 0;
 
     protected:
       // Hybrid Setup

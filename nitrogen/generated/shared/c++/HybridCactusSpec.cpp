@@ -23,6 +23,8 @@ namespace margelo::nitro::cactus {
       prototype.registerHybridMethod("reset", &HybridCactusSpec::reset);
       prototype.registerHybridMethod("stop", &HybridCactusSpec::stop);
       prototype.registerHybridMethod("destroy", &HybridCactusSpec::destroy);
+      prototype.registerHybridMethod("setTelemetryToken", &HybridCactusSpec::setTelemetryToken);
+      prototype.registerHybridMethod("setProKey", &HybridCactusSpec::setProKey);
     });
   }
 

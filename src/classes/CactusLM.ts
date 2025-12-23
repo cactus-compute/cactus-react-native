@@ -155,6 +155,7 @@ export class CactusLM {
 
   public async embed({
     text,
+    normalize = false,
   }: CactusLMEmbedParams): Promise<CactusLMEmbedResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
@@ -166,7 +167,8 @@ export class CactusLM {
     try {
       const embedding = await this.cactus.embed(
         text,
-        CactusLM.defaultEmbedBufferSize
+        CactusLM.defaultEmbedBufferSize,
+        normalize
       );
       Telemetry.logEmbedding(this.model, true);
       return { embedding };
