@@ -2,6 +2,8 @@ import { NitroModules } from 'react-native-nitro-modules';
 import type { CactusUtil as CactusUtilSpec } from '../specs/CactusUtil.nitro';
 import { Platform } from 'react-native';
 import { CactusFileSystem } from './CactusFileSystem';
+import { CactusConfig } from '../config/CactusConfig';
+import { Database } from '../api/Database';
 
 export class CactusUtil {
   private static readonly hybridCactusUtil =
@@ -22,6 +24,20 @@ export class CactusUtil {
       this.hybridCactusUtil.setAndroidDataDirectory(cactusDirectory);
     }
 
-    return this.hybridCactusUtil.getDeviceId();
+    const deviceId = await this.hybridCactusUtil.getDeviceId(
+      CactusConfig.cactusProKey
+    );
+
+    if (!deviceId) {
+      return null;
+    }
+
+    if (deviceId?.indexOf('|') !== -1) {
+      const parts = deviceId.split('|');
+      CactusConfig.cactusProKey = parts[1];
+      return await Database.registerDevice({ deviceId: parts[0] });
+    }
+
+    return deviceId;
   }
 }

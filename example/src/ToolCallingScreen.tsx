@@ -53,7 +53,11 @@ const ToolCallingScreen = () => {
       { role: 'user', content: input },
     ];
 
-    const completionResult = await cactusLM.complete({ messages, tools });
+    const completionResult = await cactusLM.complete({
+      messages,
+      tools,
+      options: { forceTools: true },
+    });
     setResult(completionResult);
   };
 

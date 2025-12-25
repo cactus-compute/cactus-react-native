@@ -7,7 +7,7 @@ extern "C" {
 
 const char* register_app(const char* encrypted_data);
 
-const char* get_device_id();
+const char* get_device_id(const char* current_token);
 
 // Helper function to free memory allocated by register_app
 void free_string(const char* str);

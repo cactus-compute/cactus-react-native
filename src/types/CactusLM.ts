@@ -20,6 +20,7 @@ export interface CompleteOptions {
   topK?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  forceTools?: boolean;
 }
 
 export interface Tool {

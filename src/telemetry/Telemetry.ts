@@ -110,7 +110,7 @@ export class Telemetry {
     try {
       this.deviceId =
         (await CactusUtil.getDeviceId()) ??
-        (await Database.registerDevice(deviceInfo));
+        (await Database.registerDevice({ deviceData: deviceInfo }));
     } catch (error) {
       console.log(error);
     }

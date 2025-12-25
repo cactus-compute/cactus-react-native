@@ -60,6 +60,7 @@ export class Cactus {
           top_k: options.topK,
           max_tokens: options.maxTokens,
           stop_sequences: options.stopSequences,
+          force_tools: options.forceTools,
         })
       : undefined;
     const toolsJson = JSON.stringify(tools);

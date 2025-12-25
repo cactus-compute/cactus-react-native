@@ -51,7 +51,7 @@ namespace margelo::nitro::cactus {
     public:
       // Methods
       virtual std::shared_ptr<Promise<std::string>> registerApp(const std::string& encryptedData) = 0;
-      virtual std::shared_ptr<Promise<std::optional<std::string>>> getDeviceId() = 0;
+      virtual std::shared_ptr<Promise<std::optional<std::string>>> getDeviceId(const std::optional<std::string>& token) = 0;
       virtual std::shared_ptr<Promise<void>> setAndroidDataDirectory(const std::string& dataDir) = 0;
 
     protected:

@@ -4,6 +4,7 @@ import type { LogRecord } from '../telemetry/Telemetry';
 import { packageVersion } from '../constants/packageVersion';
 import type { CactusModel } from '../types/CactusModel';
 import type { CactusSTTModel } from '../types/CactusSTTModel';
+import { CactusConfig } from '../config/CactusConfig';
 
 interface CactusModelResponse {
   name: string;
@@ -47,12 +48,23 @@ export class Database {
     }
   }
 
-  public static async registerDevice(device_data: DeviceInfo): Promise<string> {
+  public static async registerDevice({
+    deviceData,
+    deviceId,
+  }: {
+    deviceData?: DeviceInfo;
+    deviceId?: string;
+  }): Promise<string> {
     const response = await fetch(
       `${this.url}/functions/v1/device-registration`,
       {
         method: 'POST',
-        body: JSON.stringify({ device_data }),
+        body: JSON.stringify({
+          device_data: deviceData,
+          device_id: deviceId,
+          cactus_pro_key: CactusConfig.cactusProKey,
+        }),
+        headers: { 'Content-Type': 'application/json' },
       }
     );
 

@@ -23,12 +23,12 @@ HybridCactusUtil::registerApp(const std::string &encryptedData) {
 }
 
 std::shared_ptr<Promise<std::optional<std::string>>>
-HybridCactusUtil::getDeviceId() {
+HybridCactusUtil::getDeviceId(const std::optional<std::string>& token) {
   return Promise<std::optional<std::string>>::async(
-      [this]() -> std::optional<std::string> {
+      [this, token]() -> std::optional<std::string> {
         std::lock_guard<std::mutex> lock(this->_mutex);
 
-        const char *deviceId = get_device_id();
+        const char *deviceId = get_device_id(token ? token->c_str() : nullptr);
         return deviceId ? std::optional<std::string>(deviceId) : std::nullopt;
       });
 }
