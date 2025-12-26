@@ -47,10 +47,6 @@ public:
 
   std::shared_ptr<Promise<void>> destroy() override;
 
-  void setTelemetryToken(const std::string &token) override;
-
-  void setProKey(const std::string &proKey) override;
-
 private:
   cactus_model_t _model = nullptr;
   size_t _contextSize;

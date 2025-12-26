@@ -265,12 +265,4 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
   });
 }
 
-void HybridCactus::setTelemetryToken(const std::string &token) {
-  cactus_set_telemetry_token(token.c_str());
-}
-
-void HybridCactus::setProKey(const std::string &proKey) {
-  cactus_set_pro_key(proKey.c_str());
-}
-
 } // namespace margelo::nitro::cactus

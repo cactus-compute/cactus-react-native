@@ -30,6 +30,4 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
   reset(): Promise<void>;
   stop(): Promise<void>;
   destroy(): Promise<void>;
-  setTelemetryToken(token: string): void;
-  setProKey(proKey: string): void;
 }

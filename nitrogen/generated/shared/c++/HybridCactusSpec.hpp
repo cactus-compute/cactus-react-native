@@ -62,8 +62,6 @@ namespace margelo::nitro::cactus {
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> stop() = 0;
       virtual std::shared_ptr<Promise<void>> destroy() = 0;
-      virtual void setTelemetryToken(const std::string& token) = 0;
-      virtual void setProKey(const std::string& proKey) = 0;
 
     protected:
       // Hybrid Setup

@@ -181,12 +181,4 @@ export class Cactus {
   public destroy(): Promise<void> {
     return this.hybridCactus.destroy();
   }
-
-  public setTelemetryToken(token: string): void {
-    this.hybridCactus.setTelemetryToken(token);
-  }
-
-  public setProKey(proKey: string): void {
-    this.hybridCactus.setProKey(proKey);
-  }
 }
