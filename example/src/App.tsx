@@ -13,7 +13,6 @@ import ToolCallingScreen from './ToolCallingScreen';
 import RAGScreen from './RAGScreen';
 import STTScreen from './STTScreen';
 import ChatScreen from './ChatScreen';
-import PerformanceScreen from './PerformanceScreen';
 import IndexScreen from './IndexScreen';
 
 type Screen =
@@ -24,7 +23,6 @@ type Screen =
   | 'RAG'
   | 'STT'
   | 'Chat'
-  | 'Performance'
   | 'Index';
 
 const App = () => {
@@ -58,10 +56,6 @@ const App = () => {
     setSelectedScreen('Chat');
   };
 
-  const handleGoToPerformance = () => {
-    setSelectedScreen('Performance');
-  };
-
   const handleGoToIndex = () => {
     setSelectedScreen('Index');
   };
@@ -80,8 +74,6 @@ const App = () => {
         return <STTScreen />;
       case 'Chat':
         return <ChatScreen />;
-      case 'Performance':
-        return <PerformanceScreen />;
       case 'Index':
         return <IndexScreen />;
       default:
@@ -154,16 +146,6 @@ const App = () => {
             <Text style={styles.menuButtonTitle}>Chat</Text>
             <Text style={styles.menuButtonDescription}>
               Multi-turn conversation
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={handleGoToPerformance}
-          >
-            <Text style={styles.menuButtonTitle}>Performance</Text>
-            <Text style={styles.menuButtonDescription}>
-              Direct CactusLM class usage
             </Text>
           </TouchableOpacity>
 
