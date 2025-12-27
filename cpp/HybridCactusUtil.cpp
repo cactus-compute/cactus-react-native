@@ -23,7 +23,7 @@ HybridCactusUtil::registerApp(const std::string &encryptedData) {
 }
 
 std::shared_ptr<Promise<std::optional<std::string>>>
-HybridCactusUtil::getDeviceId(const std::optional<std::string>& token) {
+HybridCactusUtil::getDeviceId(const std::optional<std::string> &token) {
   return Promise<std::optional<std::string>>::async(
       [this, token]() -> std::optional<std::string> {
         std::lock_guard<std::mutex> lock(this->_mutex);

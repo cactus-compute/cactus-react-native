@@ -133,7 +133,11 @@ class HybridCactusFileSystem: HybridCactusFileSystemSpec {
       try FileManager.default.removeItem(at: modelURL)
     }
   }
-  
+
+  func getIndexPath(name: String) throws -> Promise<String> {
+    return Promise.async { try self.indexURL(name: name).path }
+  }
+
   private func cactusURL() throws -> URL {
     let documentsURL = try FileManager.default.url(
       for: .documentDirectory,
@@ -156,7 +160,24 @@ class HybridCactusFileSystem: HybridCactusFileSystemSpec {
   
   private func modelURL(model: String) throws -> URL {
     let cactusURL = try self.cactusURL()
-    return cactusURL.appendingPathComponent("models/\(model)")
+    let modelsURL = cactusURL.appendingPathComponent("models", isDirectory: true)
+
+    if !FileManager.default.fileExists(atPath: modelsURL.path) {
+      try FileManager.default.createDirectory(at: modelsURL, withIntermediateDirectories: true)
+    }
+
+    return modelsURL.appendingPathComponent(model)
+  }
+
+  private func indexURL(name: String) throws -> URL {
+    let cactusURL = try self.cactusURL()
+    let finalURL = cactusURL.appendingPathComponent("indexes/\(name)", isDirectory: true)
+
+    if !FileManager.default.fileExists(atPath: finalURL.path) {
+      try FileManager.default.createDirectory(at: finalURL, withIntermediateDirectories: true)
+    }
+
+    return finalURL
   }
 }
 

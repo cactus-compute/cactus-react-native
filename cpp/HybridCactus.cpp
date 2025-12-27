@@ -126,12 +126,12 @@ std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
         d = std::clamp(d, 0.0, 255.0);
         audioBytes.emplace_back(static_cast<uint8_t>(d));
       }
-      
-      result = cactus_transcribe(
-          this->_model, nullptr, prompt.c_str(), responseBuffer.data(),
-          responseBufferSize, optionsJson ? optionsJson->c_str() : nullptr,
-          cactusTokenCallback, &callbackCtx,
-          audioBytes.data(), audioBytes.size());
+
+      result = cactus_transcribe(this->_model, nullptr, prompt.c_str(),
+                                 responseBuffer.data(), responseBufferSize,
+                                 optionsJson ? optionsJson->c_str() : nullptr,
+                                 cactusTokenCallback, &callbackCtx,
+                                 audioBytes.data(), audioBytes.size());
     }
 
     if (result < 0) {

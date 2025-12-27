@@ -21,6 +21,7 @@
 #include "JFunc_void_double.hpp"
 #include "JHybridCactusImageSpec.hpp"
 #include "HybridCactus.hpp"
+#include "HybridCactusIndex.hpp"
 #include "HybridCactusUtil.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
 
@@ -47,6 +48,15 @@ int initialize(JavaVM* vm) {
                       "The HybridObject \"HybridCactus\" is not default-constructible! "
                       "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
         return std::make_shared<HybridCactus>();
+      }
+    );
+    HybridObjectRegistry::registerHybridObjectConstructor(
+      "CactusIndex",
+      []() -> std::shared_ptr<HybridObject> {
+        static_assert(std::is_default_constructible_v<HybridCactusIndex>,
+                      "The HybridObject \"HybridCactusIndex\" is not default-constructible! "
+                      "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
+        return std::make_shared<HybridCactusIndex>();
       }
     );
     HybridObjectRegistry::registerHybridObjectConstructor(

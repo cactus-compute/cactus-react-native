@@ -1,10 +1,12 @@
 // Classes
 export { CactusLM } from './classes/CactusLM';
 export { CactusSTT } from './classes/CactusSTT';
+export { CactusIndex } from './classes/CactusIndex';
 
 // Hooks
 export { useCactusLM } from './hooks/useCactusLM';
 export { useCactusSTT } from './hooks/useCactusSTT';
+export { useCactusIndex } from './hooks/useCactusIndex';
 
 // Types
 export type { CactusModel } from './types/CactusModel';
@@ -31,6 +33,16 @@ export type {
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
 } from './types/CactusSTT';
+export type {
+  CactusIndexParams,
+  CactusIndexAddParams,
+  CactusIndexGetParams,
+  CactusIndexGetResult,
+  IndexQueryOptions,
+  CactusIndexQueryParams,
+  CactusIndexQueryResult,
+  CactusIndexDeleteParams,
+} from './types/CactusIndex';
 
 // Config
 export { CactusConfig } from './config/CactusConfig';

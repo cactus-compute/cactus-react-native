@@ -11,6 +11,9 @@
     "Cactus": {
       "cpp": "HybridCactus"
     },
+    "CactusIndex": {
+      "cpp": "HybridCactusIndex"
+    },
     "CactusUtil": {
       "cpp": "HybridCactusUtil"
     },

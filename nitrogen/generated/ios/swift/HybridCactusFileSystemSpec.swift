@@ -24,6 +24,7 @@ public protocol HybridCactusFileSystemSpec_protocol: HybridObject {
   func getModelPath(model: String) throws -> Promise<String>
   func downloadModel(model: String, from: String, callback: ((_ progress: Double) -> Void)?) throws -> Promise<Void>
   func deleteModel(model: String) throws -> Promise<Void>
+  func getIndexPath(name: String) throws -> Promise<String>
 }
 
 public extension HybridCactusFileSystemSpec_protocol {

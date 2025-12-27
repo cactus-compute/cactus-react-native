@@ -63,6 +63,7 @@ namespace margelo::nitro::cactus {
     std::shared_ptr<Promise<std::string>> getModelPath(const std::string& model) override;
     std::shared_ptr<Promise<void>> downloadModel(const std::string& model, const std::string& from, const std::optional<std::function<void(double /* progress */)>>& callback) override;
     std::shared_ptr<Promise<void>> deleteModel(const std::string& model) override;
+    std::shared_ptr<Promise<std::string>> getIndexPath(const std::string& name) override;
 
   private:
     friend HybridBase;

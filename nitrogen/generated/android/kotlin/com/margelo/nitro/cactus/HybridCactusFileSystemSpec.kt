@@ -86,6 +86,10 @@ abstract class HybridCactusFileSystemSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun deleteModel(model: String): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getIndexPath(name: String): Promise<String>
 
   private external fun initHybrid(): HybridData
 

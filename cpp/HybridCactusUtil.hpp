@@ -14,7 +14,8 @@ public:
   std::shared_ptr<Promise<std::string>>
   registerApp(const std::string &encryptedData) override;
 
-  std::shared_ptr<Promise<std::optional<std::string>>> getDeviceId(const std::optional<std::string>& token) override;
+  std::shared_ptr<Promise<std::optional<std::string>>>
+  getDeviceId(const std::optional<std::string> &token) override;
 
   std::shared_ptr<Promise<void>>
   setAndroidDataDirectory(const std::string &dataDir) override;

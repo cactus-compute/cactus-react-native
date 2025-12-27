@@ -14,6 +14,7 @@ import RAGScreen from './RAGScreen';
 import STTScreen from './STTScreen';
 import ChatScreen from './ChatScreen';
 import PerformanceScreen from './PerformanceScreen';
+import IndexScreen from './IndexScreen';
 
 type Screen =
   | 'Home'
@@ -23,7 +24,8 @@ type Screen =
   | 'RAG'
   | 'STT'
   | 'Chat'
-  | 'Performance';
+  | 'Performance'
+  | 'Index';
 
 const App = () => {
   const [selectedScreen, setSelectedScreen] = useState<Screen>('Home');
@@ -60,6 +62,10 @@ const App = () => {
     setSelectedScreen('Performance');
   };
 
+  const handleGoToIndex = () => {
+    setSelectedScreen('Index');
+  };
+
   const renderScreen = () => {
     switch (selectedScreen) {
       case 'Completion':
@@ -76,6 +82,8 @@ const App = () => {
         return <ChatScreen />;
       case 'Performance':
         return <PerformanceScreen />;
+      case 'Index':
+        return <IndexScreen />;
       default:
         return null;
     }
@@ -156,6 +164,13 @@ const App = () => {
             <Text style={styles.menuButtonTitle}>Performance</Text>
             <Text style={styles.menuButtonDescription}>
               Direct CactusLM class usage
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuButton} onPress={handleGoToIndex}>
+            <Text style={styles.menuButtonTitle}>Vector Index</Text>
+            <Text style={styles.menuButtonDescription}>
+              CactusIndex with embeddings
             </Text>
           </TouchableOpacity>
         </ScrollView>
