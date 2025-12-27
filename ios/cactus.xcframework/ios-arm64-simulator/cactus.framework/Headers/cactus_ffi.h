@@ -34,6 +34,26 @@ CACTUS_FFI_EXPORT int cactus_complete(
     void* user_data
 );
 
+CACTUS_FFI_EXPORT int cactus_tokenize(
+    cactus_model_t model,
+    const char* text,
+    uint32_t* token_buffer,
+    size_t token_buffer_len,
+    size_t* out_token_len
+);
+
+CACTUS_FFI_EXPORT int cactus_score_window(
+    cactus_model_t model,
+    const uint32_t* tokens,
+    size_t token_len,
+    size_t start,
+    size_t end,
+    size_t context,
+    char* response_buffer,
+    size_t buffer_size
+);
+
+
 CACTUS_FFI_EXPORT int cactus_transcribe(
     cactus_model_t model,
     const char* audio_file_path,
@@ -84,6 +104,57 @@ CACTUS_FFI_EXPORT const char* cactus_get_last_error(void);
 CACTUS_FFI_EXPORT void cactus_set_telemetry_token(const char* token);
 
 CACTUS_FFI_EXPORT void cactus_set_pro_key(const char* pro_key);
+
+typedef void* cactus_index_t;
+
+CACTUS_FFI_EXPORT cactus_index_t cactus_index_init(
+    const char* index_dir,
+    size_t embedding_dim
+);
+
+CACTUS_FFI_EXPORT int cactus_index_add(
+    cactus_index_t index,
+    const int* ids,
+    const char** documents,
+    const char** metadatas,
+    const float** embeddings,
+    size_t count,
+    size_t embedding_dim
+);
+
+CACTUS_FFI_EXPORT int cactus_index_delete(
+    cactus_index_t index,
+    const int* ids,
+    size_t ids_count
+);
+
+CACTUS_FFI_EXPORT int cactus_index_get(
+    cactus_index_t index,
+    const int* ids,
+    size_t ids_count,
+    char** document_buffers,
+    size_t* document_buffer_sizes,
+    char** metadata_buffers,
+    size_t* metadata_buffer_sizes,
+    float** embedding_buffers,
+    size_t* embedding_buffer_sizes
+);
+
+CACTUS_FFI_EXPORT int cactus_index_query(
+    cactus_index_t index,
+    const float** embeddings,
+    size_t embeddings_count,
+    size_t embedding_dim,
+    const char* options_json,
+    int** id_buffers,
+    size_t* id_buffer_sizes,
+    float** score_buffers,
+    size_t* score_buffer_sizes
+);
+
+CACTUS_FFI_EXPORT int cactus_index_compact(cactus_index_t index);
+
+CACTUS_FFI_EXPORT void cactus_index_destroy(cactus_index_t index);
 
 #ifdef __cplusplus
 }

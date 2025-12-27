@@ -284,7 +284,7 @@ inline std::string format_tools_for_prompt(const std::vector<ToolFunction>& tool
     if (tools.empty()) return "";
     std::string formatted_tools_json;
     for (size_t i = 0; i < tools.size(); i++) {
-        if (i > 0) formatted_tools_json += ",\n";
+        if (i > 0) formatted_tools_json += "\n";
         formatted_tools_json += "{\"type\":\"function\",\"function\":{\"name\":\""
                               + tools[i].name
                               + "\",\"description\":\""

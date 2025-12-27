@@ -496,6 +496,10 @@ public:
 
     virtual void reset_cache() { kv_cache_.reset(); }
 
+    double score_tokens_window_logprob(const std::vector<uint32_t>& tokens, size_t start, size_t end, size_t context, size_t* tokens_scored);
+
+
+
     void set_cache_window(size_t window_size, size_t sink_size = 4) { kv_cache_.set_window_size(window_size, sink_size); }
 
     bool load_npu_prefill(const std::string& model_path);
