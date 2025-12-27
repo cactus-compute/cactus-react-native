@@ -3,6 +3,10 @@ import type {
   CactusLMDownloadParams,
   CactusLMCompleteParams,
   CactusLMCompleteResult,
+  CactusLMTokenizeParams,
+  CactusLMTokenizeResult,
+  CactusLMScoreWindowParams,
+  CactusLMScoreWindowResult,
   CactusLMEmbedParams,
   CactusLMEmbedResult,
   CactusLMImageEmbedParams,
@@ -151,6 +155,23 @@ export class CactusLM {
     } finally {
       this.isGenerating = false;
     }
+  }
+
+  public async tokenize({
+    text,
+  }: CactusLMTokenizeParams): Promise<CactusLMTokenizeResult> {
+    return { tokens: await this.cactus.tokenize(text) };
+  }
+
+  public async scoreWindow({
+    tokens,
+    start,
+    end,
+    context,
+  }: CactusLMScoreWindowParams): Promise<CactusLMScoreWindowResult> {
+    return {
+      score: await this.cactus.scoreWindow(tokens, start, end, context),
+    };
   }
 
   public async embed({

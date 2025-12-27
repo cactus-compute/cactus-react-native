@@ -78,6 +78,71 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
   });
 }
 
+std::shared_ptr<Promise<std::vector<double>>>
+HybridCactus::tokenize(const std::string &text) {
+  return Promise<std::vector<double>>::async([this,
+                                              text]() -> std::vector<double> {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_model) {
+      throw std::runtime_error("Cactus model is not initialized");
+    }
+
+    std::vector<uint32_t> tokenBuffer(text.length() * 2 + 16);
+    size_t outTokenLen = 0;
+
+    int result = cactus_tokenize(this->_model, text.c_str(), tokenBuffer.data(),
+                                 tokenBuffer.size(), &outTokenLen);
+
+    if (result < 0) {
+      throw std::runtime_error("Cactus tokenize failed: " +
+                               std::string(cactus_get_last_error()));
+    }
+
+    tokenBuffer.resize(outTokenLen);
+
+    return std::vector<double>(tokenBuffer.begin(), tokenBuffer.end());
+  });
+}
+
+std::shared_ptr<Promise<std::string>>
+HybridCactus::scoreWindow(const std::vector<double> &tokens, double start,
+                          double end, double context) {
+  return Promise<std::string>::async(
+      [this, tokens, start, end, context]() -> std::string {
+        std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+        if (!this->_model) {
+          throw std::runtime_error("Cactus model is not initialized");
+        }
+
+        std::vector<uint32_t> tokenBuffer;
+        tokenBuffer.reserve(tokens.size());
+        for (double d : tokens) {
+          tokenBuffer.emplace_back(static_cast<uint32_t>(d));
+        }
+
+        std::string responseBuffer;
+        responseBuffer.resize(1024);
+
+        int result = cactus_score_window(
+            this->_model, tokenBuffer.data(), tokenBuffer.size(),
+            static_cast<size_t>(start), static_cast<size_t>(end),
+            static_cast<size_t>(context), responseBuffer.data(),
+            responseBuffer.size());
+
+        if (result < 0) {
+          throw std::runtime_error("Cactus score window failed: " +
+                                   std::string(cactus_get_last_error()));
+        }
+
+        // Remove null terminator
+        responseBuffer.resize(strlen(responseBuffer.c_str()));
+
+        return responseBuffer;
+      });
+}
+
 std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
     const std::variant<std::vector<double>, std::string> &audio,
     const std::string &prompt, double responseBufferSize,

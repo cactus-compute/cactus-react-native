@@ -61,6 +61,25 @@ export interface CactusLMCompleteResult {
   totalTokens: number;
 }
 
+export interface CactusLMTokenizeParams {
+  text: string;
+}
+
+export interface CactusLMTokenizeResult {
+  tokens: number[];
+}
+
+export interface CactusLMScoreWindowParams {
+  tokens: number[];
+  start: number;
+  end: number;
+  context: number;
+}
+
+export interface CactusLMScoreWindowResult {
+  score: number;
+}
+
 export interface CactusLMEmbedParams {
   text: string;
   normalize?: boolean;

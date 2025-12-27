@@ -4,12 +4,16 @@ import { CactusFileSystem } from '../native';
 import { getErrorMessage } from '../utils/error';
 import type {
   CactusLMParams,
+  CactusLMCompleteParams,
   CactusLMCompleteResult,
+  CactusLMTokenizeParams,
+  CactusLMTokenizeResult,
+  CactusLMScoreWindowParams,
+  CactusLMScoreWindowResult,
   CactusLMEmbedParams,
   CactusLMEmbedResult,
   CactusLMImageEmbedParams,
   CactusLMImageEmbedResult,
-  CactusLMCompleteParams,
   CactusLMDownloadParams,
 } from '../types/CactusLM';
 import type { CactusModel } from '../types/CactusModel';
@@ -201,6 +205,57 @@ export const useCactusLM = ({
     [cactusLM, isGenerating]
   );
 
+  const tokenize = useCallback(
+    async ({
+      text,
+    }: CactusLMTokenizeParams): Promise<CactusLMTokenizeResult> => {
+      if (isGenerating) {
+        const message = 'CactusLM is already generating';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setError(null);
+      setIsGenerating(true);
+      try {
+        return await cactusLM.tokenize({ text });
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [cactusLM, isGenerating]
+  );
+
+  const scoreWindow = useCallback(
+    async ({
+      tokens,
+      start,
+      end,
+      context,
+    }: CactusLMScoreWindowParams): Promise<CactusLMScoreWindowResult> => {
+      if (isGenerating) {
+        const message = 'CactusLM is already generating';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setError(null);
+      setIsGenerating(true);
+      try {
+        return await cactusLM.scoreWindow({ tokens, start, end, context });
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [cactusLM, isGenerating]
+  );
+
   const embed = useCallback(
     async ({
       text,
@@ -306,6 +361,8 @@ export const useCactusLM = ({
     download,
     init,
     complete,
+    tokenize,
+    scoreWindow,
     embed,
     imageEmbed,
     reset,

@@ -23,6 +23,13 @@ public:
                                              double /* tokenId */)>> &callback)
       override;
 
+  std::shared_ptr<Promise<std::vector<double>>>
+  tokenize(const std::string &text) override;
+
+  std::shared_ptr<Promise<std::string>>
+  scoreWindow(const std::vector<double> &tokens, double start, double end,
+              double context) override;
+
   std::shared_ptr<Promise<std::string>> transcribe(
       const std::variant<std::vector<double>, std::string> &audio,
       const std::string &prompt, double responseBufferSize,

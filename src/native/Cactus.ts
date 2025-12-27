@@ -92,6 +92,30 @@ export class Cactus {
     }
   }
 
+  public tokenize(text: string): Promise<number[]> {
+    return this.hybridCactus.tokenize(text);
+  }
+
+  public async scoreWindow(
+    tokens: number[],
+    start: number,
+    end: number,
+    context: number
+  ): Promise<number> {
+    const response = await this.hybridCactus.scoreWindow(
+      tokens,
+      start,
+      end,
+      context
+    );
+    try {
+      const parsed = JSON.parse(response);
+      return parsed.logprob;
+    } catch {
+      throw new Error('Unable to parse score window response');
+    }
+  }
+
   public async transcribe(
     audio: string | number[],
     prompt: string,
