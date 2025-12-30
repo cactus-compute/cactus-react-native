@@ -854,7 +854,7 @@ const App = () => {
 **`new CactusLM(params?: CactusLMParams)`**
 
 **Parameters:**
-- `model` - Model slug (default: `'qwen3-0.6'`).
+- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6'`).
 - `contextSize` - Context window size (default: `2048`).
 - `corpusDir` - Directory containing text files for RAG (default: `undefined`).
 
@@ -883,6 +883,7 @@ Performs text completion with optional streaming and tool support. Automatically
   - `topK` - Top-K sampling limit (default: model-optimized).
   - `maxTokens` - Maximum number of tokens to generate (default: `512`).
   - `stopSequences` - Array of strings to stop generation (default: `undefined`).
+  - `forceTools` - Force the model to call one of the provided tools (default: `false`).
 - `tools` - Array of `Tool` objects for function calling (default: `undefined`).
 - `onToken` - Callback for streaming tokens.
 - `mode` - Completion mode: `'local'` | `'hybrid'` (default: `'local'`)
@@ -970,7 +971,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 **`new CactusSTT(params?: CactusSTTParams)`**
 
 **Parameters:**
-- `model` - Model slug (default: `'whisper-small'`).
+- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6'`).
 - `contextSize` - Context window size (default: `2048`).
 
 #### Methods
@@ -1166,6 +1167,7 @@ interface CompleteOptions {
   topK?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  forceTools?: boolean;
 }
 ```
 
