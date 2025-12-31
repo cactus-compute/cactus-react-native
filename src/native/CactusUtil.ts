@@ -12,7 +12,7 @@ export class CactusUtil {
   public static async registerApp(encryptedData: string): Promise<string> {
     if (Platform.OS === 'android') {
       const cactusDirectory = await CactusFileSystem.getCactusDirectory();
-      this.hybridCactusUtil.setAndroidDataDirectory(cactusDirectory);
+      await this.hybridCactusUtil.setAndroidDataDirectory(cactusDirectory);
     }
 
     return this.hybridCactusUtil.registerApp(encryptedData);
@@ -21,7 +21,7 @@ export class CactusUtil {
   public static async getDeviceId(): Promise<string | null> {
     if (Platform.OS === 'android') {
       const cactusDirectory = await CactusFileSystem.getCactusDirectory();
-      this.hybridCactusUtil.setAndroidDataDirectory(cactusDirectory);
+      await this.hybridCactusUtil.setAndroidDataDirectory(cactusDirectory);
     }
 
     const deviceId = await this.hybridCactusUtil.getDeviceId(
