@@ -18,4 +18,6 @@ export interface CactusFileSystem
     callback?: (progress: number) => void
   ): Promise<void>;
   deleteModel(model: string): Promise<void>;
+  // Index
+  getIndexPath(name: string): Promise<string>;
 }

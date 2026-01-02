@@ -162,7 +162,7 @@ export const useCactusSTT = ({
 
   const transcribe = useCallback(
     async ({
-      audioFilePath,
+      audio,
       prompt,
       options,
       onToken,
@@ -178,7 +178,7 @@ export const useCactusSTT = ({
       setIsGenerating(true);
       try {
         return await cactusSTT.transcribe({
-          audioFilePath,
+          audio,
           prompt,
           options,
           onToken: (token) => {

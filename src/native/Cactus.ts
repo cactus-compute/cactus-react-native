@@ -32,15 +32,9 @@ export class Cactus {
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusLMCompleteResult> {
     const messagesInternal: Message[] = [];
-    for (let i = 0; i < messages.length; i++) {
-      const message = messages[i]!;
-      const isLastMessage = i === messages.length - 1;
-
-      if (!message.images || !isLastMessage) {
-        messagesInternal.push({
-          ...message,
-          images: undefined,
-        });
+    for (const message of messages) {
+      if (!message.images) {
+        messagesInternal.push(message);
         continue;
       }
 
@@ -66,6 +60,7 @@ export class Cactus {
           top_k: options.topK,
           max_tokens: options.maxTokens,
           stop_sequences: options.stopSequences,
+          force_tools: options.forceTools,
         })
       : undefined;
     const toolsJson = JSON.stringify(tools);
@@ -97,13 +92,41 @@ export class Cactus {
     }
   }
 
+  public tokenize(text: string): Promise<number[]> {
+    return this.hybridCactus.tokenize(text);
+  }
+
+  public async scoreWindow(
+    tokens: number[],
+    start: number,
+    end: number,
+    context: number
+  ): Promise<number> {
+    const response = await this.hybridCactus.scoreWindow(
+      tokens,
+      start,
+      end,
+      context
+    );
+    try {
+      const parsed = JSON.parse(response);
+      return parsed.logprob;
+    } catch {
+      throw new Error('Unable to parse score window response');
+    }
+  }
+
   public async transcribe(
-    audioFilePath: string,
+    audio: string | number[],
     prompt: string,
     responseBufferSize: number,
     options?: TranscribeOptions,
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusSTTTranscribeResult> {
+    if (typeof audio === 'string') {
+      audio = audio.replace('file://', '');
+    }
+
     const optionsJson = options
       ? JSON.stringify({
           temperature: options.temperature,
@@ -115,7 +138,7 @@ export class Cactus {
       : undefined;
 
     const response = await this.hybridCactus.transcribe(
-      audioFilePath.replace('file://', ''),
+      audio,
       prompt,
       responseBufferSize,
       optionsJson,
@@ -140,8 +163,12 @@ export class Cactus {
     }
   }
 
-  public embed(text: string, embeddingBufferSize: number): Promise<number[]> {
-    return this.hybridCactus.embed(text, embeddingBufferSize);
+  public embed(
+    text: string,
+    embeddingBufferSize: number,
+    normalize: boolean
+  ): Promise<number[]> {
+    return this.hybridCactus.embed(text, embeddingBufferSize, normalize);
   }
 
   public async imageEmbed(

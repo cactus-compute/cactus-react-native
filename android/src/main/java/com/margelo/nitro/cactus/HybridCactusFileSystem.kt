@@ -209,6 +209,8 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
       modelFile.deleteRecursively()
     }
 
+  override fun getIndexPath(name: String): Promise<String> = Promise.async { indexFile(name).absolutePath }
+
   private fun cactusFile(): File {
     val cactusDir = File(context.filesDir, "cactus")
 
@@ -221,6 +223,23 @@ class HybridCactusFileSystem : HybridCactusFileSystemSpec() {
 
   private fun modelFile(model: String): File {
     val cactusDir = cactusFile()
-    return File(cactusDir, "models/$model")
+    val modelsDir = File(cactusDir, "models")
+
+    if (!modelsDir.exists()) {
+      modelsDir.mkdirs()
+    }
+
+    return File(modelsDir, model)
+  }
+
+  private fun indexFile(name: String): File {
+    val cactusDir = cactusFile()
+    val finalDir = File(cactusDir, "indexes/$name")
+
+    if (!finalDir.exists()) {
+      finalDir.mkdirs()
+    }
+
+    return finalDir
   }
 }

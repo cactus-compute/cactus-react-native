@@ -5,4 +5,7 @@ export class CactusConfig {
 
   // Hybrid mode
   public static cactusToken?: string;
+
+  // Pro features
+  public static cactusProKey?: string;
 }

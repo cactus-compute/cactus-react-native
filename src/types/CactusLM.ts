@@ -20,6 +20,7 @@ export interface CompleteOptions {
   topK?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  forceTools?: boolean;
 }
 
 export interface Tool {
@@ -60,8 +61,28 @@ export interface CactusLMCompleteResult {
   totalTokens: number;
 }
 
+export interface CactusLMTokenizeParams {
+  text: string;
+}
+
+export interface CactusLMTokenizeResult {
+  tokens: number[];
+}
+
+export interface CactusLMScoreWindowParams {
+  tokens: number[];
+  start: number;
+  end: number;
+  context: number;
+}
+
+export interface CactusLMScoreWindowResult {
+  score: number;
+}
+
 export interface CactusLMEmbedParams {
   text: string;
+  normalize?: boolean;
 }
 
 export interface CactusLMEmbedResult {

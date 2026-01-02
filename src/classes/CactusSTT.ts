@@ -42,6 +42,11 @@ export class CactusSTT {
   public async download({
     onProgress,
   }: CactusSTTDownloadParams = {}): Promise<void> {
+    if (this.isModelPath(this.model)) {
+      onProgress?.(1.0);
+      return;
+    }
+
     if (this.isDownloading) {
       throw new Error('CactusSTT is already downloading');
     }
@@ -69,11 +74,15 @@ export class CactusSTT {
       return;
     }
 
-    if (!(await CactusFileSystem.modelExists(this.model))) {
-      throw new Error(`Model "${this.model}" is not downloaded`);
+    let modelPath: string;
+    if (this.isModelPath(this.model)) {
+      modelPath = this.model.replace('file://', '');
+    } else {
+      if (!(await CactusFileSystem.modelExists(this.model))) {
+        throw new Error(`Model "${this.model}" is not downloaded`);
+      }
+      modelPath = await CactusFileSystem.getModelPath(this.model);
     }
-
-    const modelPath = await CactusFileSystem.getModelPath(this.model);
 
     try {
       await this.cactus.init(modelPath, this.contextSize);
@@ -86,7 +95,7 @@ export class CactusSTT {
   }
 
   public async transcribe({
-    audioFilePath,
+    audio,
     prompt,
     options,
     onToken,
@@ -107,7 +116,7 @@ export class CactusSTT {
     this.isGenerating = true;
     try {
       const result = await this.cactus.transcribe(
-        audioFilePath,
+        audio,
         prompt,
         responseBufferSize,
         options,
@@ -179,5 +188,9 @@ export class CactusSTT {
       model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
     }
     return models;
+  }
+
+  private isModelPath(model: string): boolean {
+    return model.startsWith('file://') || model.startsWith('/');
   }
 }

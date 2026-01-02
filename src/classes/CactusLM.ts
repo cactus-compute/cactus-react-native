@@ -3,6 +3,10 @@ import type {
   CactusLMDownloadParams,
   CactusLMCompleteParams,
   CactusLMCompleteResult,
+  CactusLMTokenizeParams,
+  CactusLMTokenizeResult,
+  CactusLMScoreWindowParams,
+  CactusLMScoreWindowResult,
   CactusLMEmbedParams,
   CactusLMEmbedResult,
   CactusLMImageEmbedParams,
@@ -46,6 +50,11 @@ export class CactusLM {
   public async download({
     onProgress,
   }: CactusLMDownloadParams = {}): Promise<void> {
+    if (this.isModelPath(this.model)) {
+      onProgress?.(1.0);
+      return;
+    }
+
     if (this.isDownloading) {
       throw new Error('CactusLM is already downloading');
     }
@@ -73,11 +82,15 @@ export class CactusLM {
       return;
     }
 
-    if (!(await CactusFileSystem.modelExists(this.model))) {
-      throw new Error(`Model "${this.model}" is not downloaded`);
+    let modelPath: string;
+    if (this.isModelPath(this.model)) {
+      modelPath = this.model.replace('file://', '');
+    } else {
+      if (!(await CactusFileSystem.modelExists(this.model))) {
+        throw new Error(`Model "${this.model}" is not downloaded`);
+      }
+      modelPath = await CactusFileSystem.getModelPath(this.model);
     }
-
-    const modelPath = await CactusFileSystem.getModelPath(this.model);
 
     try {
       await this.cactus.init(modelPath, this.contextSize, this.corpusDir);
@@ -153,8 +166,26 @@ export class CactusLM {
     }
   }
 
+  public async tokenize({
+    text,
+  }: CactusLMTokenizeParams): Promise<CactusLMTokenizeResult> {
+    return { tokens: await this.cactus.tokenize(text) };
+  }
+
+  public async scoreWindow({
+    tokens,
+    start,
+    end,
+    context,
+  }: CactusLMScoreWindowParams): Promise<CactusLMScoreWindowResult> {
+    return {
+      score: await this.cactus.scoreWindow(tokens, start, end, context),
+    };
+  }
+
   public async embed({
     text,
+    normalize = false,
   }: CactusLMEmbedParams): Promise<CactusLMEmbedResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
@@ -166,7 +197,8 @@ export class CactusLM {
     try {
       const embedding = await this.cactus.embed(
         text,
-        CactusLM.defaultEmbedBufferSize
+        CactusLM.defaultEmbedBufferSize,
+        normalize
       );
       Telemetry.logEmbedding(this.model, true);
       return { embedding };
@@ -229,5 +261,9 @@ export class CactusLM {
       model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
     }
     return models;
+  }
+
+  private isModelPath(model: string): boolean {
+    return model.startsWith('file://') || model.startsWith('/');
   }
 }

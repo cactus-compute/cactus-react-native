@@ -13,14 +13,25 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
     toolsJson?: string,
     callback?: (token: string, tokenId: number) => void
   ): Promise<string>;
+  tokenize(text: string): Promise<number[]>;
+  scoreWindow(
+    tokens: number[],
+    start: number,
+    end: number,
+    context: number
+  ): Promise<string>;
   transcribe(
-    audioFilePath: string,
+    audio: string | number[],
     prompt: string,
     responseBufferSize: number,
     optionsJson?: string,
     callback?: (token: string, tokenId: number) => void
   ): Promise<string>;
-  embed(text: string, embeddingBufferSize: number): Promise<number[]>;
+  embed(
+    text: string,
+    embeddingBufferSize: number,
+    normalize: boolean
+  ): Promise<number[]>;
   imageEmbed(imagePath: string, embeddingBufferSize: number): Promise<number[]>;
   audioEmbed(audioPath: string, embeddingBufferSize: number): Promise<number[]>;
   reset(): Promise<void>;

@@ -33,6 +33,10 @@ export class CactusFileSystem {
     return this.hybridCactusFileSystem.getModelPath(model);
   }
 
+  public static getIndexPath(name: string): Promise<string> {
+    return this.hybridCactusFileSystem.getIndexPath(name);
+  }
+
   public static downloadModel(
     model: string,
     url: string,

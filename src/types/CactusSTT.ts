@@ -16,7 +16,7 @@ export interface TranscribeOptions {
 }
 
 export interface CactusSTTTranscribeParams {
-  audioFilePath: string;
+  audio: string | number[];
   prompt?: string;
   options?: TranscribeOptions;
   onToken?: (token: string) => void;

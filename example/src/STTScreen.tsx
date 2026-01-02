@@ -56,7 +56,7 @@ const STTScreen = () => {
       return;
     }
     const transcribeResult = await cactusSTT.transcribe({
-      audioFilePath: audioFile,
+      audio: audioFile,
     });
     setResult(transcribeResult);
   };
