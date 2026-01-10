@@ -58,6 +58,11 @@ namespace margelo::nitro::cactus {
       virtual std::shared_ptr<Promise<std::vector<double>>> tokenize(const std::string& text) = 0;
       virtual std::shared_ptr<Promise<std::string>> scoreWindow(const std::vector<double>& tokens, double start, double end, double context) = 0;
       virtual std::shared_ptr<Promise<std::string>> transcribe(const std::variant<std::vector<double>, std::string>& audio, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
+      virtual std::shared_ptr<Promise<void>> streamTranscribeInit() = 0;
+      virtual std::shared_ptr<Promise<void>> streamTranscribeInsert(const std::vector<double>& audio) = 0;
+      virtual std::shared_ptr<Promise<std::string>> streamTranscribeProcess(const std::optional<std::string>& optionsJson) = 0;
+      virtual std::shared_ptr<Promise<std::string>> streamTranscribeFinalize() = 0;
+      virtual std::shared_ptr<Promise<void>> streamTranscribeDestroy() = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> embed(const std::string& text, double embeddingBufferSize, bool normalize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> imageEmbed(const std::string& imagePath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> audioEmbed(const std::string& audioPath, double embeddingBufferSize) = 0;

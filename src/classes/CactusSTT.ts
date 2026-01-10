@@ -6,6 +6,10 @@ import type {
   CactusSTTParams,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
+  CactusSTTStreamTranscribeInsertParams,
+  CactusSTTStreamTranscribeProcessParams,
+  CactusSTTStreamTranscribeProcessResult,
+  CactusSTTStreamTranscribeFinalizeResult,
 } from '../types/CactusSTT';
 import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
@@ -22,6 +26,8 @@ export class CactusSTT {
   private isDownloading = false;
   private isInitialized = false;
   private isGenerating = false;
+
+  private isStreamTranscribeInitialized = false;
 
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultContextSize = 2048;
@@ -137,6 +143,76 @@ export class CactusSTT {
     }
   }
 
+  public async streamTranscribeInit(): Promise<void> {
+    if (this.isStreamTranscribeInitialized) {
+      return;
+    }
+
+    await this.init();
+
+    try {
+      await this.cactus.streamTranscribeInit();
+      this.isStreamTranscribeInitialized = true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeInsert({
+    audio,
+  }: CactusSTTStreamTranscribeInsertParams): Promise<void> {
+    if (!this.isStreamTranscribeInitialized) {
+      throw new Error('CactusSTT stream transcribe is not initialized');
+    }
+
+    try {
+      await this.cactus.streamTranscribeInsert(audio);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeProcess({
+    options,
+  }: CactusSTTStreamTranscribeProcessParams = {}): Promise<CactusSTTStreamTranscribeProcessResult> {
+    if (!this.isStreamTranscribeInitialized) {
+      throw new Error('CactusSTT stream transcribe is not initialized');
+    }
+
+    try {
+      const result = await this.cactus.streamTranscribeProcess(options);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult> {
+    if (!this.isStreamTranscribeInitialized) {
+      throw new Error('CactusSTT stream transcribe is not initialized');
+    }
+
+    try {
+      const result = await this.cactus.streamTranscribeFinalize();
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeDestroy(): Promise<void> {
+    if (!this.isStreamTranscribeInitialized) {
+      return;
+    }
+
+    try {
+      await this.cactus.streamTranscribeDestroy();
+      this.isStreamTranscribeInitialized = false;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   public async audioEmbed({
     audioPath,
   }: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult> {
@@ -177,6 +253,7 @@ export class CactusSTT {
     }
 
     await this.stop();
+    await this.streamTranscribeDestroy();
     await this.cactus.destroy();
 
     this.isInitialized = false;

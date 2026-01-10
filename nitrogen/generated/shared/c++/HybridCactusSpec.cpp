@@ -19,6 +19,11 @@ namespace margelo::nitro::cactus {
       prototype.registerHybridMethod("tokenize", &HybridCactusSpec::tokenize);
       prototype.registerHybridMethod("scoreWindow", &HybridCactusSpec::scoreWindow);
       prototype.registerHybridMethod("transcribe", &HybridCactusSpec::transcribe);
+      prototype.registerHybridMethod("streamTranscribeInit", &HybridCactusSpec::streamTranscribeInit);
+      prototype.registerHybridMethod("streamTranscribeInsert", &HybridCactusSpec::streamTranscribeInsert);
+      prototype.registerHybridMethod("streamTranscribeProcess", &HybridCactusSpec::streamTranscribeProcess);
+      prototype.registerHybridMethod("streamTranscribeFinalize", &HybridCactusSpec::streamTranscribeFinalize);
+      prototype.registerHybridMethod("streamTranscribeDestroy", &HybridCactusSpec::streamTranscribeDestroy);
       prototype.registerHybridMethod("embed", &HybridCactusSpec::embed);
       prototype.registerHybridMethod("imageEmbed", &HybridCactusSpec::imageEmbed);
       prototype.registerHybridMethod("audioEmbed", &HybridCactusSpec::audioEmbed);

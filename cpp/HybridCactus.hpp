@@ -38,6 +38,18 @@ public:
                                              double /* tokenId */)>> &callback)
       override;
 
+  std::shared_ptr<Promise<void>> streamTranscribeInit() override;
+
+  std::shared_ptr<Promise<void>>
+  streamTranscribeInsert(const std::vector<double> &audio) override;
+
+  std::shared_ptr<Promise<std::string>> streamTranscribeProcess(
+      const std::optional<std::string> &optionsJson) override;
+
+  std::shared_ptr<Promise<std::string>> streamTranscribeFinalize() override;
+
+  std::shared_ptr<Promise<void>> streamTranscribeDestroy() override;
+
   std::shared_ptr<Promise<std::vector<double>>>
   embed(const std::string &text, double embeddingBufferSize,
         bool normalize) override;
@@ -56,6 +68,7 @@ public:
 
 private:
   cactus_model_t _model = nullptr;
+  cactus_stream_transcribe_t _streamTranscribe = nullptr;
   size_t _contextSize;
 
   std::mutex _modelMutex;

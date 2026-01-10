@@ -559,6 +559,60 @@ const App = () => {
 };
 ```
 
+### Streaming Transcription
+
+Transcribe audio in real-time with incremental results.
+
+#### Class
+
+```typescript
+import { CactusSTT } from 'cactus-react-native';
+
+const cactusSTT = new CactusSTT({ model: 'whisper-small' });
+
+await cactusSTT.streamTranscribeInit();
+
+const audioChunk: number[] = [/* PCM samples */];
+await cactusSTT.streamTranscribeInsert({ audio: audioChunk });
+
+const result = await cactusSTT.streamTranscribeProcess({
+  options: { confirmationThreshold: 0.95 }
+});
+
+console.log('Confirmed:', result.confirmed);
+console.log('Pending:', result.pending);
+
+const final = await cactusSTT.streamTranscribeFinalize();
+await cactusSTT.streamTranscribeDestroy();
+```
+
+#### Hook
+
+```tsx
+import { useCactusSTT } from 'cactus-react-native';
+
+const App = () => {
+  const cactusSTT = useCactusSTT({ model: 'whisper-small' });
+
+  const handleStream = async () => {
+    await cactusSTT.streamTranscribeInit();
+
+    const audioChunk: number[] = [/* PCM samples */];
+    await cactusSTT.streamTranscribeInsert({ audio: audioChunk });
+
+    await cactusSTT.streamTranscribeProcess();
+  };
+
+  return (
+    <>
+      <Button onPress={handleStream} title="Stream" />
+      <Text>{cactusSTT.streamTranscribeConfirmed}</Text>
+      <Text>{cactusSTT.streamTranscribePending}</Text>
+    </>
+  );
+};
+```
+
 ### Audio Embedding
 
 Generate embeddings from audio files for audio understanding.
@@ -1009,6 +1063,33 @@ Generates embeddings for the given audio file. Automatically calls `init()` if n
 **Parameters:**
 - `audioPath` - Path to the audio file.
 
+**`streamTranscribeInit(): Promise<void>`**
+
+Initializes a streaming transcription session. Automatically calls `init()` if not already initialized.
+
+**`streamTranscribeInsert(params: CactusSTTStreamTranscribeInsertParams): Promise<void>`**
+
+Inserts PCM audio samples into the streaming buffer.
+
+**Parameters:**
+- `audio` - Array of PCM audio samples.
+
+**`streamTranscribeProcess(params?: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>`**
+
+Processes accumulated audio and returns incremental transcription results.
+
+**Parameters:**
+- `options` - Processing options:
+  - `confirmationThreshold` - Confidence threshold for confirming text.
+
+**`streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult>`**
+
+Finalizes the streaming session and returns remaining transcription text.
+
+**`streamTranscribeDestroy(): Promise<void>`**
+
+Destroys the streaming session and releases resources.
+
 **`stop(): Promise<void>`**
 
 Stops ongoing transcription or embedding generation.
@@ -1032,7 +1113,10 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 #### State
 
 - `transcription: string` - Current transcription text. Automatically accumulated during streaming. Cleared before each new transcription and when calling `reset()` or `destroy()`.
+- `streamTranscribeConfirmed: string` - Accumulated confirmed text from streaming transcription.
+- `streamTranscribePending: string` - Current pending text from streaming transcription.
 - `isGenerating: boolean` - Whether the model is currently generating (transcription or embedding). Both operations share this flag.
+- `isStreamTranscribing: boolean` - Whether a streaming transcription session is active.
 - `isInitializing: boolean` - Whether the model is initializing.
 - `isDownloaded: boolean` - Whether the model is downloaded locally. Automatically checked when the hook mounts or model changes.
 - `isDownloading: boolean` - Whether the model is being downloaded.
@@ -1045,6 +1129,11 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 - `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
 - `transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>` - Transcribes audio to text. Automatically accumulates tokens in the `transcription` state during streaming. Sets `isGenerating` to `true` while generating. Clears `transcription` before starting.
 - `audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>` - Generates embeddings for the given audio. Sets `isGenerating` to `true` during operation.
+- `streamTranscribeInit(): Promise<void>` - Initializes a streaming transcription session. Sets `isStreamTranscribing` to `true`.
+- `streamTranscribeInsert(params: CactusSTTStreamTranscribeInsertParams): Promise<void>` - Inserts audio chunks into the streaming buffer.
+- `streamTranscribeProcess(params?: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>` - Processes audio and returns results. Automatically accumulates confirmed text in `streamTranscribeConfirmed` and updates `streamTranscribePending`.
+- `streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult>` - Finalizes streaming and returns remaining text.
+- `streamTranscribeDestroy(): Promise<void>` - Destroys the streaming session. Sets `isStreamTranscribing` to `false`.
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state. Also clears the `transcription` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription` state. Automatically called when the component unmounts.
@@ -1388,6 +1477,49 @@ interface CactusSTTAudioEmbedParams {
 ```typescript
 interface CactusSTTAudioEmbedResult {
   embedding: number[];
+}
+```
+
+### CactusSTTStreamTranscribeInsertParams
+
+```typescript
+interface CactusSTTStreamTranscribeInsertParams {
+  audio: number[];
+}
+```
+
+### StreamTranscribeProcessOptions
+
+```typescript
+interface StreamTranscribeProcessOptions {
+  confirmationThreshold?: number;
+}
+```
+
+### CactusSTTStreamTranscribeProcessParams
+
+```typescript
+interface CactusSTTStreamTranscribeProcessParams {
+  options?: StreamTranscribeProcessOptions;
+}
+```
+
+### CactusSTTStreamTranscribeProcessResult
+
+```typescript
+interface CactusSTTStreamTranscribeProcessResult {
+  success: boolean;
+  confirmed: string;
+  pending: string;
+}
+```
+
+### CactusSTTStreamTranscribeFinalizeResult
+
+```typescript
+interface CactusSTTStreamTranscribeFinalizeResult {
+  success: boolean;
+  confirmed: string;
 }
 ```
 

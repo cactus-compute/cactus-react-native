@@ -36,6 +36,11 @@ export type {
   CactusSTTTranscribeResult,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
+  CactusSTTStreamTranscribeInsertParams,
+  StreamTranscribeProcessOptions,
+  CactusSTTStreamTranscribeProcessParams,
+  CactusSTTStreamTranscribeProcessResult,
+  CactusSTTStreamTranscribeFinalizeResult,
 } from './types/CactusSTT';
 export type {
   CactusIndexParams,

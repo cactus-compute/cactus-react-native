@@ -10,6 +10,9 @@ import type {
 import type {
   CactusSTTTranscribeResult,
   TranscribeOptions,
+  CactusSTTStreamTranscribeProcessResult,
+  StreamTranscribeProcessOptions,
+  CactusSTTStreamTranscribeFinalizeResult,
 } from '../types/CactusSTT';
 
 export class Cactus {
@@ -161,6 +164,58 @@ export class Cactus {
     } catch {
       throw new Error('Unable to parse transcription response');
     }
+  }
+
+  public streamTranscribeInit(): Promise<void> {
+    return this.hybridCactus.streamTranscribeInit();
+  }
+
+  public streamTranscribeInsert(audio: number[]): Promise<void> {
+    return this.hybridCactus.streamTranscribeInsert(audio);
+  }
+
+  public async streamTranscribeProcess(
+    options?: StreamTranscribeProcessOptions
+  ): Promise<CactusSTTStreamTranscribeProcessResult> {
+    const optionsJson = options
+      ? JSON.stringify({
+          confirmation_threshold: options.confirmationThreshold,
+        })
+      : undefined;
+
+    const response =
+      await this.hybridCactus.streamTranscribeProcess(optionsJson);
+
+    try {
+      const parsed = JSON.parse(response);
+
+      return {
+        success: parsed.success,
+        confirmed: parsed.confirmed,
+        pending: parsed.pending,
+      };
+    } catch {
+      throw new Error('Unable to parse stream transcribe process response');
+    }
+  }
+
+  public async streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult> {
+    const response = await this.hybridCactus.streamTranscribeFinalize();
+
+    try {
+      const parsed = JSON.parse(response);
+
+      return {
+        success: parsed.success,
+        confirmed: parsed.confirmed,
+      };
+    } catch {
+      throw new Error('Unable to parse stream transcribe finalize response');
+    }
+  }
+
+  public streamTranscribeDestroy(): Promise<void> {
+    return this.hybridCactus.streamTranscribeDestroy();
   }
 
   public embed(

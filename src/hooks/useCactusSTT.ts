@@ -9,6 +9,10 @@ import type {
   CactusSTTDownloadParams,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
+  CactusSTTStreamTranscribeInsertParams,
+  CactusSTTStreamTranscribeProcessParams,
+  CactusSTTStreamTranscribeProcessResult,
+  CactusSTTStreamTranscribeFinalizeResult,
 } from '../types/CactusSTT';
 import type { CactusSTTModel } from '../types/CactusSTTModel';
 
@@ -22,7 +26,11 @@ export const useCactusSTT = ({
 
   // State
   const [transcription, setTranscription] = useState('');
+  const [streamTranscribeConfirmed, setStreamTranscribeConfirmed] =
+    useState('');
+  const [streamTranscribePending, setStreamTranscribePending] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isStreamTranscribing, setIsStreamTranscribing] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -40,7 +48,10 @@ export const useCactusSTT = ({
     setCactusSTT(new CactusSTT({ model, contextSize }));
 
     setTranscription('');
+    setStreamTranscribeConfirmed('');
+    setStreamTranscribePending('');
     setIsGenerating(false);
+    setIsStreamTranscribing(false);
     setIsInitializing(false);
     setIsDownloaded(false);
     setIsDownloading(false);
@@ -220,6 +231,103 @@ export const useCactusSTT = ({
     [cactusSTT, isGenerating]
   );
 
+  const streamTranscribeInit = useCallback(async () => {
+    if (isStreamTranscribing) {
+      return;
+    }
+
+    setError(null);
+    setStreamTranscribeConfirmed('');
+    setStreamTranscribePending('');
+    setIsStreamTranscribing(true);
+    try {
+      await cactusSTT.streamTranscribeInit();
+    } catch (e) {
+      setError(getErrorMessage(e));
+      setIsStreamTranscribing(false);
+      throw e;
+    }
+  }, [cactusSTT, isStreamTranscribing]);
+
+  const streamTranscribeInsert = useCallback(
+    async ({ audio }: CactusSTTStreamTranscribeInsertParams): Promise<void> => {
+      if (!isStreamTranscribing) {
+        const message =
+          'Stream transcribe is not initialized. Call streamTranscribeInit() first.';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setError(null);
+      try {
+        await cactusSTT.streamTranscribeInsert({ audio });
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      }
+    },
+    [cactusSTT, isStreamTranscribing]
+  );
+
+  const streamTranscribeProcess = useCallback(
+    async ({
+      options,
+    }: CactusSTTStreamTranscribeProcessParams = {}): Promise<CactusSTTStreamTranscribeProcessResult> => {
+      if (!isStreamTranscribing) {
+        const message =
+          'Stream transcribe is not initialized. Call streamTranscribeInit() first.';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setError(null);
+      try {
+        const result = await cactusSTT.streamTranscribeProcess({ options });
+        setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
+        setStreamTranscribePending(result.pending);
+        return result;
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      }
+    },
+    [cactusSTT, isStreamTranscribing]
+  );
+
+  const streamTranscribeFinalize =
+    useCallback(async (): Promise<CactusSTTStreamTranscribeFinalizeResult> => {
+      if (!isStreamTranscribing) {
+        const message =
+          'Stream transcribe is not initialized. Call streamTranscribeInit() first.';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setError(null);
+      try {
+        const result = await cactusSTT.streamTranscribeFinalize();
+        setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
+        setStreamTranscribePending('');
+        return result;
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      }
+    }, [cactusSTT, isStreamTranscribing]);
+
+  const streamTranscribeDestroy = useCallback(async (): Promise<void> => {
+    setError(null);
+    try {
+      await cactusSTT.streamTranscribeDestroy();
+    } catch (e) {
+      setError(getErrorMessage(e));
+      throw e;
+    } finally {
+      setIsStreamTranscribing(false);
+      setStreamTranscribePending('');
+    }
+  }, [cactusSTT]);
+
   const stop = useCallback(async () => {
     setError(null);
     try {
@@ -251,6 +359,9 @@ export const useCactusSTT = ({
       throw e;
     } finally {
       setTranscription('');
+      setStreamTranscribeConfirmed('');
+      setStreamTranscribePending('');
+      setIsStreamTranscribing(false);
     }
   }, [cactusSTT]);
 
@@ -266,7 +377,10 @@ export const useCactusSTT = ({
 
   return {
     transcription,
+    streamTranscribeConfirmed,
+    streamTranscribePending,
     isGenerating,
+    isStreamTranscribing,
     isInitializing,
     isDownloaded,
     isDownloading,
@@ -277,6 +391,11 @@ export const useCactusSTT = ({
     init,
     transcribe,
     audioEmbed,
+    streamTranscribeInit,
+    streamTranscribeInsert,
+    streamTranscribeProcess,
+    streamTranscribeFinalize,
+    streamTranscribeDestroy,
     reset,
     stop,
     destroy,
