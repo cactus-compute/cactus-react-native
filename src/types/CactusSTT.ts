@@ -1,6 +1,9 @@
+import { type ModelOptions } from './common';
+
 export interface CactusSTTParams {
   model?: string;
   contextSize?: number;
+  modelOptions?: ModelOptions;
 }
 
 export interface CactusSTTDownloadParams {

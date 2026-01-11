@@ -14,7 +14,7 @@ import type {
   CactusSTTStreamTranscribeProcessResult,
   CactusSTTStreamTranscribeFinalizeResult,
 } from '../types/CactusSTT';
-import type { CactusSTTModel } from '../types/CactusSTTModel';
+import type { CactusModel } from '../types/common';
 
 export const useCactusSTT = ({
   model = 'whisper-small',
@@ -365,7 +365,7 @@ export const useCactusSTT = ({
     }
   }, [cactusSTT]);
 
-  const getModels = useCallback(async (): Promise<CactusSTTModel[]> => {
+  const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
       return await cactusSTT.getModels();

@@ -16,7 +16,7 @@ import type {
   CactusLMImageEmbedResult,
   CactusLMDownloadParams,
 } from '../types/CactusLM';
-import type { CactusModel } from '../types/CactusModel';
+import type { CactusModel } from '../types/common';
 
 export const useCactusLM = ({
   model = 'qwen3-0.6',

@@ -13,15 +13,16 @@ import type {
 } from '../types/CactusSTT';
 import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
-import { Database } from '../api/Database';
 import { getErrorMessage } from '../utils/error';
-import type { CactusSTTModel } from '../types/CactusSTTModel';
+import models from '../models';
+import type { ModelOptions, CactusModel } from '../types/common';
 
 export class CactusSTT {
   private readonly cactus = new Cactus();
 
   private readonly model: string;
   private readonly contextSize: number;
+  private readonly modelOptions: ModelOptions;
 
   private isDownloading = false;
   private isInitialized = false;
@@ -31,6 +32,10 @@ export class CactusSTT {
 
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultContextSize = 2048;
+  private static readonly defaultModelOptions: ModelOptions = {
+    quantization: 'int4',
+    pro: false,
+  };
   private static readonly defaultPrompt =
     '<|startoftranscript|><|en|><|transcribe|><|notimestamps|>';
   private static readonly defaultTranscribeOptions = {
@@ -38,11 +43,12 @@ export class CactusSTT {
   };
   private static readonly defaultEmbedBufferSize = 4096;
 
-  constructor({ model, contextSize }: CactusSTTParams = {}) {
+  constructor({ model, contextSize, modelOptions }: CactusSTTParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
 
     this.model = model ?? CactusSTT.defaultModel;
     this.contextSize = contextSize ?? CactusSTT.defaultContextSize;
+    this.modelOptions = modelOptions ?? CactusSTT.defaultModelOptions;
   }
 
   public async download({
@@ -64,12 +70,17 @@ export class CactusSTT {
 
     this.isDownloading = true;
     try {
-      const model = await Database.getSTTModel(this.model);
-      await CactusFileSystem.downloadModel(
-        this.model,
-        model.downloadUrl,
-        onProgress
-      );
+      const modelConfig =
+        models[this.model]?.quantization[this.modelOptions.quantization];
+      const url = this.modelOptions.pro
+        ? modelConfig?.pro?.apple
+        : modelConfig?.url;
+
+      if (!url) {
+        throw new Error(`Model ${this.model} with specified options not found`);
+      }
+
+      await CactusFileSystem.downloadModel(this.model, url, onProgress);
     } finally {
       this.isDownloading = false;
     }
@@ -259,12 +270,8 @@ export class CactusSTT {
     this.isInitialized = false;
   }
 
-  public async getModels(): Promise<CactusSTTModel[]> {
-    const models = await Database.getSTTModels();
-    for (const model of models) {
-      model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
-    }
-    return models;
+  public getModels(): CactusModel[] {
+    return Object.values(models).filter((model) => model.speech);
   }
 
   private isModelPath(model: string): boolean {
