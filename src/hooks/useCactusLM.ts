@@ -19,12 +19,16 @@ import type {
 import type { CactusModel } from '../types/common';
 
 export const useCactusLM = ({
-  model = 'qwen3-0.6',
+  model = 'qwen3-0.6b',
   contextSize = 2048,
   corpusDir = undefined,
+  options = {
+    quantization: 'int4',
+    pro: false,
+  },
 }: CactusLMParams = {}) => {
   const [cactusLM, setCactusLM] = useState(
-    () => new CactusLM({ model, contextSize, corpusDir })
+    () => new CactusLM({ model, contextSize, corpusDir, options })
   );
 
   // State
@@ -44,7 +48,17 @@ export const useCactusLM = ({
   }, [model]);
 
   useEffect(() => {
-    setCactusLM(new CactusLM({ model, contextSize, corpusDir }));
+    setCactusLM(
+      new CactusLM({
+        model,
+        contextSize,
+        corpusDir,
+        options: {
+          quantization: options.quantization,
+          pro: options.pro,
+        },
+      })
+    );
 
     setCompletion('');
     setIsGenerating(false);
@@ -73,7 +87,7 @@ export const useCactusLM = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize, corpusDir]);
+  }, [model, contextSize, corpusDir, options.quantization, options.pro]);
 
   useEffect(() => {
     return () => {

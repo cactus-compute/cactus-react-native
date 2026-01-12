@@ -78,6 +78,32 @@ const App = () => {
 
 ## Language Model
 
+### Model Options
+
+Choose model quantization and NPU acceleration with Pro models.
+
+```typescript
+import { CactusLM } from 'cactus-react-native';
+
+// Use int4 for faster performance and smaller file size
+const cactusLM = new CactusLM({
+  model: 'lfm2-vl-450m',
+  options: {
+    quantization: 'int4', // 'int4' or 'int8'
+    pro: false
+  }
+});
+
+// Use pro models for NPU acceleration
+const cactusPro = new CactusLM({
+  model: 'lfm2-vl-450m',
+  options: {
+    quantization: 'int4',
+    pro: true
+  }
+});
+```
+
 ### Completion
 
 Generate text responses from the model by providing a conversation history.
@@ -908,9 +934,12 @@ const App = () => {
 **`new CactusLM(params?: CactusLMParams)`**
 
 **Parameters:**
-- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6'`).
+- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6b'`).
 - `contextSize` - Context window size (default: `2048`).
 - `corpusDir` - Directory containing text files for RAG (default: `undefined`).
+- `options` - Model options for quantization and NPU acceleration:
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
 
@@ -986,9 +1015,9 @@ Resets the model's internal state, clearing any cached context. Automatically ca
 
 Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
-**`getModels(): Promise<CactusModel[]>`**
+**`getModels(): CactusModel[]`**
 
-Fetches available models from the database and checks their download status.
+Returns available models.
 
 ### useCactusLM Hook
 
@@ -1016,7 +1045,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state, clearing cached context. Also clears the `completion` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `completion` state. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status.
+- `getModels(): CactusModel[]` - Returns available models.
 
 ### CactusSTT Class
 
@@ -1025,8 +1054,11 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 **`new CactusSTT(params?: CactusSTTParams)`**
 
 **Parameters:**
-- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6'`).
+- `model` - Model slug or absolute path to Cactus model (default: `'whisper-small'`).
 - `contextSize` - Context window size (default: `2048`).
+- `options` - Model options for quantization and NPU acceleration:
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
 
@@ -1102,9 +1134,9 @@ Resets the model's internal state. Automatically calls `stop()` first.
 
 Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
-**`getModels(): Promise<CactusSTTModel[]>`**
+**`getModels(): CactusModel[]`**
 
-Fetches available STT models from the database and checks their download status.
+Returns available speech-to-text models.
 
 ### useCactusSTT Hook
 
@@ -1137,7 +1169,7 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state. Also clears the `transcription` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription` state. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusSTTModel[]>` - Fetches available STT models from the database and checks their download status.
+- `getModels(): CactusModel[]` - Returns available speech-to-text models.
 
 ### CactusIndex Class
 
@@ -1226,6 +1258,7 @@ interface CactusLMParams {
   model?: string;
   contextSize?: number;
   corpusDir?: string;
+  options?: ModelOptions;
 }
 ```
 
@@ -1382,28 +1415,36 @@ interface CactusLMImageEmbedResult {
 
 ```typescript
 interface CactusModel {
-  name: string;
-  slug: string;
-  quantization: number;
-  sizeMb: number;
-  downloadUrl: string;
-  supportsToolCalling: boolean;
-  supportsVision: boolean;
-  supportsCompletion: boolean;
-  createdAt: Date;
-  isDownloaded: boolean;
+  completion: boolean;
+  tools: boolean;
+  vision: boolean;
+  embed: boolean;
+  speech: boolean;
+  quantization: {
+    int4: {
+      sizeMb: number;
+      url: string;
+      pro?: {
+        apple: string;
+      };
+    };
+    int8: {
+      sizeMb: number;
+      url: string;
+      pro?: {
+        apple: string;
+      };
+    };
+  };
 }
 ```
 
-### CactusSTTModel
+### ModelOptions
 
 ```typescript
-interface CactusSTTModel {
-  slug: string;
-  sizeMb: number;
-  downloadUrl: string;
-  createdAt: Date;
-  isDownloaded: boolean;
+interface ModelOptions {
+  quantization: 'int4' | 'int8';
+  pro: boolean;
 }
 ```
 
@@ -1413,6 +1454,7 @@ interface CactusSTTModel {
 interface CactusSTTParams {
   model?: string;
   contextSize?: number;
+  options?: ModelOptions;
 }
 ```
 
@@ -1621,6 +1663,17 @@ import { CactusConfig } from 'cactus-react-native';
 
 // Set your Cactus token for hybrid mode
 CactusConfig.cactusToken = 'your-cactus-token-here';
+```
+
+### Cactus Pro
+
+Enable NPU-accelerated models for enhanced performance.
+
+```typescript
+import { CactusConfig } from 'cactus-react-native';
+
+// Set your Cactus Pro key
+CactusConfig.cactusProKey = 'your-cactus-pro-key-here';
 ```
 
 ## Performance Tips

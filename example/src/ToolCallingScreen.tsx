@@ -33,7 +33,7 @@ const tools: Tool[] = [
 ];
 
 const ToolCallingScreen = () => {
-  const cactusLM = useCactusLM({ model: 'qwen3-0.6' });
+  const cactusLM = useCactusLM({ model: 'qwen3-0.6b' });
   const [input, setInput] = useState("What's the weather in San Francisco?");
   const [result, setResult] = useState<CactusLMCompleteResult | null>(null);
 

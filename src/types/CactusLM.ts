@@ -4,7 +4,7 @@ export interface CactusLMParams {
   model?: string;
   contextSize?: number;
   corpusDir?: string;
-  modelOptions?: ModelOptions;
+  options?: ModelOptions;
 }
 
 export interface CactusLMDownloadParams {

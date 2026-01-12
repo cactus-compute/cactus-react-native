@@ -12,8 +12,12 @@ import VisionScreen from './VisionScreen';
 import ToolCallingScreen from './ToolCallingScreen';
 import RAGScreen from './RAGScreen';
 import STTScreen from './STTScreen';
+import StreamSTTScreen from './StreamSTTScreen';
 import ChatScreen from './ChatScreen';
 import IndexScreen from './IndexScreen';
+import { CactusConfig } from 'cactus-react-native';
+
+CactusConfig.cactusProKey = '';
 
 type Screen =
   | 'Home'
@@ -22,6 +26,7 @@ type Screen =
   | 'ToolCalling'
   | 'RAG'
   | 'STT'
+  | 'StreamSTT'
   | 'Chat'
   | 'Index';
 
@@ -52,6 +57,10 @@ const App = () => {
     setSelectedScreen('STT');
   };
 
+  const handleGoToStreamSTT = () => {
+    setSelectedScreen('StreamSTT');
+  };
+
   const handleGoToChat = () => {
     setSelectedScreen('Chat');
   };
@@ -72,6 +81,8 @@ const App = () => {
         return <RAGScreen />;
       case 'STT':
         return <STTScreen />;
+      case 'StreamSTT':
+        return <StreamSTTScreen />;
       case 'Chat':
         return <ChatScreen />;
       case 'Index':
@@ -139,6 +150,16 @@ const App = () => {
             <Text style={styles.menuButtonTitle}>Speech-to-Text</Text>
             <Text style={styles.menuButtonDescription}>
               Audio transcription and embeddings
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handleGoToStreamSTT}
+          >
+            <Text style={styles.menuButtonTitle}>Stream Transcription</Text>
+            <Text style={styles.menuButtonDescription}>
+              Real-time streaming audio transcription
             </Text>
           </TouchableOpacity>
 

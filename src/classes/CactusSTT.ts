@@ -22,7 +22,7 @@ export class CactusSTT {
 
   private readonly model: string;
   private readonly contextSize: number;
-  private readonly modelOptions: ModelOptions;
+  private readonly options: ModelOptions;
 
   private isDownloading = false;
   private isInitialized = false;
@@ -32,7 +32,7 @@ export class CactusSTT {
 
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultContextSize = 2048;
-  private static readonly defaultModelOptions: ModelOptions = {
+  private static readonly defaultOptions: ModelOptions = {
     quantization: 'int4',
     pro: false,
   };
@@ -43,12 +43,15 @@ export class CactusSTT {
   };
   private static readonly defaultEmbedBufferSize = 4096;
 
-  constructor({ model, contextSize, modelOptions }: CactusSTTParams = {}) {
+  constructor({ model, contextSize, options }: CactusSTTParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
 
     this.model = model ?? CactusSTT.defaultModel;
     this.contextSize = contextSize ?? CactusSTT.defaultContextSize;
-    this.modelOptions = modelOptions ?? CactusSTT.defaultModelOptions;
+    this.options = {
+      ...CactusSTT.defaultOptions,
+      ...options,
+    };
   }
 
   public async download({
@@ -63,7 +66,7 @@ export class CactusSTT {
       throw new Error('CactusSTT is already downloading');
     }
 
-    if (await CactusFileSystem.modelExists(this.model)) {
+    if (await CactusFileSystem.modelExists(this.getModelName())) {
       onProgress?.(1.0);
       return;
     }
@@ -71,16 +74,18 @@ export class CactusSTT {
     this.isDownloading = true;
     try {
       const modelConfig =
-        models[this.model]?.quantization[this.modelOptions.quantization];
-      const url = this.modelOptions.pro
-        ? modelConfig?.pro?.apple
-        : modelConfig?.url;
+        models[this.model]?.quantization[this.options.quantization!];
+      const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
         throw new Error(`Model ${this.model} with specified options not found`);
       }
 
-      await CactusFileSystem.downloadModel(this.model, url, onProgress);
+      await CactusFileSystem.downloadModel(
+        this.getModelName(),
+        url,
+        onProgress
+      );
     } finally {
       this.isDownloading = false;
     }
@@ -95,10 +100,10 @@ export class CactusSTT {
     if (this.isModelPath(this.model)) {
       modelPath = this.model.replace('file://', '');
     } else {
-      if (!(await CactusFileSystem.modelExists(this.model))) {
+      if (!(await CactusFileSystem.modelExists(this.getModelName()))) {
         throw new Error(`Model "${this.model}" is not downloaded`);
       }
-      modelPath = await CactusFileSystem.getModelPath(this.model);
+      modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }
 
     try {
@@ -276,5 +281,9 @@ export class CactusSTT {
 
   private isModelPath(model: string): boolean {
     return model.startsWith('file://') || model.startsWith('/');
+  }
+
+  private getModelName(): string {
+    return `${this.model}-${this.options.quantization}${this.options.pro ? '-pro' : ''}`;
   }
 }

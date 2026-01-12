@@ -3,7 +3,7 @@ import { type ModelOptions } from './common';
 export interface CactusSTTParams {
   model?: string;
   contextSize?: number;
-  modelOptions?: ModelOptions;
+  options?: ModelOptions;
 }
 
 export interface CactusSTTDownloadParams {

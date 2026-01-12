@@ -19,9 +19,13 @@ import type { CactusModel } from '../types/common';
 export const useCactusSTT = ({
   model = 'whisper-small',
   contextSize = 2048,
+  options = {
+    quantization: 'int4',
+    pro: false,
+  },
 }: CactusSTTParams = {}) => {
   const [cactusSTT, setCactusSTT] = useState(
-    () => new CactusSTT({ model, contextSize })
+    () => new CactusSTT({ model, contextSize, options })
   );
 
   // State
@@ -45,7 +49,16 @@ export const useCactusSTT = ({
   }, [model]);
 
   useEffect(() => {
-    setCactusSTT(new CactusSTT({ model, contextSize }));
+    setCactusSTT(
+      new CactusSTT({
+        model,
+        contextSize,
+        options: {
+          quantization: options.quantization,
+          pro: options.pro,
+        },
+      })
+    );
 
     setTranscription('');
     setStreamTranscribeConfirmed('');
@@ -77,7 +90,7 @@ export const useCactusSTT = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize]);
+  }, [model, contextSize, options.quantization, options.pro]);
 
   useEffect(() => {
     return () => {
@@ -251,13 +264,6 @@ export const useCactusSTT = ({
 
   const streamTranscribeInsert = useCallback(
     async ({ audio }: CactusSTTStreamTranscribeInsertParams): Promise<void> => {
-      if (!isStreamTranscribing) {
-        const message =
-          'Stream transcribe is not initialized. Call streamTranscribeInit() first.';
-        setError(message);
-        throw new Error(message);
-      }
-
       setError(null);
       try {
         await cactusSTT.streamTranscribeInsert({ audio });
@@ -266,20 +272,13 @@ export const useCactusSTT = ({
         throw e;
       }
     },
-    [cactusSTT, isStreamTranscribing]
+    [cactusSTT]
   );
 
   const streamTranscribeProcess = useCallback(
     async ({
       options,
     }: CactusSTTStreamTranscribeProcessParams = {}): Promise<CactusSTTStreamTranscribeProcessResult> => {
-      if (!isStreamTranscribing) {
-        const message =
-          'Stream transcribe is not initialized. Call streamTranscribeInit() first.';
-        setError(message);
-        throw new Error(message);
-      }
-
       setError(null);
       try {
         const result = await cactusSTT.streamTranscribeProcess({ options });
@@ -291,29 +290,23 @@ export const useCactusSTT = ({
         throw e;
       }
     },
-    [cactusSTT, isStreamTranscribing]
+    [cactusSTT]
   );
 
   const streamTranscribeFinalize =
     useCallback(async (): Promise<CactusSTTStreamTranscribeFinalizeResult> => {
-      if (!isStreamTranscribing) {
-        const message =
-          'Stream transcribe is not initialized. Call streamTranscribeInit() first.';
-        setError(message);
-        throw new Error(message);
-      }
-
       setError(null);
       try {
         const result = await cactusSTT.streamTranscribeFinalize();
         setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
         setStreamTranscribePending('');
+        setIsStreamTranscribing(false);
         return result;
       } catch (e) {
         setError(getErrorMessage(e));
         throw e;
       }
-    }, [cactusSTT, isStreamTranscribing]);
+    }, [cactusSTT]);
 
   const streamTranscribeDestroy = useCallback(async (): Promise<void> => {
     setError(null);

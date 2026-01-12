@@ -26,15 +26,15 @@ export class CactusLM {
   private readonly model: string;
   private readonly contextSize: number;
   private readonly corpusDir?: string;
-  private readonly modelOptions: ModelOptions;
+  private readonly options: ModelOptions;
 
   private isDownloading = false;
   private isInitialized = false;
   private isGenerating = false;
 
-  private static readonly defaultModel = 'qwen3-0.6';
+  private static readonly defaultModel = 'qwen3-0.6b';
   private static readonly defaultContextSize = 2048;
-  private static readonly defaultModelOptions: ModelOptions = {
+  private static readonly defaultOptions: ModelOptions = {
     quantization: 'int4',
     pro: false,
   };
@@ -44,18 +44,16 @@ export class CactusLM {
   private static readonly defaultCompleteMode = 'local';
   private static readonly defaultEmbedBufferSize = 2048;
 
-  constructor({
-    model,
-    contextSize,
-    corpusDir,
-    modelOptions,
-  }: CactusLMParams = {}) {
+  constructor({ model, contextSize, corpusDir, options }: CactusLMParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
 
     this.model = model ?? CactusLM.defaultModel;
     this.contextSize = contextSize ?? CactusLM.defaultContextSize;
     this.corpusDir = corpusDir;
-    this.modelOptions = modelOptions ?? CactusLM.defaultModelOptions;
+    this.options = {
+      ...CactusLM.defaultOptions,
+      ...options,
+    };
   }
 
   public async download({
@@ -70,7 +68,7 @@ export class CactusLM {
       throw new Error('CactusLM is already downloading');
     }
 
-    if (await CactusFileSystem.modelExists(this.model)) {
+    if (await CactusFileSystem.modelExists(this.getModelName())) {
       onProgress?.(1.0);
       return;
     }
@@ -78,16 +76,18 @@ export class CactusLM {
     this.isDownloading = true;
     try {
       const modelConfig =
-        models[this.model]?.quantization[this.modelOptions.quantization];
-      const url = this.modelOptions.pro
-        ? modelConfig?.pro?.apple
-        : modelConfig?.url;
+        models[this.model]?.quantization[this.options.quantization!];
+      const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
         throw new Error(`Model ${this.model} with specified options not found`);
       }
 
-      await CactusFileSystem.downloadModel(this.model, url, onProgress);
+      await CactusFileSystem.downloadModel(
+        this.getModelName(),
+        url,
+        onProgress
+      );
     } finally {
       this.isDownloading = false;
     }
@@ -102,10 +102,10 @@ export class CactusLM {
     if (this.isModelPath(this.model)) {
       modelPath = this.model.replace('file://', '');
     } else {
-      if (!(await CactusFileSystem.modelExists(this.model))) {
+      if (!(await CactusFileSystem.modelExists(this.getModelName()))) {
         throw new Error(`Model "${this.model}" is not downloaded`);
       }
-      modelPath = await CactusFileSystem.getModelPath(this.model);
+      modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }
 
     try {
@@ -277,5 +277,9 @@ export class CactusLM {
 
   private isModelPath(model: string): boolean {
     return model.startsWith('file://') || model.startsWith('/');
+  }
+
+  private getModelName(): string {
+    return `${this.model}-${this.options.quantization}${this.options.pro ? '-pro' : ''}`;
   }
 }
