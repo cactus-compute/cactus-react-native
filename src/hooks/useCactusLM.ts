@@ -22,13 +22,13 @@ export const useCactusLM = ({
   model = 'qwen3-0.6b',
   contextSize = 2048,
   corpusDir = undefined,
-  options = {
-    quantization: 'int4',
+  options: modelOptions = {
+    quantization: undefined,
     pro: false,
   },
 }: CactusLMParams = {}) => {
   const [cactusLM, setCactusLM] = useState(
-    () => new CactusLM({ model, contextSize, corpusDir, options })
+    () => new CactusLM({ model, contextSize, corpusDir, options: modelOptions })
   );
 
   // State
@@ -54,8 +54,8 @@ export const useCactusLM = ({
         contextSize,
         corpusDir,
         options: {
-          quantization: options.quantization,
-          pro: options.pro,
+          quantization: modelOptions.quantization,
+          pro: modelOptions.pro,
         },
       })
     );
@@ -87,7 +87,13 @@ export const useCactusLM = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize, corpusDir, options.quantization, options.pro]);
+  }, [
+    model,
+    contextSize,
+    corpusDir,
+    modelOptions.quantization,
+    modelOptions.pro,
+  ]);
 
   useEffect(() => {
     return () => {

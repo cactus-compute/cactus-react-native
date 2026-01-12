@@ -1021,7 +1021,7 @@ Returns available models.
 
 ### useCactusLM Hook
 
-The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When model parameters (`model`, `contextSize`, or `corpusDir`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
+The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When model parameters (`model`, `contextSize`, `corpusDir`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
 
 #### State
 
@@ -1140,7 +1140,7 @@ Returns available speech-to-text models.
 
 ### useCactusSTT Hook
 
-The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When model parameters (`model`, `contextSize`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
+The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When model parameters (`model`, `contextSize`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
 
 #### State
 

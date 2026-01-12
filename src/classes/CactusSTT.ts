@@ -15,14 +15,17 @@ import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
 import { getErrorMessage } from '../utils/error';
 import models from '../models';
-import type { ModelOptions, CactusModel } from '../types/common';
+import type { CactusModel } from '../types/common';
 
 export class CactusSTT {
   private readonly cactus = new Cactus();
 
   private readonly model: string;
   private readonly contextSize: number;
-  private readonly options: ModelOptions;
+  private readonly options: {
+    quantization: 'int4' | 'int8';
+    pro: boolean;
+  };
 
   private isDownloading = false;
   private isInitialized = false;
@@ -32,8 +35,8 @@ export class CactusSTT {
 
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultContextSize = 2048;
-  private static readonly defaultOptions: ModelOptions = {
-    quantization: 'int4',
+  private static readonly defaultOptions = {
+    quantization: 'int4' as const,
     pro: false,
   };
   private static readonly defaultPrompt =
@@ -49,8 +52,9 @@ export class CactusSTT {
     this.model = model ?? CactusSTT.defaultModel;
     this.contextSize = contextSize ?? CactusSTT.defaultContextSize;
     this.options = {
-      ...CactusSTT.defaultOptions,
-      ...options,
+      quantization:
+        options?.quantization ?? CactusSTT.defaultOptions.quantization,
+      pro: options?.pro ?? CactusSTT.defaultOptions.pro,
     };
   }
 
@@ -67,6 +71,7 @@ export class CactusSTT {
     }
 
     if (await CactusFileSystem.modelExists(this.getModelName())) {
+      console.log('Model already exists', this.getModelName());
       onProgress?.(1.0);
       return;
     }
@@ -74,7 +79,7 @@ export class CactusSTT {
     this.isDownloading = true;
     try {
       const modelConfig =
-        models[this.model]?.quantization[this.options.quantization!];
+        models[this.model]?.quantization[this.options.quantization];
       const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
@@ -101,7 +106,10 @@ export class CactusSTT {
       modelPath = this.model.replace('file://', '');
     } else {
       if (!(await CactusFileSystem.modelExists(this.getModelName()))) {
-        throw new Error(`Model "${this.model}" is not downloaded`);
+        console.log('Model does not exist', this.getModelName());
+        throw new Error(
+          `Model "${this.model}" with options ${JSON.stringify(this.options)} is not downloaded`
+        );
       }
       modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }

@@ -18,7 +18,7 @@ import { CactusConfig } from '../config/CactusConfig';
 import { getErrorMessage } from '../utils/error';
 import { RemoteLM } from '../api/RemoteLM';
 import models from '../models';
-import type { ModelOptions, CactusModel } from '../types/common';
+import type { CactusModel } from '../types/common';
 
 export class CactusLM {
   private readonly cactus = new Cactus();
@@ -26,7 +26,10 @@ export class CactusLM {
   private readonly model: string;
   private readonly contextSize: number;
   private readonly corpusDir?: string;
-  private readonly options: ModelOptions;
+  private readonly options: {
+    quantization: 'int4' | 'int8';
+    pro: boolean;
+  };
 
   private isDownloading = false;
   private isInitialized = false;
@@ -34,9 +37,15 @@ export class CactusLM {
 
   private static readonly defaultModel = 'qwen3-0.6b';
   private static readonly defaultContextSize = 2048;
-  private static readonly defaultOptions: ModelOptions = {
-    quantization: 'int4',
+  private static readonly defaultOptions = {
+    quantization: 'int4' as const,
     pro: false,
+  };
+  private static readonly quantizationExceptions: {
+    [model: string]: 'int4' | 'int8';
+  } = {
+    'gemma-3-270m-it': 'int8' as const,
+    'functiongemma-270m-it': 'int8' as const,
   };
   private static readonly defaultCompleteOptions = {
     maxTokens: 512,
@@ -51,8 +60,11 @@ export class CactusLM {
     this.contextSize = contextSize ?? CactusLM.defaultContextSize;
     this.corpusDir = corpusDir;
     this.options = {
-      ...CactusLM.defaultOptions,
-      ...options,
+      quantization:
+        options?.quantization ??
+        CactusLM.quantizationExceptions[this.model] ??
+        CactusLM.defaultOptions.quantization,
+      pro: options?.pro ?? CactusLM.defaultOptions.pro,
     };
   }
 
@@ -69,6 +81,7 @@ export class CactusLM {
     }
 
     if (await CactusFileSystem.modelExists(this.getModelName())) {
+      console.log('Model already exists', this.getModelName());
       onProgress?.(1.0);
       return;
     }
@@ -76,7 +89,7 @@ export class CactusLM {
     this.isDownloading = true;
     try {
       const modelConfig =
-        models[this.model]?.quantization[this.options.quantization!];
+        models[this.model]?.quantization[this.options.quantization];
       const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
@@ -103,7 +116,10 @@ export class CactusLM {
       modelPath = this.model.replace('file://', '');
     } else {
       if (!(await CactusFileSystem.modelExists(this.getModelName()))) {
-        throw new Error(`Model "${this.model}" is not downloaded`);
+        console.log('Model not found:', this.getModelName());
+        throw new Error(
+          `Model "${this.model}" with options ${JSON.stringify(this.options)} is not downloaded`
+        );
       }
       modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }

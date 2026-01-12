@@ -17,6 +17,8 @@ import ChatScreen from './ChatScreen';
 import IndexScreen from './IndexScreen';
 import { CactusConfig } from 'cactus-react-native';
 
+// Set your Cactus Pro API key here
+// To enable NPU acceleration set also the pro option in model options where applicable
 CactusConfig.cactusProKey = '';
 
 type Screen =

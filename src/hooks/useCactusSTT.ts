@@ -19,13 +19,13 @@ import type { CactusModel } from '../types/common';
 export const useCactusSTT = ({
   model = 'whisper-small',
   contextSize = 2048,
-  options = {
-    quantization: 'int4',
+  options: modelOptions = {
+    quantization: undefined,
     pro: false,
   },
 }: CactusSTTParams = {}) => {
   const [cactusSTT, setCactusSTT] = useState(
-    () => new CactusSTT({ model, contextSize, options })
+    () => new CactusSTT({ model, contextSize, options: modelOptions })
   );
 
   // State
@@ -54,8 +54,8 @@ export const useCactusSTT = ({
         model,
         contextSize,
         options: {
-          quantization: options.quantization,
-          pro: options.pro,
+          quantization: modelOptions.quantization,
+          pro: modelOptions.pro,
         },
       })
     );
@@ -90,7 +90,7 @@ export const useCactusSTT = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize, options.quantization, options.pro]);
+  }, [model, contextSize, modelOptions.quantization, modelOptions.pro]);
 
   useEffect(() => {
     return () => {
