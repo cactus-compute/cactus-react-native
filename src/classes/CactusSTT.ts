@@ -42,7 +42,7 @@ export class CactusSTT {
   private static readonly defaultPrompt =
     '<|startoftranscript|><|en|><|transcribe|><|notimestamps|>';
   private static readonly defaultTranscribeOptions = {
-    maxTokens: 512,
+    maxTokens: 384,
   };
   private static readonly defaultEmbedBufferSize = 4096;
 
