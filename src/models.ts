@@ -280,7 +280,7 @@ const models: { [key: string]: CactusModel } = {
       },
     },
   },
-  'lfm2.5-vl-1.6b': {
+  'lfm2-vl-1.6b': {
     completion: true,
     tools: false,
     vision: true,
@@ -289,18 +289,18 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 954,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2.5-vl-1.6b.zip',
+        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-vl-1.6b.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/pro/apple/lfm2.5-vl-1.6b.zip',
+            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/pro/apple/lfm2-vl-1.6b.zip',
         },
       },
       int8: {
         sizeMb: 1440,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2.5-vl-1.6b.zip',
+        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-vl-1.6b.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/pro/apple/lfm2.5-vl-1.6b.zip',
+            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/pro/apple/lfm2-vl-1.6b.zip',
         },
       },
     },
