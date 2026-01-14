@@ -5,6 +5,10 @@
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
+#if defined(__ANDROID__)
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#endif
 #include <algorithm>
 #include <cmath>
 #include <thread>
@@ -51,18 +55,40 @@ inline int32x4_t accum_dot(int32x4_t acc, int8x16_t a, int8x16_t b) {
 }
 #endif
 
-// I8MM support: Apple Clang requires target attribute, Android/GCC uses feature macro
-#if defined(__ARM_FEATURE_MATMUL_INT8)
+// I8MM support: runtime detection on Android, compile-time on Apple
+#if defined(__ANDROID__) && defined(__aarch64__)
+
+inline bool cactus_has_i8mm() {
+    static int8_t supported = -1;
+    if (supported == -1) {
+        unsigned long hwcaps = getauxval(AT_HWCAP2);
+        supported = (hwcaps & HWCAP2_I8MM) ? 1 : 0;
+    }
+    return supported;
+}
+
+__attribute__((target("arch=armv8.2-a+i8mm")))
 inline int32x4_t accum_matmul(int32x4_t acc, int8x16_t a, int8x16_t b) {
     return vmmlaq_s32(acc, a, b);
 }
-#define CACTUS_HAS_I8MM 1
+
 #elif defined(__APPLE__) && defined(__aarch64__)
+
+inline bool cactus_has_i8mm() {
+    return true;
+}
+
 __attribute__((target("i8mm")))
 inline int32x4_t accum_matmul(int32x4_t acc, int8x16_t a, int8x16_t b) {
     return vmmlaq_s32(acc, a, b);
 }
-#define CACTUS_HAS_I8MM 1
+
+#else
+
+inline bool cactus_has_i8mm() {
+    return false;
+}
+
 #endif
 
 inline float16x8_t accum_f16_dot(float16x8_t acc, float16x8_t a_low, float16x8_t a_high,
