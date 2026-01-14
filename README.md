@@ -78,6 +78,32 @@ const App = () => {
 
 ## Language Model
 
+### Model Options
+
+Choose model quantization and NPU acceleration with Pro models.
+
+```typescript
+import { CactusLM } from 'cactus-react-native';
+
+// Use int4 for faster performance and smaller file size
+const cactusLM = new CactusLM({
+  model: 'lfm2-vl-450m',
+  options: {
+    quantization: 'int4', // 'int4' or 'int8'
+    pro: false
+  }
+});
+
+// Use pro models for NPU acceleration
+const cactusPro = new CactusLM({
+  model: 'lfm2-vl-450m',
+  options: {
+    quantization: 'int4',
+    pro: true
+  }
+});
+```
+
 ### Completion
 
 Generate text responses from the model by providing a conversation history.
@@ -559,6 +585,60 @@ const App = () => {
 };
 ```
 
+### Streaming Transcription
+
+Transcribe audio in real-time with incremental results.
+
+#### Class
+
+```typescript
+import { CactusSTT } from 'cactus-react-native';
+
+const cactusSTT = new CactusSTT({ model: 'whisper-small' });
+
+await cactusSTT.streamTranscribeInit();
+
+const audioChunk: number[] = [/* PCM samples */];
+await cactusSTT.streamTranscribeInsert({ audio: audioChunk });
+
+const result = await cactusSTT.streamTranscribeProcess({
+  options: { confirmationThreshold: 0.95 }
+});
+
+console.log('Confirmed:', result.confirmed);
+console.log('Pending:', result.pending);
+
+const final = await cactusSTT.streamTranscribeFinalize();
+await cactusSTT.streamTranscribeDestroy();
+```
+
+#### Hook
+
+```tsx
+import { useCactusSTT } from 'cactus-react-native';
+
+const App = () => {
+  const cactusSTT = useCactusSTT({ model: 'whisper-small' });
+
+  const handleStream = async () => {
+    await cactusSTT.streamTranscribeInit();
+
+    const audioChunk: number[] = [/* PCM samples */];
+    await cactusSTT.streamTranscribeInsert({ audio: audioChunk });
+
+    await cactusSTT.streamTranscribeProcess();
+  };
+
+  return (
+    <>
+      <Button onPress={handleStream} title="Stream" />
+      <Text>{cactusSTT.streamTranscribeConfirmed}</Text>
+      <Text>{cactusSTT.streamTranscribePending}</Text>
+    </>
+  );
+};
+```
+
 ### Audio Embedding
 
 Generate embeddings from audio files for audio understanding.
@@ -854,9 +934,12 @@ const App = () => {
 **`new CactusLM(params?: CactusLMParams)`**
 
 **Parameters:**
-- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6'`).
+- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6b'`).
 - `contextSize` - Context window size (default: `2048`).
 - `corpusDir` - Directory containing text files for RAG (default: `undefined`).
+- `options` - Model options for quantization and NPU acceleration:
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
 
@@ -932,13 +1015,13 @@ Resets the model's internal state, clearing any cached context. Automatically ca
 
 Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
-**`getModels(): Promise<CactusModel[]>`**
+**`getModels(): CactusModel[]`**
 
-Fetches available models from the database and checks their download status.
+Returns available models.
 
 ### useCactusLM Hook
 
-The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When model parameters (`model`, `contextSize`, or `corpusDir`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
+The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When model parameters (`model`, `contextSize`, `corpusDir`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
 
 #### State
 
@@ -962,7 +1045,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state, clearing cached context. Also clears the `completion` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `completion` state. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusModel[]>` - Fetches available models from the database and checks their download status.
+- `getModels(): CactusModel[]` - Returns available models.
 
 ### CactusSTT Class
 
@@ -971,8 +1054,11 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 **`new CactusSTT(params?: CactusSTTParams)`**
 
 **Parameters:**
-- `model` - Model slug or absolute path to Cactus model (default: `'qwen3-0.6'`).
+- `model` - Model slug or absolute path to Cactus model (default: `'whisper-small'`).
 - `contextSize` - Context window size (default: `2048`).
+- `options` - Model options for quantization and NPU acceleration:
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
 
@@ -1009,6 +1095,33 @@ Generates embeddings for the given audio file. Automatically calls `init()` if n
 **Parameters:**
 - `audioPath` - Path to the audio file.
 
+**`streamTranscribeInit(): Promise<void>`**
+
+Initializes a streaming transcription session. Automatically calls `init()` if not already initialized.
+
+**`streamTranscribeInsert(params: CactusSTTStreamTranscribeInsertParams): Promise<void>`**
+
+Inserts PCM audio samples into the streaming buffer.
+
+**Parameters:**
+- `audio` - Array of PCM audio samples.
+
+**`streamTranscribeProcess(params?: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>`**
+
+Processes accumulated audio and returns incremental transcription results.
+
+**Parameters:**
+- `options` - Processing options:
+  - `confirmationThreshold` - Confidence threshold for confirming text.
+
+**`streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult>`**
+
+Finalizes the streaming session and returns remaining transcription text.
+
+**`streamTranscribeDestroy(): Promise<void>`**
+
+Destroys the streaming session and releases resources.
+
 **`stop(): Promise<void>`**
 
 Stops ongoing transcription or embedding generation.
@@ -1021,18 +1134,21 @@ Resets the model's internal state. Automatically calls `stop()` first.
 
 Releases all resources associated with the model. Automatically calls `stop()` first. Safe to call even if the model is not initialized.
 
-**`getModels(): Promise<CactusSTTModel[]>`**
+**`getModels(): CactusModel[]`**
 
-Fetches available STT models from the database and checks their download status.
+Returns available speech-to-text models.
 
 ### useCactusSTT Hook
 
-The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When model parameters (`model`, `contextSize`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
+The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When model parameters (`model`, `contextSize`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
 
 #### State
 
 - `transcription: string` - Current transcription text. Automatically accumulated during streaming. Cleared before each new transcription and when calling `reset()` or `destroy()`.
+- `streamTranscribeConfirmed: string` - Accumulated confirmed text from streaming transcription.
+- `streamTranscribePending: string` - Current pending text from streaming transcription.
 - `isGenerating: boolean` - Whether the model is currently generating (transcription or embedding). Both operations share this flag.
+- `isStreamTranscribing: boolean` - Whether a streaming transcription session is active.
 - `isInitializing: boolean` - Whether the model is initializing.
 - `isDownloaded: boolean` - Whether the model is downloaded locally. Automatically checked when the hook mounts or model changes.
 - `isDownloading: boolean` - Whether the model is being downloaded.
@@ -1045,10 +1161,15 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 - `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
 - `transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>` - Transcribes audio to text. Automatically accumulates tokens in the `transcription` state during streaming. Sets `isGenerating` to `true` while generating. Clears `transcription` before starting.
 - `audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>` - Generates embeddings for the given audio. Sets `isGenerating` to `true` during operation.
+- `streamTranscribeInit(): Promise<void>` - Initializes a streaming transcription session. Sets `isStreamTranscribing` to `true`.
+- `streamTranscribeInsert(params: CactusSTTStreamTranscribeInsertParams): Promise<void>` - Inserts audio chunks into the streaming buffer.
+- `streamTranscribeProcess(params?: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>` - Processes audio and returns results. Automatically accumulates confirmed text in `streamTranscribeConfirmed` and updates `streamTranscribePending`.
+- `streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult>` - Finalizes streaming and returns remaining text.
+- `streamTranscribeDestroy(): Promise<void>` - Destroys the streaming session. Sets `isStreamTranscribing` to `false`.
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state. Also clears the `transcription` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription` state. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusSTTModel[]>` - Fetches available STT models from the database and checks their download status.
+- `getModels(): CactusModel[]` - Returns available speech-to-text models.
 
 ### CactusIndex Class
 
@@ -1137,6 +1258,7 @@ interface CactusLMParams {
   model?: string;
   contextSize?: number;
   corpusDir?: string;
+  options?: ModelOptions;
 }
 ```
 
@@ -1293,28 +1415,36 @@ interface CactusLMImageEmbedResult {
 
 ```typescript
 interface CactusModel {
-  name: string;
-  slug: string;
-  quantization: number;
-  sizeMb: number;
-  downloadUrl: string;
-  supportsToolCalling: boolean;
-  supportsVision: boolean;
-  supportsCompletion: boolean;
-  createdAt: Date;
-  isDownloaded: boolean;
+  completion: boolean;
+  tools: boolean;
+  vision: boolean;
+  embed: boolean;
+  speech: boolean;
+  quantization: {
+    int4: {
+      sizeMb: number;
+      url: string;
+      pro?: {
+        apple: string;
+      };
+    };
+    int8: {
+      sizeMb: number;
+      url: string;
+      pro?: {
+        apple: string;
+      };
+    };
+  };
 }
 ```
 
-### CactusSTTModel
+### ModelOptions
 
 ```typescript
-interface CactusSTTModel {
-  slug: string;
-  sizeMb: number;
-  downloadUrl: string;
-  createdAt: Date;
-  isDownloaded: boolean;
+interface ModelOptions {
+  quantization: 'int4' | 'int8';
+  pro: boolean;
 }
 ```
 
@@ -1324,6 +1454,7 @@ interface CactusSTTModel {
 interface CactusSTTParams {
   model?: string;
   contextSize?: number;
+  options?: ModelOptions;
 }
 ```
 
@@ -1388,6 +1519,49 @@ interface CactusSTTAudioEmbedParams {
 ```typescript
 interface CactusSTTAudioEmbedResult {
   embedding: number[];
+}
+```
+
+### CactusSTTStreamTranscribeInsertParams
+
+```typescript
+interface CactusSTTStreamTranscribeInsertParams {
+  audio: number[];
+}
+```
+
+### StreamTranscribeProcessOptions
+
+```typescript
+interface StreamTranscribeProcessOptions {
+  confirmationThreshold?: number;
+}
+```
+
+### CactusSTTStreamTranscribeProcessParams
+
+```typescript
+interface CactusSTTStreamTranscribeProcessParams {
+  options?: StreamTranscribeProcessOptions;
+}
+```
+
+### CactusSTTStreamTranscribeProcessResult
+
+```typescript
+interface CactusSTTStreamTranscribeProcessResult {
+  success: boolean;
+  confirmed: string;
+  pending: string;
+}
+```
+
+### CactusSTTStreamTranscribeFinalizeResult
+
+```typescript
+interface CactusSTTStreamTranscribeFinalizeResult {
+  success: boolean;
+  confirmed: string;
 }
 ```
 
@@ -1489,6 +1663,17 @@ import { CactusConfig } from 'cactus-react-native';
 
 // Set your Cactus token for hybrid mode
 CactusConfig.cactusToken = 'your-cactus-token-here';
+```
+
+### Cactus Pro
+
+Enable NPU-accelerated models for enhanced performance.
+
+```typescript
+import { CactusConfig } from 'cactus-react-native';
+
+// Set your Cactus Pro key
+CactusConfig.cactusProKey = 'your-cactus-pro-key-here';
 ```
 
 ## Performance Tips

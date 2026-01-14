@@ -16,7 +16,7 @@ import {
 } from 'cactus-react-native';
 
 const CompletionScreen = () => {
-  const cactusLM = useCactusLM({ model: 'qwen3-0.6' });
+  const cactusLM = useCactusLM({ model: 'qwen3-0.6b' });
   const [input, setInput] = useState('What is the capital of France?');
   const [result, setResult] = useState<CactusLMCompleteResult | null>(null);
   const [embedResult, setEmbedResult] = useState<CactusLMEmbedResult | null>(

@@ -6,37 +6,56 @@ import type {
   CactusSTTParams,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
+  CactusSTTStreamTranscribeInsertParams,
+  CactusSTTStreamTranscribeProcessParams,
+  CactusSTTStreamTranscribeProcessResult,
+  CactusSTTStreamTranscribeFinalizeResult,
 } from '../types/CactusSTT';
 import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
-import { Database } from '../api/Database';
 import { getErrorMessage } from '../utils/error';
-import type { CactusSTTModel } from '../types/CactusSTTModel';
+import models from '../models';
+import type { CactusModel } from '../types/common';
 
 export class CactusSTT {
   private readonly cactus = new Cactus();
 
   private readonly model: string;
   private readonly contextSize: number;
+  private readonly options: {
+    quantization: 'int4' | 'int8';
+    pro: boolean;
+  };
 
   private isDownloading = false;
   private isInitialized = false;
   private isGenerating = false;
 
+  private isStreamTranscribeInitialized = false;
+
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultContextSize = 2048;
+  private static readonly defaultOptions = {
+    quantization: 'int4' as const,
+    pro: false,
+  };
   private static readonly defaultPrompt =
     '<|startoftranscript|><|en|><|transcribe|><|notimestamps|>';
   private static readonly defaultTranscribeOptions = {
-    maxTokens: 512,
+    maxTokens: 384,
   };
   private static readonly defaultEmbedBufferSize = 4096;
 
-  constructor({ model, contextSize }: CactusSTTParams = {}) {
+  constructor({ model, contextSize, options }: CactusSTTParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
 
     this.model = model ?? CactusSTT.defaultModel;
     this.contextSize = contextSize ?? CactusSTT.defaultContextSize;
+    this.options = {
+      quantization:
+        options?.quantization ?? CactusSTT.defaultOptions.quantization,
+      pro: options?.pro ?? CactusSTT.defaultOptions.pro,
+    };
   }
 
   public async download({
@@ -51,17 +70,25 @@ export class CactusSTT {
       throw new Error('CactusSTT is already downloading');
     }
 
-    if (await CactusFileSystem.modelExists(this.model)) {
+    if (await CactusFileSystem.modelExists(this.getModelName())) {
+      console.log('Model already exists', this.getModelName());
       onProgress?.(1.0);
       return;
     }
 
     this.isDownloading = true;
     try {
-      const model = await Database.getSTTModel(this.model);
+      const modelConfig =
+        models[this.model]?.quantization[this.options.quantization];
+      const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
+
+      if (!url) {
+        throw new Error(`Model ${this.model} with specified options not found`);
+      }
+
       await CactusFileSystem.downloadModel(
-        this.model,
-        model.downloadUrl,
+        this.getModelName(),
+        url,
         onProgress
       );
     } finally {
@@ -78,10 +105,13 @@ export class CactusSTT {
     if (this.isModelPath(this.model)) {
       modelPath = this.model.replace('file://', '');
     } else {
-      if (!(await CactusFileSystem.modelExists(this.model))) {
-        throw new Error(`Model "${this.model}" is not downloaded`);
+      if (!(await CactusFileSystem.modelExists(this.getModelName()))) {
+        console.log('Model does not exist', this.getModelName());
+        throw new Error(
+          `Model "${this.model}" with options ${JSON.stringify(this.options)} is not downloaded`
+        );
       }
-      modelPath = await CactusFileSystem.getModelPath(this.model);
+      modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }
 
     try {
@@ -137,6 +167,76 @@ export class CactusSTT {
     }
   }
 
+  public async streamTranscribeInit(): Promise<void> {
+    if (this.isStreamTranscribeInitialized) {
+      return;
+    }
+
+    await this.init();
+
+    try {
+      await this.cactus.streamTranscribeInit();
+      this.isStreamTranscribeInitialized = true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeInsert({
+    audio,
+  }: CactusSTTStreamTranscribeInsertParams): Promise<void> {
+    if (!this.isStreamTranscribeInitialized) {
+      throw new Error('CactusSTT stream transcribe is not initialized');
+    }
+
+    try {
+      await this.cactus.streamTranscribeInsert(audio);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeProcess({
+    options,
+  }: CactusSTTStreamTranscribeProcessParams = {}): Promise<CactusSTTStreamTranscribeProcessResult> {
+    if (!this.isStreamTranscribeInitialized) {
+      throw new Error('CactusSTT stream transcribe is not initialized');
+    }
+
+    try {
+      const result = await this.cactus.streamTranscribeProcess(options);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult> {
+    if (!this.isStreamTranscribeInitialized) {
+      throw new Error('CactusSTT stream transcribe is not initialized');
+    }
+
+    try {
+      const result = await this.cactus.streamTranscribeFinalize();
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async streamTranscribeDestroy(): Promise<void> {
+    if (!this.isStreamTranscribeInitialized) {
+      return;
+    }
+
+    try {
+      await this.cactus.streamTranscribeDestroy();
+      this.isStreamTranscribeInitialized = false;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   public async audioEmbed({
     audioPath,
   }: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult> {
@@ -177,20 +277,21 @@ export class CactusSTT {
     }
 
     await this.stop();
+    await this.streamTranscribeDestroy();
     await this.cactus.destroy();
 
     this.isInitialized = false;
   }
 
-  public async getModels(): Promise<CactusSTTModel[]> {
-    const models = await Database.getSTTModels();
-    for (const model of models) {
-      model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
-    }
-    return models;
+  public getModels(): CactusModel[] {
+    return Object.values(models).filter((model) => model.speech);
   }
 
   private isModelPath(model: string): boolean {
     return model.startsWith('file://') || model.startsWith('/');
+  }
+
+  private getModelName(): string {
+    return `${this.model}-${this.options.quantization}${this.options.pro ? '-pro' : ''}`;
   }
 }

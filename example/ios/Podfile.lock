@@ -1,6 +1,6 @@
 PODS:
   - boost (1.84.0)
-  - Cactus (1.4.0):
+  - Cactus (1.5.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2643,7 +2643,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  Cactus: 83c36f3d76eb2102a79020b41201a3aae8b71956
+  Cactus: 336fab89b318d196bcc0f87cf4634acd57c83bad
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: b8f1312d48447cca7b4abc21ed155db14742bd03

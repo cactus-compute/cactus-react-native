@@ -13,12 +13,12 @@ import type {
   CactusLMImageEmbedResult,
   CactusLMParams,
 } from '../types/CactusLM';
-import type { CactusModel } from '../types/CactusModel';
 import { Telemetry } from '../telemetry/Telemetry';
 import { CactusConfig } from '../config/CactusConfig';
-import { Database } from '../api/Database';
 import { getErrorMessage } from '../utils/error';
 import { RemoteLM } from '../api/RemoteLM';
+import models from '../models';
+import type { CactusModel } from '../types/common';
 
 export class CactusLM {
   private readonly cactus = new Cactus();
@@ -26,25 +26,46 @@ export class CactusLM {
   private readonly model: string;
   private readonly contextSize: number;
   private readonly corpusDir?: string;
+  private readonly options: {
+    quantization: 'int4' | 'int8';
+    pro: boolean;
+  };
 
   private isDownloading = false;
   private isInitialized = false;
   private isGenerating = false;
 
-  private static readonly defaultModel = 'qwen3-0.6';
+  private static readonly defaultModel = 'qwen3-0.6b';
   private static readonly defaultContextSize = 2048;
+  private static readonly defaultOptions = {
+    quantization: 'int4' as const,
+    pro: false,
+  };
+  private static readonly quantizationExceptions: {
+    [model: string]: 'int4' | 'int8';
+  } = {
+    'gemma-3-270m-it': 'int8' as const,
+    'functiongemma-270m-it': 'int8' as const,
+  };
   private static readonly defaultCompleteOptions = {
     maxTokens: 512,
   };
   private static readonly defaultCompleteMode = 'local';
   private static readonly defaultEmbedBufferSize = 2048;
 
-  constructor({ model, contextSize, corpusDir }: CactusLMParams = {}) {
+  constructor({ model, contextSize, corpusDir, options }: CactusLMParams = {}) {
     Telemetry.init(CactusConfig.telemetryToken);
 
     this.model = model ?? CactusLM.defaultModel;
     this.contextSize = contextSize ?? CactusLM.defaultContextSize;
     this.corpusDir = corpusDir;
+    this.options = {
+      quantization:
+        options?.quantization ??
+        CactusLM.quantizationExceptions[this.model] ??
+        CactusLM.defaultOptions.quantization,
+      pro: options?.pro ?? CactusLM.defaultOptions.pro,
+    };
   }
 
   public async download({
@@ -59,17 +80,25 @@ export class CactusLM {
       throw new Error('CactusLM is already downloading');
     }
 
-    if (await CactusFileSystem.modelExists(this.model)) {
+    if (await CactusFileSystem.modelExists(this.getModelName())) {
+      console.log('Model already exists', this.getModelName());
       onProgress?.(1.0);
       return;
     }
 
     this.isDownloading = true;
     try {
-      const model = await Database.getModel(this.model);
+      const modelConfig =
+        models[this.model]?.quantization[this.options.quantization];
+      const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
+
+      if (!url) {
+        throw new Error(`Model ${this.model} with specified options not found`);
+      }
+
       await CactusFileSystem.downloadModel(
-        this.model,
-        model.downloadUrl,
+        this.getModelName(),
+        url,
         onProgress
       );
     } finally {
@@ -86,10 +115,13 @@ export class CactusLM {
     if (this.isModelPath(this.model)) {
       modelPath = this.model.replace('file://', '');
     } else {
-      if (!(await CactusFileSystem.modelExists(this.model))) {
-        throw new Error(`Model "${this.model}" is not downloaded`);
+      if (!(await CactusFileSystem.modelExists(this.getModelName()))) {
+        console.log('Model not found:', this.getModelName());
+        throw new Error(
+          `Model "${this.model}" with options ${JSON.stringify(this.options)} is not downloaded`
+        );
       }
-      modelPath = await CactusFileSystem.getModelPath(this.model);
+      modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }
 
     try {
@@ -255,15 +287,15 @@ export class CactusLM {
     this.isInitialized = false;
   }
 
-  public async getModels(): Promise<CactusModel[]> {
-    const models = await Database.getModels();
-    for (const model of models) {
-      model.isDownloaded = await CactusFileSystem.modelExists(model.slug);
-    }
-    return models;
+  public getModels(): CactusModel[] {
+    return Object.values(models).filter((model) => model.completion);
   }
 
   private isModelPath(model: string): boolean {
     return model.startsWith('file://') || model.startsWith('/');
+  }
+
+  private getModelName(): string {
+    return `${this.model}-${this.options.quantization}${this.options.pro ? '-pro' : ''}`;
   }
 }

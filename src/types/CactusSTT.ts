@@ -1,6 +1,9 @@
+import { type ModelOptions } from './common';
+
 export interface CactusSTTParams {
   model?: string;
   contextSize?: number;
+  options?: ModelOptions;
 }
 
 export interface CactusSTTDownloadParams {
@@ -39,4 +42,27 @@ export interface CactusSTTAudioEmbedParams {
 
 export interface CactusSTTAudioEmbedResult {
   embedding: number[];
+}
+
+export interface CactusSTTStreamTranscribeInsertParams {
+  audio: number[];
+}
+
+export interface StreamTranscribeProcessOptions {
+  confirmationThreshold?: number;
+}
+
+export interface CactusSTTStreamTranscribeProcessParams {
+  options?: StreamTranscribeProcessOptions;
+}
+
+export interface CactusSTTStreamTranscribeProcessResult {
+  success: boolean;
+  confirmed: string;
+  pending: string;
+}
+
+export interface CactusSTTStreamTranscribeFinalizeResult {
+  success: boolean;
+  confirmed: string;
 }

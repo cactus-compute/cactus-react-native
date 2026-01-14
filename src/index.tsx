@@ -9,8 +9,7 @@ export { useCactusSTT } from './hooks/useCactusSTT';
 export { useCactusIndex } from './hooks/useCactusIndex';
 
 // Types
-export type { CactusModel } from './types/CactusModel';
-export type { CactusSTTModel } from './types/CactusSTTModel';
+export type { CactusModel, ModelOptions } from './types/common';
 export type {
   CactusLMParams,
   CactusLMDownloadParams,
@@ -36,6 +35,11 @@ export type {
   CactusSTTTranscribeResult,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
+  CactusSTTStreamTranscribeInsertParams,
+  StreamTranscribeProcessOptions,
+  CactusSTTStreamTranscribeProcessParams,
+  CactusSTTStreamTranscribeProcessResult,
+  CactusSTTStreamTranscribeFinalizeResult,
 } from './types/CactusSTT';
 export type {
   CactusIndexParams,

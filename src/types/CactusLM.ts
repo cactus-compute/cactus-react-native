@@ -1,7 +1,10 @@
+import { type ModelOptions } from './common';
+
 export interface CactusLMParams {
   model?: string;
   contextSize?: number;
   corpusDir?: string;
+  options?: ModelOptions;
 }
 
 export interface CactusLMDownloadParams {

@@ -325,8 +325,127 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
       throw std::runtime_error("Cactus model is not initialized");
     }
 
+    if (this->_streamTranscribe) {
+      cactus_stream_transcribe_destroy(this->_streamTranscribe);
+      this->_streamTranscribe = nullptr;
+    }
+
     cactus_destroy(this->_model);
     this->_model = nullptr;
+  });
+}
+
+std::shared_ptr<Promise<void>> HybridCactus::streamTranscribeInit() {
+  return Promise<void>::async([this]() -> void {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_model) {
+      throw std::runtime_error("Cactus model is not initialized");
+    }
+
+    if (this->_streamTranscribe) {
+      throw std::runtime_error(
+          "Cactus stream transcribe is already initialized");
+    }
+
+    this->_streamTranscribe = cactus_stream_transcribe_init(this->_model);
+    if (!this->_streamTranscribe) {
+      throw std::runtime_error("Cactus stream transcribe init failed: " +
+                               std::string(cactus_get_last_error()));
+    }
+  });
+}
+
+std::shared_ptr<Promise<void>>
+HybridCactus::streamTranscribeInsert(const std::vector<double> &audio) {
+  return Promise<void>::async([this, audio]() -> void {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_streamTranscribe) {
+      throw std::runtime_error("Cactus stream transcribe is not initialized");
+    }
+
+    std::vector<uint8_t> audioBytes;
+    audioBytes.reserve(audio.size());
+    for (double d : audio) {
+      d = std::clamp(d, 0.0, 255.0);
+      audioBytes.emplace_back(static_cast<uint8_t>(d));
+    }
+
+    int result = cactus_stream_transcribe_insert(
+        this->_streamTranscribe, audioBytes.data(), audioBytes.size());
+
+    if (result < 0) {
+      throw std::runtime_error("Cactus stream transcribe insert failed: " +
+                               std::string(cactus_get_last_error()));
+    }
+  });
+}
+
+std::shared_ptr<Promise<std::string>> HybridCactus::streamTranscribeProcess(
+    const std::optional<std::string> &optionsJson) {
+  return Promise<std::string>::async([this, optionsJson]() -> std::string {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_streamTranscribe) {
+      throw std::runtime_error("Cactus stream transcribe is not initialized");
+    }
+
+    std::string responseBuffer;
+    responseBuffer.resize(32768);
+
+    int result = cactus_stream_transcribe_process(
+        this->_streamTranscribe, responseBuffer.data(), responseBuffer.size(),
+        optionsJson ? optionsJson->c_str() : nullptr);
+
+    if (result < 0) {
+      throw std::runtime_error("Cactus stream transcribe process failed: " +
+                               std::string(cactus_get_last_error()));
+    }
+
+    // Remove null terminator
+    responseBuffer.resize(strlen(responseBuffer.c_str()));
+
+    return responseBuffer;
+  });
+}
+
+std::shared_ptr<Promise<std::string>> HybridCactus::streamTranscribeFinalize() {
+  return Promise<std::string>::async([this]() -> std::string {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_streamTranscribe) {
+      throw std::runtime_error("Cactus stream transcribe is not initialized");
+    }
+
+    std::string responseBuffer;
+    responseBuffer.resize(32768);
+
+    int result = cactus_stream_transcribe_finalize(
+        this->_streamTranscribe, responseBuffer.data(), responseBuffer.size());
+
+    if (result < 0) {
+      throw std::runtime_error("Cactus stream transcribe finalize failed: " +
+                               std::string(cactus_get_last_error()));
+    }
+
+    // Remove null terminator
+    responseBuffer.resize(strlen(responseBuffer.c_str()));
+
+    return responseBuffer;
+  });
+}
+
+std::shared_ptr<Promise<void>> HybridCactus::streamTranscribeDestroy() {
+  return Promise<void>::async([this]() -> void {
+    std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+    if (!this->_streamTranscribe) {
+      throw std::runtime_error("Cactus stream transcribe is not initialized");
+    }
+
+    cactus_stream_transcribe_destroy(this->_streamTranscribe);
+    this->_streamTranscribe = nullptr;
   });
 }
 
