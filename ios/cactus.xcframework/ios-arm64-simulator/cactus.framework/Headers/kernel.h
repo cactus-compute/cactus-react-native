@@ -15,7 +15,7 @@ enum class ScalarOpType {
     SIN
 };
 
-constexpr size_t KV_QUANT_GROUP_SIZE = 128;
+constexpr size_t KV_QUANT_GROUP_SIZE = 32;
 
 void cactus_add_f16(const __fp16* a, const __fp16* b, __fp16* output, size_t num_elements);
 void cactus_add_f16_clipped(const __fp16* a, const __fp16* b, __fp16* output, size_t num_elements);
@@ -38,12 +38,16 @@ void cactus_divide_broadcast_f16(const __fp16* a, const __fp16* b, __fp16* outpu
 
 void cactus_scalar_op_f16(const __fp16* input, __fp16* output, size_t num_elements, float scalar_value, ScalarOpType op_type);
 
+void cactus_gemv_int8(const int8_t* A, float A_scale,
+                      const int8_t* B, const __fp16* B_scales,
+                      __fp16* C, size_t K, size_t N, size_t group_size);
+
+void cactus_gemm_int8(const int8_t* A, const float* A_scales,
+                      const int8_t* B, const __fp16* B_scales,
+                      __fp16* C, size_t M, size_t K, size_t N, size_t group_size);
+
 void cactus_matmul_int8(const int8_t* A, const float* A_scales,
                         const int8_t* B, const __fp16* B_scales,
-                        __fp16* C, size_t M, size_t K, size_t N, size_t group_size);
-
-void cactus_matmul_int4(const int8_t* A, const float* A_scales,
-                        const uint8_t* B_packed, const __fp16* B_scales,
                         __fp16* C, size_t M, size_t K, size_t N, size_t group_size);
 
 void cactus_matmul_f16(const __fp16* a, const __fp16* b_transposed, __fp16* c,
@@ -75,14 +79,23 @@ void cactus_rms_norm_f16(const __fp16* input, const __fp16* weight, __fp16* outp
 void cactus_rope_f16(const __fp16* input, __fp16* output, size_t batch_size, size_t seq_len,
                       size_t num_heads, size_t head_dim, size_t start_pos, float theta);
 
+void cactus_gpt_j_rope_f16(const __fp16* input, __fp16* output, size_t batch_size, size_t seq_len,
+                           size_t num_heads, size_t head_dim, size_t rot_dim, size_t start_pos, float theta);
+
 void cactus_softmax_f16(const __fp16* input, __fp16* output, size_t batch_size,
                          size_t seq_len, size_t vocab_size);
+
+void cactus_relu_f16(const __fp16* input, __fp16* output, size_t num_elements);
 
 void cactus_silu_f16(const __fp16* input, __fp16* output, size_t num_elements);
 
 void cactus_gelu_f16(const __fp16* input, __fp16* output, size_t num_elements);
 
 void cactus_gelu_f16_erf(const __fp16* input, __fp16* output, size_t num_elements);
+
+void cactus_sigmoid_f16(const __fp16* input, __fp16* output, size_t num_elements);
+
+void cactus_tanh_f16(const __fp16* input, __fp16* output, size_t num_elements);
 
 void cactus_attention_f16(const __fp16* queries, const __fp16* keys, const __fp16* values, __fp16* output,
                           size_t batch_size, size_t seq_len, size_t kv_seq_len, size_t num_q_heads, size_t num_kv_heads,
@@ -100,7 +113,7 @@ void cactus_attention_hybrid_int8_fp16(
     __fp16* output,
     size_t batch_size, size_t seq_len, size_t cache_len, size_t new_len,
     size_t num_q_heads, size_t num_kv_heads, size_t head_dim,
-    float scale, size_t position_offset = 0, bool is_causal = true,
+    float scale, size_t position_offset = 0, bool is_causal = true, size_t window_size = 0,
     size_t group_size = KV_QUANT_GROUP_SIZE);
 
 void cactus_conv1d_causal_depthwise_f16(
@@ -122,6 +135,40 @@ void cactus_conv1d_f16_k3(
     size_t C_in,
     size_t C_out,
     size_t stride
+);
+
+void cactus_conv1d_f16(
+    const __fp16* input,
+    const __fp16* weight,
+    const __fp16* bias,
+    __fp16* output,
+    size_t N,
+    size_t L,
+    size_t C_in,
+    size_t C_out,
+    size_t K,
+    size_t stride
+);
+
+void cactus_stft_magnitude_f16(
+    const __fp16* input,
+    const __fp16* weight,
+    __fp16* output,
+    size_t N, size_t L,
+    size_t C_in, size_t C_out,
+    size_t K, size_t stride,
+    size_t num_fft_bins
+);
+
+void cactus_conv1d_f16_k7s3_oc8(
+    const __fp16* input,
+    const __fp16* Wpack,
+    const __fp16* bias,
+    __fp16* output,
+    size_t N,
+    size_t L,
+    size_t C_in,
+    size_t C_out
 );
 
 void cactus_bilinear_interpolation_f16(const __fp16* input, __fp16* output, size_t src_height, size_t src_width, size_t embed_dim,
@@ -161,5 +208,20 @@ inline size_t kv_scales_count(size_t seq_len, size_t kv_heads, size_t head_dim, 
 }
 
 void cactus_unpack_int4_to_int8(const uint8_t* packed, int8_t* unpacked, size_t unpacked_count);
+
+void cactus_lstm_cell_f16(
+    const __fp16* x_input,
+    const __fp16* h_prev,
+    const __fp16* c_prev,
+    const __fp16* weight_ih,
+    const __fp16* weight_hh,
+    const __fp16* bias_ih,
+    const __fp16* bias_hh,
+    __fp16* h_new,
+    __fp16* c_new,
+    size_t batch_size,
+    size_t input_size,
+    size_t hidden_size
+);
 
 #endif

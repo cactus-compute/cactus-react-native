@@ -84,12 +84,17 @@ struct Config {
     bool use_thumbnail = true;
     uint32_t min_image_tokens = 64;
     uint32_t max_image_tokens = 256;
-        uint32_t max_num_patches = 1024;
+    uint32_t max_num_patches = 1024;
     uint32_t tile_size = 512;
     float max_pixels_tolerance = 2.0f;
     bool do_image_splitting = true;
+    bool encoder_act_gelu = false;
+    bool decoder_act_gelu = false;
+    uint32_t num_encoder_layers = 0;
+    uint32_t num_decoder_layers = 0;
+    float partial_rotary_factor = 0.0f;
 
-    enum class ModelType {QWEN = 0, GEMMA = 1, SMOL = 2, NOMIC = 3, LFM2 = 5, SIGLIP2 = 6, WHISPER = 7};
+    enum class ModelType {QWEN = 0, GEMMA = 1, NOMIC = 3, LFM2 = 5, SIGLIP2 = 6, WHISPER = 7, MOONSHINE = 8, SILERO_VAD = 9};
     ModelType model_type = ModelType::QWEN;
 
     enum class ModelVariant {DEFAULT = 0, VLM = 1, EXTRACT = 2, RAG = 3};
@@ -107,6 +112,8 @@ struct Config {
     float default_temperature = 0.6f;
     float default_top_p = 0.95f;
     size_t default_top_k = 20;
+    float default_max_tps = -1.0f;
+    float default_cloud_handoff_threshold = 0.0f;
 
     std::vector<std::string> layer_types;
     size_t conv_L_cache = 0;
@@ -152,6 +159,7 @@ public:
     virtual uint32_t get_bos_token() const = 0;
     virtual uint32_t get_eos_token() const = 0;
     virtual bool has_chat_template() const { return has_chat_template_; }
+    std::string get_default_stop_sequence() const;
 
     virtual bool load_vocabulary_with_config(const std::string& vocab_file, const std::string& merges_file, const std::string& config_file) = 0;
     
@@ -159,11 +167,8 @@ public:
     uint32_t get_fake_token_id() const { return fake_token_id_; }
     uint32_t get_global_img_token_id() const { return global_img_token_id_; }
 
-
-    void set_corpus_dir(const std::string& dir) { corpus_dir_ = dir; }
-
 protected:
-    enum class ModelType { UNKNOWN, QWEN, GEMMA, LFM2, SMOL, BERT, WHISPER};
+    enum class ModelType { UNKNOWN, QWEN, GEMMA, LFM2, BERT, WHISPER};
     ModelType model_type_ = ModelType::UNKNOWN;
     enum class ModelVariant { DEFAULT, VLM, EXTRACT, RAG};
     ModelVariant model_variant_ = ModelVariant::DEFAULT;
@@ -173,14 +178,12 @@ protected:
     uint32_t image_token_id_ = 396;
     uint32_t fake_token_id_ = 49189;
     uint32_t global_img_token_id_ = 49152;
-    std::string corpus_dir_;
 
     void detect_model_type(const std::string& config_path);
     std::string format_qwen_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
     std::string format_gemma_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
     std::string format_lfm2_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
     std::string format_lfm2_vl_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
-    std::string format_smol_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
 };
 
 class BPETokenizer : public Tokenizer {
@@ -471,6 +474,8 @@ private:
     void compute_bias();
     void tokenize_grammar_elements();
     void add_tokens_for_string(const std::string& str, std::unordered_set<uint32_t>& token_set);
+    void tokenize_function_names(bool quote_names);
+    void init_common_tokens();
 };
 
 class Model {
@@ -495,22 +500,22 @@ public:
               const std::string& system_prompt = "", bool do_warmup = true);
 
     virtual uint32_t decode(const std::vector<uint32_t>& tokens, float temperature = -1.0f, float top_p = -1.0f,
-                      size_t top_k = 0, const std::string& profile_file = "");
+                      size_t top_k = 0, const std::string& profile_file = "", float* out_entropy = nullptr);
 
     virtual void prefill(const std::vector<uint32_t>& tokens, size_t chunk_size = 256, const std::string& profile_file = "");
 
     virtual uint32_t decode_with_images(const std::vector<uint32_t>& tokens, const std::vector<std::string>& image_paths,
                                           float temperature = -1.0f, float top_p = -1.0f,
-                                          size_t top_k = 0, const std::string& profile_file = "");
+                                          size_t top_k = 0, const std::string& profile_file = "", float* out_entropy = nullptr);
 
-    virtual uint32_t decode_with_audio(const std::vector<uint32_t>& tokens, const std::vector<float>& mel_bins, float temperature = 0.0f, float top_p = 0.0f,
-                      size_t top_k = 0, const std::string& profile_file = "");
+    virtual uint32_t decode_with_audio(const std::vector<uint32_t>& tokens, const std::vector<float>& audio_features, float temperature = 0.0f, float top_p = 0.0f,
+                      size_t top_k = 0, const std::string& profile_file = "", float* out_entropy = nullptr);
 
     std::vector<float> get_embeddings(const std::vector<uint32_t>& tokens, bool pooled = true, bool normalize = false, const std::string& profile_file = "");
     
     virtual std::vector<float> get_image_embeddings(const std::string& image_path);
     
-    virtual std::vector<float> get_audio_embeddings(const std::vector<float>& mel_bins);
+    virtual std::vector<float> get_audio_embeddings(const std::vector<float>& audio_features);
 
     virtual void reset_cache() { kv_cache_.reset(); }
 
@@ -533,7 +538,7 @@ public:
 protected:
     virtual size_t forward(const std::vector<uint32_t>& tokens, bool use_cache = false) = 0;
     
-    virtual size_t forward(const std::vector<float>& mel_bins, const std::vector<uint32_t>& tokens, bool use_cache = false);
+    virtual size_t forward(const std::vector<float>& audio_features, const std::vector<uint32_t>& tokens, bool use_cache = false);
     
     virtual void load_weights_to_graph(CactusGraph* gb) = 0;
     
@@ -645,6 +650,7 @@ public:
 private:
     Config config_;
 
+    std::pair<int64_t, int64_t> compute_pixel_limits() const;
     std::vector<unsigned char> convert_to_rgb(const unsigned char* img_data, int width, int height, int channels);
     std::pair<int, int> smart_resize(int height, int width);
     bool is_image_too_large(int height, int width);
@@ -700,6 +706,103 @@ private:
     size_t num_frequency_bins_;
     size_t num_mel_filters_;
 };
+
+namespace index {
+    constexpr uint32_t MAGIC = 0x43414354;
+    constexpr uint32_t VERSION = 1;
+
+    struct Document {
+        int id;
+        std::vector<float> embedding;
+        std::string content;
+        std::string metadata;
+    };
+
+    struct QueryResult {
+        int doc_id;
+        float score;
+    };
+
+    struct QueryOptions {
+        size_t top_k = 10;
+        float score_threshold = -1.0f;
+    };
+
+    class Index {
+        public:
+            Index(const std::string& index_path, const std::string& data_path, size_t embedding_dim);
+            ~Index();
+
+            Index(const Index&) = delete;
+            Index& operator=(const Index&) = delete;
+            Index(Index&&) = delete;
+            Index& operator=(Index&&) = delete;
+
+            void add_documents(const std::vector<Document>& documents);
+            void delete_documents(const std::vector<int>& doc_ids);
+            std::vector<Document> get_documents(const std::vector<int>& doc_ids);
+            std::vector<std::vector<QueryResult>> query(const std::vector<std::vector<float>>& embeddings, const QueryOptions& options);
+            void compact();
+
+        private:
+            struct IndexHeader {
+                uint32_t magic;
+                uint32_t version;
+                uint32_t embedding_dim;
+                uint32_t num_documents;
+            };
+
+            struct IndexEntry {
+                int32_t doc_id;
+                uint64_t data_offset;
+                uint8_t flags; // bit 0: tombstone
+
+                const __fp16* embedding() const {
+                    return reinterpret_cast<const __fp16*>(this + 1);
+                }
+
+                static size_t size(size_t embedding_dim) {
+                    return sizeof(IndexEntry) + embedding_dim * sizeof(__fp16);
+                }
+            };
+
+            struct DataHeader {
+                uint32_t magic;
+                uint32_t version;
+            };
+
+            struct DataEntry {
+                uint16_t content_len;
+                uint16_t metadata_len;
+
+                const char* content() const {
+                    return reinterpret_cast<const char*>(this + 1);
+                }
+
+                const char* metadata() const {
+                    return content() + content_len;
+                }
+            };
+
+            void parse_index_header();
+            void parse_data_header();
+            void build_doc_id_map();
+            void validate_documents(const std::vector<Document>& documents);
+            void validate_doc_ids(const std::vector<int>& doc_ids);
+            ssize_t write_full(int fd, const void* buf, size_t count);
+
+            std::unordered_map<int, uint32_t> doc_id_map_;
+
+            std::string index_path_, data_path_;
+            size_t embedding_dim_;
+            size_t index_entry_size_;
+            uint32_t num_documents_;
+
+            int index_fd_, data_fd_;
+            void *mapped_index_, *mapped_data_;
+            size_t index_file_size_, data_file_size_;
+    };
+} // namespace index
 
 }
 }
