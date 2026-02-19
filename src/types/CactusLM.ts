@@ -1,32 +1,33 @@
-import { type ModelOptions } from './common';
+import { type CactusModelOptions } from './common';
 
 export interface CactusLMParams {
   model?: string;
-  contextSize?: number;
   corpusDir?: string;
-  options?: ModelOptions;
+  cacheIndex?: boolean;
+  options?: CactusModelOptions;
 }
 
 export interface CactusLMDownloadParams {
   onProgress?: (progress: number) => void;
 }
 
-export interface Message {
+export interface CactusLMMessage {
   role: 'user' | 'assistant' | 'system';
   content?: string;
   images?: string[];
 }
 
-export interface CompleteOptions {
+export interface CactusLMCompleteOptions {
   temperature?: number;
   topP?: number;
   topK?: number;
   maxTokens?: number;
   stopSequences?: string[];
   forceTools?: boolean;
+  telemetryEnabled?: boolean;
 }
 
-export interface Tool {
+export interface CactusLMTool {
   name: string;
   description: string;
   parameters: {
@@ -42,11 +43,10 @@ export interface Tool {
 }
 
 export interface CactusLMCompleteParams {
-  messages: Message[];
-  options?: CompleteOptions;
-  tools?: Tool[];
+  messages: CactusLMMessage[];
+  options?: CactusLMCompleteOptions;
+  tools?: CactusLMTool[];
   onToken?: (token: string) => void;
-  mode?: 'local' | 'hybrid';
 }
 
 export interface CactusLMCompleteResult {

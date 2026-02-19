@@ -1,21 +1,23 @@
 // Classes
 export { CactusLM } from './classes/CactusLM';
 export { CactusSTT } from './classes/CactusSTT';
+export { CactusVAD } from './classes/CactusVAD';
 export { CactusIndex } from './classes/CactusIndex';
 
 // Hooks
 export { useCactusLM } from './hooks/useCactusLM';
 export { useCactusSTT } from './hooks/useCactusSTT';
+export { useCactusVAD } from './hooks/useCactusVAD';
 export { useCactusIndex } from './hooks/useCactusIndex';
 
 // Types
-export type { CactusModel, ModelOptions } from './types/common';
+export type { CactusModel, CactusModelOptions } from './types/common';
 export type {
   CactusLMParams,
   CactusLMDownloadParams,
-  Message,
-  CompleteOptions,
-  Tool,
+  CactusLMMessage,
+  CactusLMCompleteOptions,
+  CactusLMTool,
   CactusLMCompleteParams,
   CactusLMCompleteResult,
   CactusLMTokenizeParams,
@@ -30,27 +32,31 @@ export type {
 export type {
   CactusSTTParams,
   CactusSTTDownloadParams,
-  TranscribeOptions,
+  CactusSTTTranscribeOptions,
   CactusSTTTranscribeParams,
   CactusSTTTranscribeResult,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
-  CactusSTTStreamTranscribeInsertParams,
-  StreamTranscribeProcessOptions,
+  CactusSTTStreamTranscribeStartOptions,
   CactusSTTStreamTranscribeProcessParams,
   CactusSTTStreamTranscribeProcessResult,
-  CactusSTTStreamTranscribeFinalizeResult,
+  CactusSTTStreamTranscribeStopResult,
 } from './types/CactusSTT';
+export type {
+  CactusVADParams,
+  CactusVADDownloadParams,
+  CactusVADVadParams,
+  CactusVADOptions,
+  CactusVADSegment,
+  CactusVADResult,
+} from './types/CactusVAD';
 export type {
   CactusIndexParams,
   CactusIndexAddParams,
   CactusIndexGetParams,
   CactusIndexGetResult,
-  IndexQueryOptions,
+  CactusIndexQueryOptions,
   CactusIndexQueryParams,
   CactusIndexQueryResult,
   CactusIndexDeleteParams,
 } from './types/CactusIndex';
-
-// Config
-export { CactusConfig } from './config/CactusConfig';

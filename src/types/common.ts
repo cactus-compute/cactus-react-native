@@ -22,7 +22,7 @@ export interface CactusModel {
   };
 }
 
-export interface ModelOptions {
+export interface CactusModelOptions {
   quantization?: 'int4' | 'int8';
   pro?: boolean;
 }

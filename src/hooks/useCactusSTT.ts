@@ -9,30 +9,27 @@ import type {
   CactusSTTDownloadParams,
   CactusSTTAudioEmbedParams,
   CactusSTTAudioEmbedResult,
-  CactusSTTStreamTranscribeInsertParams,
+  CactusSTTStreamTranscribeStartOptions,
   CactusSTTStreamTranscribeProcessParams,
   CactusSTTStreamTranscribeProcessResult,
-  CactusSTTStreamTranscribeFinalizeResult,
+  CactusSTTStreamTranscribeStopResult,
 } from '../types/CactusSTT';
 import type { CactusModel } from '../types/common';
 
 export const useCactusSTT = ({
   model = 'whisper-small',
-  contextSize = 2048,
   options: modelOptions = {
     quantization: undefined,
     pro: false,
   },
 }: CactusSTTParams = {}) => {
   const [cactusSTT, setCactusSTT] = useState(
-    () => new CactusSTT({ model, contextSize, options: modelOptions })
+    () => new CactusSTT({ model, options: modelOptions })
   );
 
   // State
   const [transcription, setTranscription] = useState('');
-  const [streamTranscribeConfirmed, setStreamTranscribeConfirmed] =
-    useState('');
-  const [streamTranscribePending, setStreamTranscribePending] = useState('');
+  const [streamTranscription, setStreamTranscription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isStreamTranscribing, setIsStreamTranscribing] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -49,20 +46,17 @@ export const useCactusSTT = ({
   }, [model]);
 
   useEffect(() => {
-    setCactusSTT(
-      new CactusSTT({
-        model,
-        contextSize,
-        options: {
-          quantization: modelOptions.quantization,
-          pro: modelOptions.pro,
-        },
-      })
-    );
+    const newInstance = new CactusSTT({
+      model,
+      options: {
+        quantization: modelOptions.quantization,
+        pro: modelOptions.pro,
+      },
+    });
+    setCactusSTT(newInstance);
 
     setTranscription('');
-    setStreamTranscribeConfirmed('');
-    setStreamTranscribePending('');
+    setStreamTranscription('');
     setIsGenerating(false);
     setIsStreamTranscribing(false);
     setIsInitializing(false);
@@ -72,7 +66,7 @@ export const useCactusSTT = ({
     setError(null);
 
     let mounted = true;
-    CactusFileSystem.modelExists(model)
+    CactusFileSystem.modelExists(newInstance.getModelName())
       .then((exists) => {
         if (!mounted) {
           return;
@@ -90,7 +84,7 @@ export const useCactusSTT = ({
     return () => {
       mounted = false;
     };
-  }, [model, contextSize, modelOptions.quantization, modelOptions.pro]);
+  }, [model, modelOptions.quantization, modelOptions.pro]);
 
   useEffect(() => {
     return () => {
@@ -244,46 +238,34 @@ export const useCactusSTT = ({
     [cactusSTT, isGenerating]
   );
 
-  const streamTranscribeInit = useCallback(async () => {
-    if (isStreamTranscribing) {
-      return;
-    }
+  const streamTranscribeStart = useCallback(
+    async (options?: CactusSTTStreamTranscribeStartOptions) => {
+      if (isStreamTranscribing) {
+        return;
+      }
 
-    setError(null);
-    setStreamTranscribeConfirmed('');
-    setStreamTranscribePending('');
-    setIsStreamTranscribing(true);
-    try {
-      await cactusSTT.streamTranscribeInit();
-    } catch (e) {
-      setError(getErrorMessage(e));
-      setIsStreamTranscribing(false);
-      throw e;
-    }
-  }, [cactusSTT, isStreamTranscribing]);
-
-  const streamTranscribeInsert = useCallback(
-    async ({ audio }: CactusSTTStreamTranscribeInsertParams): Promise<void> => {
       setError(null);
+      setStreamTranscription('');
+      setIsStreamTranscribing(true);
       try {
-        await cactusSTT.streamTranscribeInsert({ audio });
+        await cactusSTT.streamTranscribeStart(options);
       } catch (e) {
         setError(getErrorMessage(e));
+        setIsStreamTranscribing(false);
         throw e;
       }
     },
-    [cactusSTT]
+    [cactusSTT, isStreamTranscribing]
   );
 
   const streamTranscribeProcess = useCallback(
     async ({
-      options,
-    }: CactusSTTStreamTranscribeProcessParams = {}): Promise<CactusSTTStreamTranscribeProcessResult> => {
+      audio,
+    }: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult> => {
       setError(null);
       try {
-        const result = await cactusSTT.streamTranscribeProcess({ options });
-        setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
-        setStreamTranscribePending(result.pending);
+        const result = await cactusSTT.streamTranscribeProcess({ audio });
+        setStreamTranscription(result.confirmed);
         return result;
       } catch (e) {
         setError(getErrorMessage(e));
@@ -293,13 +275,12 @@ export const useCactusSTT = ({
     [cactusSTT]
   );
 
-  const streamTranscribeFinalize =
-    useCallback(async (): Promise<CactusSTTStreamTranscribeFinalizeResult> => {
+  const streamTranscribeStop =
+    useCallback(async (): Promise<CactusSTTStreamTranscribeStopResult> => {
       setError(null);
       try {
-        const result = await cactusSTT.streamTranscribeFinalize();
-        setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
-        setStreamTranscribePending('');
+        const result = await cactusSTT.streamTranscribeStop();
+        setStreamTranscription(result.confirmed);
         setIsStreamTranscribing(false);
         return result;
       } catch (e) {
@@ -307,19 +288,6 @@ export const useCactusSTT = ({
         throw e;
       }
     }, [cactusSTT]);
-
-  const streamTranscribeDestroy = useCallback(async (): Promise<void> => {
-    setError(null);
-    try {
-      await cactusSTT.streamTranscribeDestroy();
-    } catch (e) {
-      setError(getErrorMessage(e));
-      throw e;
-    } finally {
-      setIsStreamTranscribing(false);
-      setStreamTranscribePending('');
-    }
-  }, [cactusSTT]);
 
   const stop = useCallback(async () => {
     setError(null);
@@ -352,8 +320,7 @@ export const useCactusSTT = ({
       throw e;
     } finally {
       setTranscription('');
-      setStreamTranscribeConfirmed('');
-      setStreamTranscribePending('');
+      setStreamTranscription('');
       setIsStreamTranscribing(false);
     }
   }, [cactusSTT]);
@@ -361,7 +328,7 @@ export const useCactusSTT = ({
   const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
-      return await cactusSTT.getModels();
+      return cactusSTT.getModels();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
@@ -370,8 +337,7 @@ export const useCactusSTT = ({
 
   return {
     transcription,
-    streamTranscribeConfirmed,
-    streamTranscribePending,
+    streamTranscription,
     isGenerating,
     isStreamTranscribing,
     isInitializing,
@@ -384,11 +350,9 @@ export const useCactusSTT = ({
     init,
     transcribe,
     audioEmbed,
-    streamTranscribeInit,
-    streamTranscribeInsert,
+    streamTranscribeStart,
     streamTranscribeProcess,
-    streamTranscribeFinalize,
-    streamTranscribeDestroy,
+    streamTranscribeStop,
     reset,
     stop,
     destroy,

@@ -1,6 +1,48 @@
 import type { CactusModel } from './types/common';
 
 const models: { [key: string]: CactusModel } = {
+  'silero-vad': {
+    completion: false,
+    tools: false,
+    vision: false,
+    embed: false,
+    speech: true,
+    quantization: {
+      int4: {
+        sizeMb: 1,
+        url: 'https://huggingface.co/Cactus-Compute/silero-vad/resolve/main/weights/silero-vad-int4.zip',
+      },
+      int8: {
+        sizeMb: 1,
+        url: 'https://huggingface.co/Cactus-Compute/silero-vad/resolve/main/weights/silero-vad-int8.zip',
+      },
+    },
+  },
+  'moonshine-base': {
+    completion: false,
+    tools: false,
+    vision: false,
+    embed: false,
+    speech: true,
+    quantization: {
+      int4: {
+        sizeMb: 44,
+        url: 'https://huggingface.co/Cactus-Compute/moonshine-base/resolve/main/weights/moonshine-base-int4.zip',
+        pro: {
+          apple:
+            'https://huggingface.co/Cactus-Compute/moonshine-base/resolve/main/weights/moonshine-base-int4-apple.zip',
+        },
+      },
+      int8: {
+        sizeMb: 81,
+        url: 'https://huggingface.co/Cactus-Compute/moonshine-base/resolve/main/weights/moonshine-base-int8.zip',
+        pro: {
+          apple:
+            'https://huggingface.co/Cactus-Compute/moonshine-base/resolve/main/weights/moonshine-base-int8-apple.zip',
+        },
+      },
+    },
+  },
   'gemma-3-270m-it': {
     completion: true,
     tools: false,
@@ -10,11 +52,11 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 115,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/gemma-3-270m-it.zip',
+        url: 'https://huggingface.co/Cactus-Compute/gemma-3-270m-it/resolve/main/weights/gemma-3-270m-it-int4.zip',
       },
       int8: {
         sizeMb: 172,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/gemma-3-270m-it.zip',
+        url: 'https://huggingface.co/Cactus-Compute/gemma-3-270m-it/resolve/main/weights/gemma-3-270m-it-int8.zip',
       },
     },
   },
@@ -27,11 +69,11 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 115,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/functiongemma-270m-it.zip',
+        url: 'https://huggingface.co/Cactus-Compute/functiongemma-270m-it/resolve/main/weights/functiongemma-270m-it-int4.zip',
       },
       int8: {
         sizeMb: 172,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/functiongemma-270m-it.zip',
+        url: 'https://huggingface.co/Cactus-Compute/functiongemma-270m-it/resolve/main/weights/functiongemma-270m-it-int8.zip',
       },
     },
   },
@@ -44,18 +86,18 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 104,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/whisper-small.zip',
+        url: 'https://huggingface.co/Cactus-Compute/whisper-small/resolve/main/weights/whisper-small-int4.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/pro/apple/whisper-small.zip',
+            'https://huggingface.co/Cactus-Compute/whisper-small/resolve/main/weights/whisper-small-int4-apple.zip',
         },
       },
       int8: {
         sizeMb: 282,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/whisper-small.zip',
+        url: 'https://huggingface.co/Cactus-Compute/whisper-small/resolve/main/weights/whisper-small-int8.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/pro/apple/whisper-small.zip',
+            'https://huggingface.co/Cactus-Compute/whisper-small/resolve/main/weights/whisper-small-int8-apple.zip',
         },
       },
     },
@@ -69,28 +111,11 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 153,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-350m.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-350M/resolve/main/weights/lfm2-350m-int4.zip',
       },
       int8: {
         sizeMb: 233,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-350m.zip',
-      },
-    },
-  },
-  'smollm2-360m-instruct': {
-    completion: true,
-    tools: false,
-    vision: false,
-    embed: true,
-    speech: false,
-    quantization: {
-      int4: {
-        sizeMb: 140,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/smollm2-360m-instruct.zip',
-      },
-      int8: {
-        sizeMb: 227,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/smollm2-360m-instruct.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-350M/resolve/main/weights/lfm2-350m-int8.zip',
       },
     },
   },
@@ -103,36 +128,19 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 318,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-vl-450m.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-VL-450M/resolve/main/weights/lfm2-vl-450m-int4.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/pro/apple/lfm2-vl-450m.zip',
+            'https://huggingface.co/Cactus-Compute/LFM2-VL-450M/resolve/main/weights/lfm2-vl-450m-int4-apple.zip',
         },
       },
       int8: {
         sizeMb: 480,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-vl-450m.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-VL-450M/resolve/main/weights/lfm2-vl-450m-int8.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/pro/apple/lfm2-vl-450m.zip',
+            'https://huggingface.co/Cactus-Compute/LFM2-VL-450M/resolve/main/weights/lfm2-vl-450m-int8-apple.zip',
         },
-      },
-    },
-  },
-  'nomic-embed-text-v2-moe': {
-    completion: false,
-    tools: false,
-    vision: false,
-    embed: true,
-    speech: false,
-    quantization: {
-      int4: {
-        sizeMb: 211,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/nomic-embed-text-v2-moe.zip',
-      },
-      int8: {
-        sizeMb: 456,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/nomic-embed-text-v2-moe.zip',
       },
     },
   },
@@ -145,11 +153,11 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 234,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/qwen3-0.6b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/Qwen3-0.6B/resolve/main/weights/qwen3-0.6b-int4.zip',
       },
       int8: {
         sizeMb: 394,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/qwen3-0.6b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/Qwen3-0.6B/resolve/main/weights/qwen3-0.6b-int8.zip',
       },
     },
   },
@@ -162,11 +170,28 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 234,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/qwen3-embedding-0.6b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/Qwen3-Embedding-0.6B/resolve/main/weights/qwen3-embedding-0.6b-int4.zip',
       },
       int8: {
         sizeMb: 394,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/qwen3-embedding-0.6b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/Qwen3-Embedding-0.6B/resolve/main/weights/qwen3-embedding-0.6b-int8.zip',
+      },
+    },
+  },
+  'nomic-embed-text-v2-moe': {
+    completion: false,
+    tools: false,
+    vision: false,
+    embed: true,
+    speech: false,
+    quantization: {
+      int4: {
+        sizeMb: 211,
+        url: 'https://huggingface.co/Cactus-Compute/nomic-embed-text-v2-moe/resolve/main/weights/nomic-embed-text-v2-moe-int4.zip',
+      },
+      int8: {
+        sizeMb: 456,
+        url: 'https://huggingface.co/Cactus-Compute/nomic-embed-text-v2-moe/resolve/main/weights/nomic-embed-text-v2-moe-int8.zip',
       },
     },
   },
@@ -179,11 +204,11 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 300,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-700m.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-700M/resolve/main/weights/lfm2-700m-int4.zip',
       },
       int8: {
         sizeMb: 467,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-700m.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-700M/resolve/main/weights/lfm2-700m-int8.zip',
       },
     },
   },
@@ -196,11 +221,11 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 320,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/gemma-3-1b-it.zip',
+        url: 'https://huggingface.co/Cactus-Compute/gemma-3-1b-it/resolve/main/weights/gemma-3-1b-it-int4.zip',
       },
       int8: {
         sizeMb: 642,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/gemma-3-1b-it.zip',
+        url: 'https://huggingface.co/Cactus-Compute/gemma-3-1b-it/resolve/main/weights/gemma-3-1b-it-int8.zip',
       },
     },
   },
@@ -213,19 +238,36 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 320,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/whisper-medium.zip',
+        url: 'https://huggingface.co/Cactus-Compute/whisper-medium/resolve/main/weights/whisper-medium-int4.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/pro/apple/whisper-medium.zip',
+            'https://huggingface.co/Cactus-Compute/whisper-medium/resolve/main/weights/whisper-medium-int4-apple.zip',
         },
       },
       int8: {
         sizeMb: 646,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/whisper-medium.zip',
+        url: 'https://huggingface.co/Cactus-Compute/whisper-medium/resolve/main/weights/whisper-medium-int8.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/pro/apple/whisper-medium.zip',
+            'https://huggingface.co/Cactus-Compute/whisper-medium/resolve/main/weights/whisper-medium-int8-apple.zip',
         },
+      },
+    },
+  },
+  'lfm2-1.2b': {
+    completion: true,
+    tools: true,
+    vision: false,
+    embed: true,
+    speech: false,
+    quantization: {
+      int4: {
+        sizeMb: 574,
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-1.2B/resolve/main/weights/lfm2-1.2b-int4.zip',
+      },
+      int8: {
+        sizeMb: 1170,
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-1.2B/resolve/main/weights/lfm2-1.2b-int8.zip',
       },
     },
   },
@@ -238,15 +280,15 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 474,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2.5-1.2b-instruct.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2.5-1.2B-Instruct/resolve/main/weights/lfm2.5-1.2b-instruct-int4.zip',
       },
       int8: {
         sizeMb: 722,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2.5-1.2b-instruct.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2.5-1.2B-Instruct/resolve/main/weights/lfm2.5-1.2b-instruct-int8.zip',
       },
     },
   },
-  'lfm2-1.2b-rag': {
+  'lfm2.5-1.2b-thinking': {
     completion: true,
     tools: true,
     vision: false,
@@ -254,33 +296,16 @@ const models: { [key: string]: CactusModel } = {
     speech: false,
     quantization: {
       int4: {
-        sizeMb: 474,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-1.2b-rag.zip',
+        sizeMb: 574,
+        url: 'https://huggingface.co/Cactus-Compute/LFM2.5-1.2B-Thinking/resolve/main/weights/lfm2.5-1.2b-thinking-int4.zip',
       },
       int8: {
-        sizeMb: 722,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-1.2b-rag.zip',
+        sizeMb: 1170,
+        url: 'https://huggingface.co/Cactus-Compute/LFM2.5-1.2B-Thinking/resolve/main/weights/lfm2.5-1.2b-thinking-int8.zip',
       },
     },
   },
-  'lfm2-1.2b-tool': {
-    completion: true,
-    tools: true,
-    vision: false,
-    embed: true,
-    speech: false,
-    quantization: {
-      int4: {
-        sizeMb: 474,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-1.2b-tool.zip',
-      },
-      int8: {
-        sizeMb: 722,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-1.2b-tool.zip',
-      },
-    },
-  },
-  'lfm2-vl-1.6b': {
+  'lfm2.5-vl-1.6b': {
     completion: true,
     tools: false,
     vision: true,
@@ -289,18 +314,18 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 954,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/lfm2-vl-1.6b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2.5-VL-1.6B/resolve/main/weights/lfm2.5-vl-1.6b-int4.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/pro/apple/lfm2-vl-1.6b.zip',
+            'https://huggingface.co/Cactus-Compute/LFM2.5-VL-1.6B/resolve/main/weights/lfm2.5-vl-1.6b-int4-apple.zip',
         },
       },
       int8: {
         sizeMb: 1440,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/lfm2-vl-1.6b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/LFM2.5-VL-1.6B/resolve/main/weights/lfm2.5-vl-1.6b-int8.zip',
         pro: {
           apple:
-            'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/pro/apple/lfm2-vl-1.6b.zip',
+            'https://huggingface.co/Cactus-Compute/LFM2.5-VL-1.6B/resolve/main/weights/lfm2.5-vl-1.6b-int8-apple.zip',
         },
       },
     },
@@ -314,28 +339,28 @@ const models: { [key: string]: CactusModel } = {
     quantization: {
       int4: {
         sizeMb: 749,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/qwen3-1.7b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/Qwen3-1.7B/resolve/main/weights/qwen3-1.7b-int4.zip',
       },
       int8: {
         sizeMb: 1161,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/qwen3-1.7b.zip',
+        url: 'https://huggingface.co/Cactus-Compute/Qwen3-1.7B/resolve/main/weights/qwen3-1.7b-int8.zip',
       },
     },
   },
-  'smollm2-1.7b-instruct': {
+  'lfm2-2.6b': {
     completion: true,
-    tools: false,
+    tools: true,
     vision: false,
     embed: true,
     speech: false,
     quantization: {
       int4: {
-        sizeMb: 801,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int4/smollm2-1.7b-instruct.zip',
+        sizeMb: 1280,
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-2.6B/resolve/main/weights/lfm2-2.6b-int4.zip',
       },
       int8: {
-        sizeMb: 1161,
-        url: 'https://vlqqczxwyaodtcdmdmlw.supabase.co/storage/v1/object/public/cactus-models/v1.5/int8/smollm2-1.7b-instruct.zip',
+        sizeMb: 2620,
+        url: 'https://huggingface.co/Cactus-Compute/LFM2-2.6B/resolve/main/weights/lfm2-2.6b-int8.zip',
       },
     },
   },

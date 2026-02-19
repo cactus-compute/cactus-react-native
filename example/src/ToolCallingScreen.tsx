@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import {
   useCactusLM,
-  type Message,
-  type Tool,
+  type CactusLMMessage,
+  type CactusLMTool,
   type CactusLMCompleteResult,
 } from 'cactus-react-native';
 
-const tools: Tool[] = [
+const tools: CactusLMTool[] = [
   {
     name: 'get_weather',
     description: 'Get current weather for a location',
@@ -45,7 +45,7 @@ const ToolCallingScreen = () => {
   }, [cactusLM.isDownloaded]);
 
   const handleComplete = async () => {
-    const messages: Message[] = [
+    const messages: CactusLMMessage[] = [
       {
         role: 'system',
         content: 'You are a helpful assistant that can call tools.',

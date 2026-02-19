@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {
   useCactusLM,
-  type Message,
+  type CactusLMMessage,
   type CactusLMCompleteResult,
   type CactusLMEmbedResult,
 } from 'cactus-react-native';
@@ -35,7 +35,7 @@ const CompletionScreen = () => {
   };
 
   const handleComplete = async () => {
-    const messages: Message[] = [
+    const messages: CactusLMMessage[] = [
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: input },
     ];

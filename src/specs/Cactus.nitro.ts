@@ -3,8 +3,8 @@ import type { HybridObject } from 'react-native-nitro-modules';
 export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
   init(
     modelPath: string,
-    contextSize: number,
-    corpusDir?: string
+    corpusDir?: string,
+    cacheIndex?: boolean
   ): Promise<void>;
   complete(
     messagesJson: string,
@@ -27,11 +27,14 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
     optionsJson?: string,
     callback?: (token: string, tokenId: number) => void
   ): Promise<string>;
-  streamTranscribeInit(): Promise<void>;
-  streamTranscribeInsert(audio: number[]): Promise<void>;
-  streamTranscribeProcess(optionsJson?: string): Promise<string>;
-  streamTranscribeFinalize(): Promise<string>;
-  streamTranscribeDestroy(): Promise<void>;
+  streamTranscribeStart(optionsJson?: string): Promise<void>;
+  streamTranscribeProcess(audio: number[]): Promise<string>;
+  streamTranscribeStop(): Promise<string>;
+  vad(
+    audio: string | number[],
+    responseBufferSize: number,
+    optionsJson?: string
+  ): Promise<string>;
   embed(
     text: string,
     embeddingBufferSize: number,
@@ -42,4 +45,5 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
   reset(): Promise<void>;
   stop(): Promise<void>;
   destroy(): Promise<void>;
+  setTelemetryEnvironment(cacheDir: string): Promise<void>;
 }

@@ -53,22 +53,22 @@ namespace margelo::nitro::cactus {
 
     public:
       // Methods
-      virtual std::shared_ptr<Promise<void>> init(const std::string& modelPath, double contextSize, const std::optional<std::string>& corpusDir) = 0;
+      virtual std::shared_ptr<Promise<void>> init(const std::string& modelPath, const std::optional<std::string>& corpusDir, std::optional<bool> cacheIndex) = 0;
       virtual std::shared_ptr<Promise<std::string>> complete(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> tokenize(const std::string& text) = 0;
       virtual std::shared_ptr<Promise<std::string>> scoreWindow(const std::vector<double>& tokens, double start, double end, double context) = 0;
       virtual std::shared_ptr<Promise<std::string>> transcribe(const std::variant<std::vector<double>, std::string>& audio, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
-      virtual std::shared_ptr<Promise<void>> streamTranscribeInit() = 0;
-      virtual std::shared_ptr<Promise<void>> streamTranscribeInsert(const std::vector<double>& audio) = 0;
-      virtual std::shared_ptr<Promise<std::string>> streamTranscribeProcess(const std::optional<std::string>& optionsJson) = 0;
-      virtual std::shared_ptr<Promise<std::string>> streamTranscribeFinalize() = 0;
-      virtual std::shared_ptr<Promise<void>> streamTranscribeDestroy() = 0;
+      virtual std::shared_ptr<Promise<void>> streamTranscribeStart(const std::optional<std::string>& optionsJson) = 0;
+      virtual std::shared_ptr<Promise<std::string>> streamTranscribeProcess(const std::vector<double>& audio) = 0;
+      virtual std::shared_ptr<Promise<std::string>> streamTranscribeStop() = 0;
+      virtual std::shared_ptr<Promise<std::string>> vad(const std::variant<std::vector<double>, std::string>& audio, double responseBufferSize, const std::optional<std::string>& optionsJson) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> embed(const std::string& text, double embeddingBufferSize, bool normalize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> imageEmbed(const std::string& imagePath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> audioEmbed(const std::string& audioPath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> stop() = 0;
       virtual std::shared_ptr<Promise<void>> destroy() = 0;
+      virtual std::shared_ptr<Promise<void>> setTelemetryEnvironment(const std::string& cacheDir) = 0;
 
     protected:
       // Hybrid Setup

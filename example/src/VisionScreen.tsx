@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {
   useCactusLM,
-  type Message,
+  type CactusLMMessage,
   type CactusLMCompleteResult,
   type CactusLMEmbedResult,
 } from 'cactus-react-native';
@@ -48,7 +48,7 @@ const VisionScreen = () => {
   const handleAnalyze = async () => {
     if (!selectedImage) return;
 
-    const messages: Message[] = [
+    const messages: CactusLMMessage[] = [
       {
         role: 'system',
         content: 'You are a helpful assistant that can analyze images.',

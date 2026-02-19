@@ -3,17 +3,18 @@ import type { Cactus as CactusSpec } from '../specs/Cactus.nitro';
 import { CactusImage } from './CactusImage';
 import type {
   CactusLMCompleteResult,
-  Message,
-  CompleteOptions,
-  Tool,
+  CactusLMMessage,
+  CactusLMCompleteOptions,
+  CactusLMTool,
 } from '../types/CactusLM';
 import type {
   CactusSTTTranscribeResult,
-  TranscribeOptions,
+  CactusSTTTranscribeOptions,
+  CactusSTTStreamTranscribeStartOptions,
   CactusSTTStreamTranscribeProcessResult,
-  StreamTranscribeProcessOptions,
-  CactusSTTStreamTranscribeFinalizeResult,
+  CactusSTTStreamTranscribeStopResult,
 } from '../types/CactusSTT';
+import type { CactusVADOptions, CactusVADResult } from '../types/CactusVAD';
 
 export class Cactus {
   private readonly hybridCactus =
@@ -21,20 +22,20 @@ export class Cactus {
 
   public init(
     modelPath: string,
-    contextSize: number,
-    corpusDir?: string
+    corpusDir?: string,
+    cacheIndex?: boolean
   ): Promise<void> {
-    return this.hybridCactus.init(modelPath, contextSize, corpusDir);
+    return this.hybridCactus.init(modelPath, corpusDir, cacheIndex ?? false);
   }
 
   public async complete(
-    messages: Message[],
+    messages: CactusLMMessage[],
     responseBufferSize: number,
-    options?: CompleteOptions,
-    tools?: { type: 'function'; function: Tool }[],
+    options?: CactusLMCompleteOptions,
+    tools?: { type: 'function'; function: CactusLMTool }[],
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusLMCompleteResult> {
-    const messagesInternal: Message[] = [];
+    const messagesInternal: CactusLMMessage[] = [];
     for (const message of messages) {
       if (!message.images) {
         messagesInternal.push(message);
@@ -45,8 +46,8 @@ export class Cactus {
       for (const imagePath of message.images) {
         const resizedImage = await CactusImage.resize(
           imagePath.replace('file://', ''),
-          128,
-          128,
+          256,
+          256,
           1
         );
         resizedImages.push(resizedImage);
@@ -64,6 +65,7 @@ export class Cactus {
           max_tokens: options.maxTokens,
           stop_sequences: options.stopSequences,
           force_tools: options.forceTools,
+          telemetry_enabled: options.telemetryEnabled,
         })
       : undefined;
     const toolsJson = JSON.stringify(tools);
@@ -123,7 +125,7 @@ export class Cactus {
     audio: string | number[],
     prompt: string,
     responseBufferSize: number,
-    options?: TranscribeOptions,
+    options?: CactusSTTTranscribeOptions,
     callback?: (token: string, tokenId: number) => void
   ): Promise<CactusSTTTranscribeResult> {
     if (typeof audio === 'string') {
@@ -137,6 +139,8 @@ export class Cactus {
           top_k: options.topK,
           max_tokens: options.maxTokens,
           stop_sequences: options.stopSequences,
+          use_vad: options.useVad,
+          telemetry_enabled: options.telemetryEnabled,
         })
       : undefined;
 
@@ -166,56 +170,82 @@ export class Cactus {
     }
   }
 
-  public streamTranscribeInit(): Promise<void> {
-    return this.hybridCactus.streamTranscribeInit();
-  }
-
-  public streamTranscribeInsert(audio: number[]): Promise<void> {
-    return this.hybridCactus.streamTranscribeInsert(audio);
-  }
-
-  public async streamTranscribeProcess(
-    options?: StreamTranscribeProcessOptions
-  ): Promise<CactusSTTStreamTranscribeProcessResult> {
+  public streamTranscribeStart(
+    options?: CactusSTTStreamTranscribeStartOptions
+  ): Promise<void> {
     const optionsJson = options
       ? JSON.stringify({
           confirmation_threshold: options.confirmationThreshold,
+          min_chunk_size: options.minChunkSize,
+          telemetry_enabled: options.telemetryEnabled,
         })
       : undefined;
+    return this.hybridCactus.streamTranscribeStart(optionsJson);
+  }
 
-    const response =
-      await this.hybridCactus.streamTranscribeProcess(optionsJson);
-
+  public async streamTranscribeProcess(
+    audio: number[]
+  ): Promise<CactusSTTStreamTranscribeProcessResult> {
+    const response = await this.hybridCactus.streamTranscribeProcess(audio);
     try {
       const parsed = JSON.parse(response);
-
       return {
         success: parsed.success,
         confirmed: parsed.confirmed,
         pending: parsed.pending,
+        bufferDurationMs: parsed.buffer_duration_ms,
+        confidence: parsed.confidence,
+        timeToFirstTokenMs: parsed.time_to_first_token_ms,
+        totalTimeMs: parsed.total_time_ms,
       };
     } catch {
       throw new Error('Unable to parse stream transcribe process response');
     }
   }
 
-  public async streamTranscribeFinalize(): Promise<CactusSTTStreamTranscribeFinalizeResult> {
-    const response = await this.hybridCactus.streamTranscribeFinalize();
-
+  public async streamTranscribeStop(): Promise<CactusSTTStreamTranscribeStopResult> {
+    const response = await this.hybridCactus.streamTranscribeStop();
     try {
       const parsed = JSON.parse(response);
-
-      return {
-        success: parsed.success,
-        confirmed: parsed.confirmed,
-      };
+      return { success: parsed.success, confirmed: parsed.confirmed };
     } catch {
-      throw new Error('Unable to parse stream transcribe finalize response');
+      throw new Error('Unable to parse stream transcribe stop response');
     }
   }
 
-  public streamTranscribeDestroy(): Promise<void> {
-    return this.hybridCactus.streamTranscribeDestroy();
+  public async vad(
+    audio: string | number[],
+    options?: CactusVADOptions
+  ): Promise<CactusVADResult> {
+    if (typeof audio === 'string') {
+      audio = audio.replace('file://', '');
+    }
+    const optionsJson = options
+      ? JSON.stringify({
+          threshold: options.threshold,
+          neg_threshold: options.negThreshold,
+          min_speech_duration_ms: options.minSpeechDurationMs,
+          max_speech_duration_s: options.maxSpeechDurationS,
+          min_silence_duration_ms: options.minSilenceDurationMs,
+          speech_pad_ms: options.speechPadMs,
+          window_size_samples: options.windowSizeSamples,
+          sampling_rate: options.samplingRate,
+        })
+      : undefined;
+    const response = await this.hybridCactus.vad(audio, 65536, optionsJson);
+    try {
+      const parsed = JSON.parse(response);
+      return {
+        segments: parsed.segments.map((s: { start: number; end: number }) => ({
+          start: s.start,
+          end: s.end,
+        })),
+        totalTime: parsed.total_time_ms,
+        ramUsage: parsed.ram_usage_mb,
+      };
+    } catch {
+      throw new Error('Unable to parse VAD response');
+    }
   }
 
   public embed(
@@ -259,5 +289,9 @@ export class Cactus {
 
   public destroy(): Promise<void> {
     return this.hybridCactus.destroy();
+  }
+
+  public setTelemetryEnvironment(cacheDir: string): Promise<void> {
+    return this.hybridCactus.setTelemetryEnvironment(cacheDir);
   }
 }

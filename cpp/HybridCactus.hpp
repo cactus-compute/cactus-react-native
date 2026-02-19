@@ -12,8 +12,9 @@ public:
   HybridCactus();
 
   std::shared_ptr<Promise<void>>
-  init(const std::string &modelPath, double contextSize,
-       const std::optional<std::string> &corpusDir) override;
+  init(const std::string &modelPath,
+       const std::optional<std::string> &corpusDir,
+       bool cacheIndex) override;
 
   std::shared_ptr<Promise<std::string>> complete(
       const std::string &messagesJson, double responseBufferSize,
@@ -38,17 +39,18 @@ public:
                                              double /* tokenId */)>> &callback)
       override;
 
-  std::shared_ptr<Promise<void>> streamTranscribeInit() override;
-
   std::shared_ptr<Promise<void>>
-  streamTranscribeInsert(const std::vector<double> &audio) override;
+  streamTranscribeStart(const std::optional<std::string> &optionsJson) override;
 
-  std::shared_ptr<Promise<std::string>> streamTranscribeProcess(
+  std::shared_ptr<Promise<std::string>>
+  streamTranscribeProcess(const std::vector<double> &audio) override;
+
+  std::shared_ptr<Promise<std::string>> streamTranscribeStop() override;
+
+  std::shared_ptr<Promise<std::string>>
+  vad(const std::variant<std::vector<double>, std::string> &audio,
+      double responseBufferSize,
       const std::optional<std::string> &optionsJson) override;
-
-  std::shared_ptr<Promise<std::string>> streamTranscribeFinalize() override;
-
-  std::shared_ptr<Promise<void>> streamTranscribeDestroy() override;
 
   std::shared_ptr<Promise<std::vector<double>>>
   embed(const std::string &text, double embeddingBufferSize,
@@ -66,10 +68,12 @@ public:
 
   std::shared_ptr<Promise<void>> destroy() override;
 
+  std::shared_ptr<Promise<void>>
+  setTelemetryEnvironment(const std::string &cacheDir) override;
+
 private:
   cactus_model_t _model = nullptr;
   cactus_stream_transcribe_t _streamTranscribe = nullptr;
-  size_t _contextSize;
 
   std::mutex _modelMutex;
 };

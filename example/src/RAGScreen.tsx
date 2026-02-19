@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {
   useCactusLM,
-  type Message,
+  type CactusLMMessage,
   type CactusLMCompleteResult,
 } from 'cactus-react-native';
 import * as RNFS from '@dr.pogodin/react-native-fs';
@@ -18,7 +18,7 @@ import * as RNFS from '@dr.pogodin/react-native-fs';
 const RAGScreen = () => {
   const [corpusDir, setCorpusDir] = useState<string | null>(null);
   const cactusLM = useCactusLM({
-    model: 'lfm2-1.2b-rag',
+    model: 'lfm2-1.2b',
     corpusDir: corpusDir || undefined,
   });
   const [input, setInput] = useState('How old is Spike the cactus?');
@@ -64,7 +64,7 @@ My Monstera Deliciosa, called Ferdinand, is five years old and has forty-three l
   };
 
   const handleAsk = async () => {
-    const messages: Message[] = [
+    const messages: CactusLMMessage[] = [
       {
         role: 'system',
         content:

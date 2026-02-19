@@ -20,14 +20,14 @@ export interface CactusIndexGetResult {
   embeddings: number[][];
 }
 
-export interface IndexQueryOptions {
+export interface CactusIndexQueryOptions {
   topK?: number;
   scoreThreshold?: number;
 }
 
 export interface CactusIndexQueryParams {
   embeddings: number[][];
-  options?: IndexQueryOptions;
+  options?: CactusIndexQueryOptions;
 }
 
 export interface CactusIndexQueryResult {
