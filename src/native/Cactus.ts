@@ -46,8 +46,8 @@ export class Cactus {
       for (const imagePath of message.images) {
         const resizedImage = await CactusImage.resize(
           imagePath.replace('file://', ''),
-          256,
-          256,
+          128,
+          128,
           1
         );
         resizedImages.push(resizedImage);
@@ -66,6 +66,10 @@ export class Cactus {
           stop_sequences: options.stopSequences,
           force_tools: options.forceTools,
           telemetry_enabled: options.telemetryEnabled,
+          confidence_threshold: options.confidenceThreshold,
+          tool_rag_top_k: options.toolRagTopK,
+          include_stop_sequences: options.includeStopSequences,
+          use_vad: options.useVad,
         })
       : undefined;
     const toolsJson = JSON.stringify(tools);
@@ -85,12 +89,16 @@ export class Cactus {
         success: parsed.success,
         response: parsed.response,
         functionCalls: parsed.function_calls,
+        cloudHandoff: parsed.cloud_handoff,
+        confidence: parsed.confidence,
         timeToFirstTokenMs: parsed.time_to_first_token_ms,
         totalTimeMs: parsed.total_time_ms,
-        tokensPerSecond: parsed.tokens_per_second,
         prefillTokens: parsed.prefill_tokens,
+        prefillTps: parsed.prefill_tps,
         decodeTokens: parsed.decode_tokens,
+        decodeTps: parsed.decode_tps,
         totalTokens: parsed.total_tokens,
+        ramUsageMb: parsed.ram_usage_mb,
       };
     } catch {
       throw new Error('Unable to parse completion response');
@@ -141,6 +149,9 @@ export class Cactus {
           stop_sequences: options.stopSequences,
           use_vad: options.useVad,
           telemetry_enabled: options.telemetryEnabled,
+          confidence_threshold: options.confidenceThreshold,
+          cloud_handoff_threshold: options.cloudHandoffThreshold,
+          include_stop_sequences: options.includeStopSequences,
         })
       : undefined;
 
@@ -158,12 +169,16 @@ export class Cactus {
       return {
         success: parsed.success,
         response: parsed.response,
+        cloudHandoff: parsed.cloud_handoff,
+        confidence: parsed.confidence,
         timeToFirstTokenMs: parsed.time_to_first_token_ms,
         totalTimeMs: parsed.total_time_ms,
-        tokensPerSecond: parsed.tokens_per_second,
         prefillTokens: parsed.prefill_tokens,
+        prefillTps: parsed.prefill_tps,
         decodeTokens: parsed.decode_tokens,
+        decodeTps: parsed.decode_tps,
         totalTokens: parsed.total_tokens,
+        ramUsageMb: parsed.ram_usage_mb,
       };
     } catch {
       throw new Error('Unable to parse transcription response');
@@ -195,8 +210,18 @@ export class Cactus {
         pending: parsed.pending,
         bufferDurationMs: parsed.buffer_duration_ms,
         confidence: parsed.confidence,
+        cloudHandoff: parsed.cloud_handoff,
+        cloudResult: parsed.cloud_result,
+        cloudJobId: parsed.cloud_job_id,
+        cloudResultJobId: parsed.cloud_result_job_id,
         timeToFirstTokenMs: parsed.time_to_first_token_ms,
         totalTimeMs: parsed.total_time_ms,
+        prefillTokens: parsed.prefill_tokens,
+        prefillTps: parsed.prefill_tps,
+        decodeTokens: parsed.decode_tokens,
+        decodeTps: parsed.decode_tps,
+        totalTokens: parsed.total_tokens,
+        ramUsageMb: parsed.ram_usage_mb,
       };
     } catch {
       throw new Error('Unable to parse stream transcribe process response');
@@ -230,6 +255,8 @@ export class Cactus {
           speech_pad_ms: options.speechPadMs,
           window_size_samples: options.windowSizeSamples,
           sampling_rate: options.samplingRate,
+          min_silence_at_max_speech: options.minSilenceAtMaxSpeech,
+          use_max_poss_sil_at_max_speech: options.useMaxPossSilAtMaxSpeech,
         })
       : undefined;
     const response = await this.hybridCactus.vad(audio, 65536, optionsJson);

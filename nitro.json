@@ -14,20 +14,9 @@
     "CactusIndex": {
       "cpp": "HybridCactusIndex"
     },
-    "CactusUtil": {
-      "cpp": "HybridCactusUtil"
-    },
     "CactusFileSystem": {
       "kotlin": "HybridCactusFileSystem",
       "swift": "HybridCactusFileSystem"
-    },
-    "CactusCrypto": {
-      "kotlin": "HybridCactusCrypto",
-      "swift": "HybridCactusCrypto"
-    },
-    "CactusDeviceInfo": {
-      "kotlin": "HybridCactusDeviceInfo",
-      "swift": "HybridCactusDeviceInfo"
     },
     "CactusImage": {
       "kotlin": "HybridCactusImage",

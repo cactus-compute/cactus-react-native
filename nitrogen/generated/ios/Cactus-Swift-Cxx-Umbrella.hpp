@@ -8,21 +8,12 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-// Forward declaration of `DeviceInfo` to properly resolve imports.
-namespace margelo::nitro::cactus { struct DeviceInfo; }
-// Forward declaration of `HybridCactusCryptoSpec` to properly resolve imports.
-namespace margelo::nitro::cactus { class HybridCactusCryptoSpec; }
-// Forward declaration of `HybridCactusDeviceInfoSpec` to properly resolve imports.
-namespace margelo::nitro::cactus { class HybridCactusDeviceInfoSpec; }
 // Forward declaration of `HybridCactusFileSystemSpec` to properly resolve imports.
 namespace margelo::nitro::cactus { class HybridCactusFileSystemSpec; }
 // Forward declaration of `HybridCactusImageSpec` to properly resolve imports.
 namespace margelo::nitro::cactus { class HybridCactusImageSpec; }
 
 // Include C++ defined types
-#include "DeviceInfo.hpp"
-#include "HybridCactusCryptoSpec.hpp"
-#include "HybridCactusDeviceInfoSpec.hpp"
 #include "HybridCactusFileSystemSpec.hpp"
 #include "HybridCactusImageSpec.hpp"
 #include <NitroModules/Promise.hpp>
@@ -43,10 +34,6 @@ namespace margelo::nitro::cactus { class HybridCactusImageSpec; }
 #include <NitroModules/DateToChronoDate.hpp>
 
 // Forward declarations of Swift defined types
-// Forward declaration of `HybridCactusCryptoSpec_cxx` to properly resolve imports.
-namespace Cactus { class HybridCactusCryptoSpec_cxx; }
-// Forward declaration of `HybridCactusDeviceInfoSpec_cxx` to properly resolve imports.
-namespace Cactus { class HybridCactusDeviceInfoSpec_cxx; }
 // Forward declaration of `HybridCactusFileSystemSpec_cxx` to properly resolve imports.
 namespace Cactus { class HybridCactusFileSystemSpec_cxx; }
 // Forward declaration of `HybridCactusImageSpec_cxx` to properly resolve imports.

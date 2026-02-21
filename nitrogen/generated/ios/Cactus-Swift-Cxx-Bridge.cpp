@@ -9,8 +9,6 @@
 
 // Include C++ implementation defined types
 #include "Cactus-Swift-Cxx-Umbrella.hpp"
-#include "HybridCactusCryptoSpecSwift.hpp"
-#include "HybridCactusDeviceInfoSpecSwift.hpp"
 #include "HybridCactusFileSystemSpecSwift.hpp"
 #include "HybridCactusImageSpecSwift.hpp"
 
@@ -30,54 +28,6 @@ namespace margelo::nitro::cactus::bridge::swift {
     return [swiftClosure = std::move(swiftClosure)](const std::exception_ptr& error) mutable -> void {
       swiftClosure.call(error);
     };
-  }
-  
-  // pragma MARK: std::shared_ptr<HybridCactusCryptoSpec>
-  std::shared_ptr<HybridCactusCryptoSpec> create_std__shared_ptr_HybridCactusCryptoSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
-    Cactus::HybridCactusCryptoSpec_cxx swiftPart = Cactus::HybridCactusCryptoSpec_cxx::fromUnsafe(swiftUnsafePointer);
-    return std::make_shared<margelo::nitro::cactus::HybridCactusCryptoSpecSwift>(swiftPart);
-  }
-  void* NON_NULL get_std__shared_ptr_HybridCactusCryptoSpec_(std__shared_ptr_HybridCactusCryptoSpec_ cppType) {
-    std::shared_ptr<margelo::nitro::cactus::HybridCactusCryptoSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::cactus::HybridCactusCryptoSpecSwift>(cppType);
-    #ifdef NITRO_DEBUG
-    if (swiftWrapper == nullptr) [[unlikely]] {
-      throw std::runtime_error("Class \"HybridCactusCryptoSpec\" is not implemented in Swift!");
-    }
-    #endif
-    Cactus::HybridCactusCryptoSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
-    return swiftPart.toUnsafe();
-  }
-  
-  // pragma MARK: std::function<void(const std::optional<std::string>& /* result */)>
-  Func_void_std__optional_std__string_ create_Func_void_std__optional_std__string_(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = Cactus::Func_void_std__optional_std__string_::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const std::optional<std::string>& result) mutable -> void {
-      swiftClosure.call(result);
-    };
-  }
-  
-  // pragma MARK: std::function<void(const DeviceInfo& /* result */)>
-  Func_void_DeviceInfo create_Func_void_DeviceInfo(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = Cactus::Func_void_DeviceInfo::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const DeviceInfo& result) mutable -> void {
-      swiftClosure.call(result);
-    };
-  }
-  
-  // pragma MARK: std::shared_ptr<HybridCactusDeviceInfoSpec>
-  std::shared_ptr<HybridCactusDeviceInfoSpec> create_std__shared_ptr_HybridCactusDeviceInfoSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
-    Cactus::HybridCactusDeviceInfoSpec_cxx swiftPart = Cactus::HybridCactusDeviceInfoSpec_cxx::fromUnsafe(swiftUnsafePointer);
-    return std::make_shared<margelo::nitro::cactus::HybridCactusDeviceInfoSpecSwift>(swiftPart);
-  }
-  void* NON_NULL get_std__shared_ptr_HybridCactusDeviceInfoSpec_(std__shared_ptr_HybridCactusDeviceInfoSpec_ cppType) {
-    std::shared_ptr<margelo::nitro::cactus::HybridCactusDeviceInfoSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::cactus::HybridCactusDeviceInfoSpecSwift>(cppType);
-    #ifdef NITRO_DEBUG
-    if (swiftWrapper == nullptr) [[unlikely]] {
-      throw std::runtime_error("Class \"HybridCactusDeviceInfoSpec\" is not implemented in Swift!");
-    }
-    #endif
-    Cactus::HybridCactusDeviceInfoSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
-    return swiftPart.toUnsafe();
   }
   
   // pragma MARK: std::function<void(bool /* result */)>

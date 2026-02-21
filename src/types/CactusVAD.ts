@@ -18,6 +18,8 @@ export interface CactusVADOptions {
   speechPadMs?: number;
   windowSizeSamples?: number;
   samplingRate?: number;
+  minSilenceAtMaxSpeech?: number;
+  useMaxPossSilAtMaxSpeech?: boolean;
 }
 
 export interface CactusVADSegment {

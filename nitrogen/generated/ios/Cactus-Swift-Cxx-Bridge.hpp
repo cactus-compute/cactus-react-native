@@ -8,31 +8,18 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-// Forward declaration of `DeviceInfo` to properly resolve imports.
-namespace margelo::nitro::cactus { struct DeviceInfo; }
-// Forward declaration of `HybridCactusCryptoSpec` to properly resolve imports.
-namespace margelo::nitro::cactus { class HybridCactusCryptoSpec; }
-// Forward declaration of `HybridCactusDeviceInfoSpec` to properly resolve imports.
-namespace margelo::nitro::cactus { class HybridCactusDeviceInfoSpec; }
 // Forward declaration of `HybridCactusFileSystemSpec` to properly resolve imports.
 namespace margelo::nitro::cactus { class HybridCactusFileSystemSpec; }
 // Forward declaration of `HybridCactusImageSpec` to properly resolve imports.
 namespace margelo::nitro::cactus { class HybridCactusImageSpec; }
 
 // Forward declarations of Swift defined types
-// Forward declaration of `HybridCactusCryptoSpec_cxx` to properly resolve imports.
-namespace Cactus { class HybridCactusCryptoSpec_cxx; }
-// Forward declaration of `HybridCactusDeviceInfoSpec_cxx` to properly resolve imports.
-namespace Cactus { class HybridCactusDeviceInfoSpec_cxx; }
 // Forward declaration of `HybridCactusFileSystemSpec_cxx` to properly resolve imports.
 namespace Cactus { class HybridCactusFileSystemSpec_cxx; }
 // Forward declaration of `HybridCactusImageSpec_cxx` to properly resolve imports.
 namespace Cactus { class HybridCactusImageSpec_cxx; }
 
 // Include C++ defined types
-#include "DeviceInfo.hpp"
-#include "HybridCactusCryptoSpec.hpp"
-#include "HybridCactusDeviceInfoSpec.hpp"
 #include "HybridCactusFileSystemSpec.hpp"
 #include "HybridCactusImageSpec.hpp"
 #include <NitroModules/Promise.hpp>
@@ -104,140 +91,6 @@ namespace margelo::nitro::cactus::bridge::swift {
   Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__exception_ptr_Wrapper wrap_Func_void_std__exception_ptr(Func_void_std__exception_ptr value) noexcept {
     return Func_void_std__exception_ptr_Wrapper(std::move(value));
-  }
-  
-  // pragma MARK: std::shared_ptr<HybridCactusCryptoSpec>
-  /**
-   * Specialized version of `std::shared_ptr<HybridCactusCryptoSpec>`.
-   */
-  using std__shared_ptr_HybridCactusCryptoSpec_ = std::shared_ptr<HybridCactusCryptoSpec>;
-  std::shared_ptr<HybridCactusCryptoSpec> create_std__shared_ptr_HybridCactusCryptoSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
-  void* NON_NULL get_std__shared_ptr_HybridCactusCryptoSpec_(std__shared_ptr_HybridCactusCryptoSpec_ cppType);
-  
-  // pragma MARK: std::weak_ptr<HybridCactusCryptoSpec>
-  using std__weak_ptr_HybridCactusCryptoSpec_ = std::weak_ptr<HybridCactusCryptoSpec>;
-  inline std__weak_ptr_HybridCactusCryptoSpec_ weakify_std__shared_ptr_HybridCactusCryptoSpec_(const std::shared_ptr<HybridCactusCryptoSpec>& strong) noexcept { return strong; }
-  
-  // pragma MARK: Result<std::shared_ptr<Promise<std::string>>>
-  using Result_std__shared_ptr_Promise_std__string___ = Result<std::shared_ptr<Promise<std::string>>>;
-  inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::shared_ptr<Promise<std::string>>& value) noexcept {
-    return Result<std::shared_ptr<Promise<std::string>>>::withValue(value);
-  }
-  inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::exception_ptr& error) noexcept {
-    return Result<std::shared_ptr<Promise<std::string>>>::withError(error);
-  }
-  
-  // pragma MARK: std::optional<std::string>
-  /**
-   * Specialized version of `std::optional<std::string>`.
-   */
-  using std__optional_std__string_ = std::optional<std::string>;
-  inline std::optional<std::string> create_std__optional_std__string_(const std::string& value) noexcept {
-    return std::optional<std::string>(value);
-  }
-  inline bool has_value_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
-    return optional.has_value();
-  }
-  inline std::string get_std__optional_std__string_(const std::optional<std::string>& optional) noexcept {
-    return *optional;
-  }
-  
-  // pragma MARK: std::shared_ptr<Promise<std::optional<std::string>>>
-  /**
-   * Specialized version of `std::shared_ptr<Promise<std::optional<std::string>>>`.
-   */
-  using std__shared_ptr_Promise_std__optional_std__string___ = std::shared_ptr<Promise<std::optional<std::string>>>;
-  inline std::shared_ptr<Promise<std::optional<std::string>>> create_std__shared_ptr_Promise_std__optional_std__string___() noexcept {
-    return Promise<std::optional<std::string>>::create();
-  }
-  inline PromiseHolder<std::optional<std::string>> wrap_std__shared_ptr_Promise_std__optional_std__string___(std::shared_ptr<Promise<std::optional<std::string>>> promise) noexcept {
-    return PromiseHolder<std::optional<std::string>>(std::move(promise));
-  }
-  
-  // pragma MARK: std::function<void(const std::optional<std::string>& /* result */)>
-  /**
-   * Specialized version of `std::function<void(const std::optional<std::string>&)>`.
-   */
-  using Func_void_std__optional_std__string_ = std::function<void(const std::optional<std::string>& /* result */)>;
-  /**
-   * Wrapper class for a `std::function<void(const std::optional<std::string>& / * result * /)>`, this can be used from Swift.
-   */
-  class Func_void_std__optional_std__string__Wrapper final {
-  public:
-    explicit Func_void_std__optional_std__string__Wrapper(std::function<void(const std::optional<std::string>& /* result */)>&& func): _function(std::make_unique<std::function<void(const std::optional<std::string>& /* result */)>>(std::move(func))) {}
-    inline void call(std::optional<std::string> result) const noexcept {
-      _function->operator()(result);
-    }
-  private:
-    std::unique_ptr<std::function<void(const std::optional<std::string>& /* result */)>> _function;
-  } SWIFT_NONCOPYABLE;
-  Func_void_std__optional_std__string_ create_Func_void_std__optional_std__string_(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_std__optional_std__string__Wrapper wrap_Func_void_std__optional_std__string_(Func_void_std__optional_std__string_ value) noexcept {
-    return Func_void_std__optional_std__string__Wrapper(std::move(value));
-  }
-  
-  // pragma MARK: std::shared_ptr<Promise<DeviceInfo>>
-  /**
-   * Specialized version of `std::shared_ptr<Promise<DeviceInfo>>`.
-   */
-  using std__shared_ptr_Promise_DeviceInfo__ = std::shared_ptr<Promise<DeviceInfo>>;
-  inline std::shared_ptr<Promise<DeviceInfo>> create_std__shared_ptr_Promise_DeviceInfo__() noexcept {
-    return Promise<DeviceInfo>::create();
-  }
-  inline PromiseHolder<DeviceInfo> wrap_std__shared_ptr_Promise_DeviceInfo__(std::shared_ptr<Promise<DeviceInfo>> promise) noexcept {
-    return PromiseHolder<DeviceInfo>(std::move(promise));
-  }
-  
-  // pragma MARK: std::function<void(const DeviceInfo& /* result */)>
-  /**
-   * Specialized version of `std::function<void(const DeviceInfo&)>`.
-   */
-  using Func_void_DeviceInfo = std::function<void(const DeviceInfo& /* result */)>;
-  /**
-   * Wrapper class for a `std::function<void(const DeviceInfo& / * result * /)>`, this can be used from Swift.
-   */
-  class Func_void_DeviceInfo_Wrapper final {
-  public:
-    explicit Func_void_DeviceInfo_Wrapper(std::function<void(const DeviceInfo& /* result */)>&& func): _function(std::make_unique<std::function<void(const DeviceInfo& /* result */)>>(std::move(func))) {}
-    inline void call(DeviceInfo result) const noexcept {
-      _function->operator()(result);
-    }
-  private:
-    std::unique_ptr<std::function<void(const DeviceInfo& /* result */)>> _function;
-  } SWIFT_NONCOPYABLE;
-  Func_void_DeviceInfo create_Func_void_DeviceInfo(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_DeviceInfo_Wrapper wrap_Func_void_DeviceInfo(Func_void_DeviceInfo value) noexcept {
-    return Func_void_DeviceInfo_Wrapper(std::move(value));
-  }
-  
-  // pragma MARK: std::shared_ptr<HybridCactusDeviceInfoSpec>
-  /**
-   * Specialized version of `std::shared_ptr<HybridCactusDeviceInfoSpec>`.
-   */
-  using std__shared_ptr_HybridCactusDeviceInfoSpec_ = std::shared_ptr<HybridCactusDeviceInfoSpec>;
-  std::shared_ptr<HybridCactusDeviceInfoSpec> create_std__shared_ptr_HybridCactusDeviceInfoSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
-  void* NON_NULL get_std__shared_ptr_HybridCactusDeviceInfoSpec_(std__shared_ptr_HybridCactusDeviceInfoSpec_ cppType);
-  
-  // pragma MARK: std::weak_ptr<HybridCactusDeviceInfoSpec>
-  using std__weak_ptr_HybridCactusDeviceInfoSpec_ = std::weak_ptr<HybridCactusDeviceInfoSpec>;
-  inline std__weak_ptr_HybridCactusDeviceInfoSpec_ weakify_std__shared_ptr_HybridCactusDeviceInfoSpec_(const std::shared_ptr<HybridCactusDeviceInfoSpec>& strong) noexcept { return strong; }
-  
-  // pragma MARK: Result<std::shared_ptr<Promise<std::optional<std::string>>>>
-  using Result_std__shared_ptr_Promise_std__optional_std__string____ = Result<std::shared_ptr<Promise<std::optional<std::string>>>>;
-  inline Result_std__shared_ptr_Promise_std__optional_std__string____ create_Result_std__shared_ptr_Promise_std__optional_std__string____(const std::shared_ptr<Promise<std::optional<std::string>>>& value) noexcept {
-    return Result<std::shared_ptr<Promise<std::optional<std::string>>>>::withValue(value);
-  }
-  inline Result_std__shared_ptr_Promise_std__optional_std__string____ create_Result_std__shared_ptr_Promise_std__optional_std__string____(const std::exception_ptr& error) noexcept {
-    return Result<std::shared_ptr<Promise<std::optional<std::string>>>>::withError(error);
-  }
-  
-  // pragma MARK: Result<std::shared_ptr<Promise<DeviceInfo>>>
-  using Result_std__shared_ptr_Promise_DeviceInfo___ = Result<std::shared_ptr<Promise<DeviceInfo>>>;
-  inline Result_std__shared_ptr_Promise_DeviceInfo___ create_Result_std__shared_ptr_Promise_DeviceInfo___(const std::shared_ptr<Promise<DeviceInfo>>& value) noexcept {
-    return Result<std::shared_ptr<Promise<DeviceInfo>>>::withValue(value);
-  }
-  inline Result_std__shared_ptr_Promise_DeviceInfo___ create_Result_std__shared_ptr_Promise_DeviceInfo___(const std::exception_ptr& error) noexcept {
-    return Result<std::shared_ptr<Promise<DeviceInfo>>>::withError(error);
   }
   
   // pragma MARK: std::shared_ptr<Promise<bool>>
@@ -356,6 +209,15 @@ namespace margelo::nitro::cactus::bridge::swift {
   // pragma MARK: std::weak_ptr<HybridCactusFileSystemSpec>
   using std__weak_ptr_HybridCactusFileSystemSpec_ = std::weak_ptr<HybridCactusFileSystemSpec>;
   inline std__weak_ptr_HybridCactusFileSystemSpec_ weakify_std__shared_ptr_HybridCactusFileSystemSpec_(const std::shared_ptr<HybridCactusFileSystemSpec>& strong) noexcept { return strong; }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<std::string>>>
+  using Result_std__shared_ptr_Promise_std__string___ = Result<std::shared_ptr<Promise<std::string>>>;
+  inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::shared_ptr<Promise<std::string>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<std::string>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<std::string>>>::withError(error);
+  }
   
   // pragma MARK: Result<std::shared_ptr<Promise<bool>>>
   using Result_std__shared_ptr_Promise_bool___ = Result<std::shared_ptr<Promise<bool>>>;

@@ -34,14 +34,10 @@ target_sources(
   ../nitrogen/generated/android/cactusOnLoad.cpp
   # Shared Nitrogen C++ sources
   ../nitrogen/generated/shared/c++/HybridCactusSpec.cpp
-  ../nitrogen/generated/shared/c++/HybridCactusCryptoSpec.cpp
-  ../nitrogen/generated/shared/c++/HybridCactusDeviceInfoSpec.cpp
   ../nitrogen/generated/shared/c++/HybridCactusFileSystemSpec.cpp
   ../nitrogen/generated/shared/c++/HybridCactusImageSpec.cpp
   ../nitrogen/generated/shared/c++/HybridCactusIndexSpec.cpp
   # Android-specific Nitrogen C++ sources
-  ../nitrogen/generated/android/c++/JHybridCactusCryptoSpec.cpp
-  ../nitrogen/generated/android/c++/JHybridCactusDeviceInfoSpec.cpp
   ../nitrogen/generated/android/c++/JHybridCactusFileSystemSpec.cpp
   ../nitrogen/generated/android/c++/JHybridCactusImageSpec.cpp
 )

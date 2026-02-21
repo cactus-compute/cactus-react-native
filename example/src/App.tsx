@@ -10,7 +10,6 @@ import {
 import CompletionScreen from './CompletionScreen';
 import VisionScreen from './VisionScreen';
 import ToolCallingScreen from './ToolCallingScreen';
-import RAGScreen from './RAGScreen';
 import STTScreen from './STTScreen';
 import StreamSTTScreen from './StreamSTTScreen';
 import ChatScreen from './ChatScreen';
@@ -21,7 +20,6 @@ type Screen =
   | 'Completion'
   | 'Vision'
   | 'ToolCalling'
-  | 'RAG'
   | 'STT'
   | 'StreamSTT'
   | 'Chat'
@@ -44,10 +42,6 @@ const App = () => {
 
   const handleGoToToolCalling = () => {
     setSelectedScreen('ToolCalling');
-  };
-
-  const handleGoToRAG = () => {
-    setSelectedScreen('RAG');
   };
 
   const handleGoToSTT = () => {
@@ -74,8 +68,6 @@ const App = () => {
         return <VisionScreen />;
       case 'ToolCalling':
         return <ToolCallingScreen />;
-      case 'RAG':
-        return <RAGScreen />;
       case 'STT':
         return <STTScreen />;
       case 'StreamSTT':
@@ -134,13 +126,6 @@ const App = () => {
           >
             <Text style={styles.menuButtonTitle}>Tool Calling</Text>
             <Text style={styles.menuButtonDescription}>Function calls</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuButton} onPress={handleGoToRAG}>
-            <Text style={styles.menuButtonTitle}>RAG</Text>
-            <Text style={styles.menuButtonDescription}>
-              Document-based answers
-            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuButton} onPress={handleGoToSTT}>

@@ -14,7 +14,7 @@ public:
   std::shared_ptr<Promise<void>>
   init(const std::string &modelPath,
        const std::optional<std::string> &corpusDir,
-       bool cacheIndex) override;
+       std::optional<bool> cacheIndex) override;
 
   std::shared_ptr<Promise<std::string>> complete(
       const std::string &messagesJson, double responseBufferSize,

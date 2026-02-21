@@ -12,10 +12,7 @@
 
 #include "HybridCactus.hpp"
 #include "HybridCactusIndex.hpp"
-#include "HybridCactusUtil.hpp"
 #include "HybridCactusFileSystemSpecSwift.hpp"
-#include "HybridCactusCryptoSpecSwift.hpp"
-#include "HybridCactusDeviceInfoSpecSwift.hpp"
 #include "HybridCactusImageSpecSwift.hpp"
 
 @interface CactusAutolinking : NSObject
@@ -46,32 +43,9 @@
     }
   );
   HybridObjectRegistry::registerHybridObjectConstructor(
-    "CactusUtil",
-    []() -> std::shared_ptr<HybridObject> {
-      static_assert(std::is_default_constructible_v<HybridCactusUtil>,
-                    "The HybridObject \"HybridCactusUtil\" is not default-constructible! "
-                    "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
-      return std::make_shared<HybridCactusUtil>();
-    }
-  );
-  HybridObjectRegistry::registerHybridObjectConstructor(
     "CactusFileSystem",
     []() -> std::shared_ptr<HybridObject> {
       std::shared_ptr<HybridCactusFileSystemSpec> hybridObject = Cactus::CactusAutolinking::createCactusFileSystem();
-      return hybridObject;
-    }
-  );
-  HybridObjectRegistry::registerHybridObjectConstructor(
-    "CactusCrypto",
-    []() -> std::shared_ptr<HybridObject> {
-      std::shared_ptr<HybridCactusCryptoSpec> hybridObject = Cactus::CactusAutolinking::createCactusCrypto();
-      return hybridObject;
-    }
-  );
-  HybridObjectRegistry::registerHybridObjectConstructor(
-    "CactusDeviceInfo",
-    []() -> std::shared_ptr<HybridObject> {
-      std::shared_ptr<HybridCactusDeviceInfoSpec> hybridObject = Cactus::CactusAutolinking::createCactusDeviceInfo();
       return hybridObject;
     }
   );

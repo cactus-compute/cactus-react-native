@@ -25,6 +25,10 @@ export interface CactusLMCompleteOptions {
   stopSequences?: string[];
   forceTools?: boolean;
   telemetryEnabled?: boolean;
+  confidenceThreshold?: number;
+  toolRagTopK?: number;
+  includeStopSequences?: boolean;
+  useVad?: boolean;
 }
 
 export interface CactusLMTool {
@@ -56,12 +60,16 @@ export interface CactusLMCompleteResult {
     name: string;
     arguments: { [key: string]: any };
   }[];
+  cloudHandoff?: boolean;
+  confidence?: number;
   timeToFirstTokenMs: number;
   totalTimeMs: number;
-  tokensPerSecond: number;
   prefillTokens: number;
+  prefillTps: number;
   decodeTokens: number;
+  decodeTps: number;
   totalTokens: number;
+  ramUsageMb?: number;
 }
 
 export interface CactusLMTokenizeParams {

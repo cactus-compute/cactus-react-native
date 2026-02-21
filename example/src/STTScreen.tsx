@@ -174,21 +174,28 @@ const STTScreen = () => {
             </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
-              tokensPerSecond:
-            </Text>
-            <Text style={styles.resultFieldValue}>
-              {result.tokensPerSecond.toFixed(2)}
-            </Text>
-
-            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               prefillTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.prefillTokens}</Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              prefillTps:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {result.prefillTps.toFixed(2)}
+            </Text>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               decodeTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.decodeTokens}</Text>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              decodeTps:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {result.decodeTps.toFixed(2)}
+            </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               totalTokens:

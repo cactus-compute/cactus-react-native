@@ -7,7 +7,7 @@ HybridCactus::HybridCactus() : HybridObject(TAG) {}
 std::shared_ptr<Promise<void>>
 HybridCactus::init(const std::string &modelPath,
                    const std::optional<std::string> &corpusDir,
-                   bool cacheIndex) {
+                   std::optional<bool> cacheIndex) {
   return Promise<void>::async(
       [this, modelPath, corpusDir, cacheIndex]() -> void {
         std::lock_guard<std::mutex> lock(this->_modelMutex);
@@ -19,7 +19,7 @@ HybridCactus::init(const std::string &modelPath,
         const cactus_model_t model =
             cactus_init(modelPath.c_str(),
                         corpusDir ? corpusDir->c_str() : nullptr,
-                        cacheIndex);
+                        cacheIndex.value_or(false));
 
         if (!model) {
           throw std::runtime_error("Cactus init failed: " +
