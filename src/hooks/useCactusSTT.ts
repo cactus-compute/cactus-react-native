@@ -29,7 +29,9 @@ export const useCactusSTT = ({
 
   // State
   const [transcription, setTranscription] = useState('');
-  const [streamTranscription, setStreamTranscription] = useState('');
+  const [streamTranscribeConfirmed, setStreamTranscribeConfirmed] =
+    useState('');
+  const [streamTranscribePending, setStreamTranscribePending] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isStreamTranscribing, setIsStreamTranscribing] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -56,7 +58,8 @@ export const useCactusSTT = ({
     setCactusSTT(newInstance);
 
     setTranscription('');
-    setStreamTranscription('');
+    setStreamTranscribeConfirmed('');
+    setStreamTranscribePending('');
     setIsGenerating(false);
     setIsStreamTranscribing(false);
     setIsInitializing(false);
@@ -68,17 +71,13 @@ export const useCactusSTT = ({
     let mounted = true;
     CactusFileSystem.modelExists(newInstance.getModelName())
       .then((exists) => {
-        if (!mounted) {
-          return;
-        }
-        setIsDownloaded(exists);
+        if (mounted) setIsDownloaded(exists);
       })
       .catch((e) => {
-        if (!mounted) {
-          return;
+        if (mounted) {
+          setIsDownloaded(false);
+          setError(getErrorMessage(e));
         }
-        setIsDownloaded(false);
-        setError(getErrorMessage(e));
       });
 
     return () => {
@@ -109,49 +108,29 @@ export const useCactusSTT = ({
       const thisModel = currentModelRef.current;
       const thisDownloadId = ++currentDownloadIdRef.current;
 
+      const isCurrent = () =>
+        currentModelRef.current === thisModel &&
+        currentDownloadIdRef.current === thisDownloadId;
+
       setDownloadProgress(0);
       setIsDownloading(true);
       try {
         await cactusSTT.download({
           onProgress: (progress) => {
-            if (
-              currentModelRef.current !== thisModel ||
-              currentDownloadIdRef.current !== thisDownloadId
-            ) {
-              return;
-            }
-
+            if (!isCurrent()) return;
             setDownloadProgress(progress);
             onProgress?.(progress);
           },
         });
 
-        if (
-          currentModelRef.current !== thisModel ||
-          currentDownloadIdRef.current !== thisDownloadId
-        ) {
-          return;
-        }
-
+        if (!isCurrent()) return;
         setIsDownloaded(true);
       } catch (e) {
-        if (
-          currentModelRef.current !== thisModel ||
-          currentDownloadIdRef.current !== thisDownloadId
-        ) {
-          return;
-        }
-
+        if (!isCurrent()) return;
         setError(getErrorMessage(e));
         throw e;
       } finally {
-        if (
-          currentModelRef.current !== thisModel ||
-          currentDownloadIdRef.current !== thisDownloadId
-        ) {
-          return;
-        }
-
+        if (!isCurrent()) return;
         setIsDownloading(false);
         setDownloadProgress(0);
       }
@@ -245,7 +224,8 @@ export const useCactusSTT = ({
       }
 
       setError(null);
-      setStreamTranscription('');
+      setStreamTranscribeConfirmed('');
+      setStreamTranscribePending('');
       setIsStreamTranscribing(true);
       try {
         await cactusSTT.streamTranscribeStart(options);
@@ -265,7 +245,8 @@ export const useCactusSTT = ({
       setError(null);
       try {
         const result = await cactusSTT.streamTranscribeProcess({ audio });
-        setStreamTranscription(result.confirmed);
+        setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
+        setStreamTranscribePending(result.pending);
         return result;
       } catch (e) {
         setError(getErrorMessage(e));
@@ -280,12 +261,14 @@ export const useCactusSTT = ({
       setError(null);
       try {
         const result = await cactusSTT.streamTranscribeStop();
-        setStreamTranscription(result.confirmed);
-        setIsStreamTranscribing(false);
+        setStreamTranscribeConfirmed((prev) => prev + result.confirmed);
+        setStreamTranscribePending('');
         return result;
       } catch (e) {
         setError(getErrorMessage(e));
         throw e;
+      } finally {
+        setIsStreamTranscribing(false);
       }
     }, [cactusSTT]);
 
@@ -320,7 +303,8 @@ export const useCactusSTT = ({
       throw e;
     } finally {
       setTranscription('');
-      setStreamTranscription('');
+      setStreamTranscribeConfirmed('');
+      setStreamTranscribePending('');
       setIsStreamTranscribing(false);
     }
   }, [cactusSTT]);
@@ -328,7 +312,7 @@ export const useCactusSTT = ({
   const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
-      return cactusSTT.getModels();
+      return await cactusSTT.getModels();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
@@ -337,7 +321,8 @@ export const useCactusSTT = ({
 
   return {
     transcription,
-    streamTranscription,
+    streamTranscribeConfirmed,
+    streamTranscribePending,
     isGenerating,
     isStreamTranscribing,
     isInitializing,
@@ -353,8 +338,8 @@ export const useCactusSTT = ({
     streamTranscribeStart,
     streamTranscribeProcess,
     streamTranscribeStop,
-    reset,
     stop,
+    reset,
     destroy,
     getModels,
   };

@@ -13,7 +13,7 @@ import type {
   CactusLMImageEmbedResult,
   CactusLMParams,
 } from '../types/CactusLM';
-import models from '../models';
+import { getRegistry } from '../modelRegistry';
 import type { CactusModel } from '../types/common';
 
 export class CactusLM {
@@ -33,7 +33,7 @@ export class CactusLM {
 
   private static readonly defaultModel = 'qwen3-0.6b';
   private static readonly defaultOptions = {
-    quantization: 'int4' as const,
+    quantization: 'int8' as const,
     pro: false,
   };
   private static readonly quantizationExceptions: {
@@ -80,8 +80,9 @@ export class CactusLM {
 
     this.isDownloading = true;
     try {
+      const registry = await getRegistry();
       const modelConfig =
-        models[this.model]?.quantization[this.options.quantization];
+        registry[this.model]?.quantization[this.options.quantization];
       const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
@@ -239,8 +240,8 @@ export class CactusLM {
     this.isInitialized = false;
   }
 
-  public getModels(): CactusModel[] {
-    return Object.values(models).filter((model) => model.completion);
+  public async getModels(): Promise<CactusModel[]> {
+    return Object.values(await getRegistry());
   }
 
   private isModelPath(model: string): boolean {

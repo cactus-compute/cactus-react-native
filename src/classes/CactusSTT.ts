@@ -11,7 +11,7 @@ import type {
   CactusSTTStreamTranscribeProcessResult,
   CactusSTTStreamTranscribeStopResult,
 } from '../types/CactusSTT';
-import models from '../models';
+import { getRegistry } from '../modelRegistry';
 import type { CactusModel } from '../types/common';
 
 export class CactusSTT {
@@ -30,7 +30,7 @@ export class CactusSTT {
 
   private static readonly defaultModel = 'whisper-small';
   private static readonly defaultOptions = {
-    quantization: 'int4' as const,
+    quantization: 'int8' as const,
     pro: false,
   };
   private static readonly defaultPrompt =
@@ -69,8 +69,9 @@ export class CactusSTT {
 
     this.isDownloading = true;
     try {
+      const registry = await getRegistry();
       const modelConfig =
-        models[this.model]?.quantization[this.options.quantization];
+        registry[this.model]?.quantization[this.options.quantization];
       const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
@@ -224,8 +225,8 @@ export class CactusSTT {
     this.isInitialized = false;
   }
 
-  public getModels(): CactusModel[] {
-    return Object.values(models).filter((model) => model.speech);
+  public async getModels(): Promise<CactusModel[]> {
+    return Object.values(await getRegistry());
   }
 
   private isModelPath(model: string): boolean {

@@ -192,7 +192,7 @@ export const useCactusVAD = ({
   const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
-      return cactusVAD.getModels();
+      return await cactusVAD.getModels();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;

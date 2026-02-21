@@ -18,7 +18,6 @@ const StreamSTTScreen = () => {
   const cactusSTT = useCactusSTT({ model: 'whisper-small' });
   const [audioFile, setAudioFile] = useState<string | null>(null);
   const [audioFileName, setAudioFileName] = useState<string>('');
-  const [pendingText, setPendingText] = useState('');
 
   useEffect(() => {
     if (!cactusSTT.isDownloaded) {
@@ -64,14 +63,12 @@ const StreamSTTScreen = () => {
 
       for (let i = 0; i < pcmData.length; i += CHUNK_SIZE) {
         const chunk = pcmData.slice(i, i + CHUNK_SIZE);
-        const result = await cactusSTT.streamTranscribeProcess({
+        await cactusSTT.streamTranscribeProcess({
           audio: Array.from(chunk),
         });
-        setPendingText(result.pending);
       }
 
       await cactusSTT.streamTranscribeStop();
-      setPendingText('');
     } catch (err) {
       console.error('Stream error:', err);
     }
@@ -80,7 +77,6 @@ const StreamSTTScreen = () => {
   const handleStop = async () => {
     try {
       await cactusSTT.destroy();
-      setPendingText('');
     } catch (err) {
       console.error('Stop error:', err);
     }
@@ -140,23 +136,23 @@ const StreamSTTScreen = () => {
         </View>
       )}
 
-      {cactusSTT.streamTranscription && (
+      {cactusSTT.streamTranscribeConfirmed && (
         <View style={styles.resultContainer}>
           <Text style={styles.resultLabel}>Confirmed Text:</Text>
           <View style={styles.resultBox}>
             <Text style={styles.resultText}>
-              {cactusSTT.streamTranscription}
+              {cactusSTT.streamTranscribeConfirmed}
             </Text>
           </View>
         </View>
       )}
 
-      {pendingText !== '' && (
+      {cactusSTT.streamTranscribePending && (
         <View style={styles.resultContainer}>
           <Text style={styles.resultLabel}>Pending Text:</Text>
           <View style={styles.pendingBox}>
             <Text style={[styles.resultText, styles.pendingText]}>
-              {pendingText}
+              {cactusSTT.streamTranscribePending}
             </Text>
           </View>
         </View>

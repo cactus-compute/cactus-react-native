@@ -1,9 +1,4 @@
 export interface CactusModel {
-  completion: boolean;
-  tools: boolean;
-  vision: boolean;
-  embed: boolean;
-  speech: boolean;
   quantization: {
     int4: {
       sizeMb: number;

@@ -359,7 +359,7 @@ export const useCactusLM = ({
   const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
-      return cactusLM.getModels();
+      return await cactusLM.getModels();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;

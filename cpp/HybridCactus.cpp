@@ -477,7 +477,7 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
 std::shared_ptr<Promise<void>>
 HybridCactus::setTelemetryEnvironment(const std::string &cacheDir) {
   return Promise<void>::async([cacheDir]() -> void {
-    cactus_set_telemetry_environment("react-native", cacheDir.c_str());
+    cactus_set_telemetry_environment("react-native-v1.7", cacheDir.c_str());
   });
 }
 
