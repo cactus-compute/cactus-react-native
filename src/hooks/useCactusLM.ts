@@ -20,15 +20,15 @@ import type { CactusModel } from '../types/common';
 
 export const useCactusLM = ({
   model = 'qwen3-0.6b',
-  contextSize = 2048,
   corpusDir = undefined,
+  cacheIndex = false,
   options: modelOptions = {
     quantization: undefined,
     pro: false,
   },
 }: CactusLMParams = {}) => {
   const [cactusLM, setCactusLM] = useState(
-    () => new CactusLM({ model, contextSize, corpusDir, options: modelOptions })
+    () => new CactusLM({ model, corpusDir, cacheIndex, options: modelOptions })
   );
 
   // State
@@ -48,17 +48,16 @@ export const useCactusLM = ({
   }, [model]);
 
   useEffect(() => {
-    setCactusLM(
-      new CactusLM({
-        model,
-        contextSize,
-        corpusDir,
-        options: {
-          quantization: modelOptions.quantization,
-          pro: modelOptions.pro,
-        },
-      })
-    );
+    const newInstance = new CactusLM({
+      model,
+      corpusDir,
+      cacheIndex,
+      options: {
+        quantization: modelOptions.quantization,
+        pro: modelOptions.pro,
+      },
+    });
+    setCactusLM(newInstance);
 
     setCompletion('');
     setIsGenerating(false);
@@ -69,7 +68,7 @@ export const useCactusLM = ({
     setError(null);
 
     let mounted = true;
-    CactusFileSystem.modelExists(model)
+    CactusFileSystem.modelExists(newInstance.getModelName())
       .then((exists) => {
         if (!mounted) {
           return;
@@ -89,8 +88,8 @@ export const useCactusLM = ({
     };
   }, [
     model,
-    contextSize,
     corpusDir,
+    cacheIndex,
     modelOptions.quantization,
     modelOptions.pro,
   ]);
@@ -193,7 +192,6 @@ export const useCactusLM = ({
       options,
       tools,
       onToken,
-      mode,
     }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> => {
       if (isGenerating) {
         const message = 'CactusLM is already generating';
@@ -213,7 +211,6 @@ export const useCactusLM = ({
             setCompletion((prev) => prev + token);
             onToken?.(token);
           },
-          mode,
         });
       } catch (e) {
         setError(getErrorMessage(e));

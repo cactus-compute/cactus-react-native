@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import {
   useCactusLM,
-  type Message,
-  type Tool,
+  type CactusLMMessage,
+  type CactusLMTool,
   type CactusLMCompleteResult,
 } from 'cactus-react-native';
 
-const tools: Tool[] = [
+const tools: CactusLMTool[] = [
   {
     name: 'get_weather',
     description: 'Get current weather for a location',
@@ -45,7 +45,7 @@ const ToolCallingScreen = () => {
   }, [cactusLM.isDownloaded]);
 
   const handleComplete = async () => {
-    const messages: Message[] = [
+    const messages: CactusLMMessage[] = [
       {
         role: 'system',
         content: 'You are a helpful assistant that can call tools.',
@@ -169,21 +169,28 @@ const ToolCallingScreen = () => {
             </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
-              tokensPerSecond:
-            </Text>
-            <Text style={styles.resultFieldValue}>
-              {result.tokensPerSecond.toFixed(2)}
-            </Text>
-
-            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               prefillTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.prefillTokens}</Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              prefillTps:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {result.prefillTps.toFixed(2)}
+            </Text>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               decodeTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.decodeTokens}</Text>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              decodeTps:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {result.decodeTps.toFixed(2)}
+            </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               totalTokens:

@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 #include <cstring>
 #include <stdexcept>
@@ -114,17 +115,20 @@ enum class OpType {
     MATMUL, TRANSPOSE, RESHAPE, SLICE, GATHER, EMBEDDING,
     BILINEAR_INTERPOLATION,
     SUM, MEAN, VARIANCE, MIN, MAX,
-    RMS_NORM, ROPE, SOFTMAX, ATTENTION, ATTENTION_INT8_HYBRID, CONV1D_CAUSAL, CONV1D_K3,
+    RMS_NORM, ROPE, ROPE_GPTJ, SOFTMAX, ATTENTION, ATTENTION_INT8_HYBRID, CONV1D_CAUSAL, CONV1D_K3, CONV1D_K7S3, CONV1D,
     SCALAR_ADD, SCALAR_SUBTRACT, SCALAR_MULTIPLY, SCALAR_DIVIDE, SCALAR_EXP, SCALAR_SQRT, SCALAR_COS, SCALAR_SIN,
-    SILU, GELU, GELU_ERF,
+    RELU, SILU, GELU, GELU_ERF, SIGMOID, TANH,
     SAMPLE, CONCAT,
     SCATTER_TOPK,
-    TOPK, LAYERNORM,
+    TOPK, LAYERNORM, GROUPNORM,
     INDEX,
+    PERSISTENT,
+    QUANTIZE_ACTIVATIONS,
+    LSTM_CELL,
+    STFT_MAGNITUDE
 };
 
 struct PrecisionTraits {
-    // Returns in-memory element size (INT4 unpacks to INT8, so returns 1)
     static constexpr size_t size_of(Precision prec) {
         switch (prec) {
             case Precision::INT8: return 1;
@@ -205,8 +209,12 @@ struct BufferDesc {
     void* scales_data = nullptr;
     std::unique_ptr<char[]> owned_scales;
 
-    const void* packed_int4_data = nullptr;  
-    size_t packed_int4_size = 0; 
+    bool is_interleaved = false;
+    size_t original_N = 0;  
+
+    void* activation_scales_data = nullptr;
+    std::unique_ptr<char[]> owned_activation_scales;
+    size_t num_rows_for_activation_scales = 0;
 
     BufferDesc();
     BufferDesc(const std::vector<size_t>& s, Precision prec = Precision::INT8);
@@ -230,23 +238,39 @@ struct BufferDesc {
     const __fp16* scales_as_fp16() const {
         return reinterpret_cast<const __fp16*>(scales_data);
     }
+
     bool is_grouped_int8() const {
         return precision == Precision::INT8 && group_size > 0;
     }
-    bool is_packed_int4() const {
-        return packed_int4_data != nullptr && packed_int4_size > 0;
-    }
-    const uint8_t* packed_int4_as_uint8() const {
-        return reinterpret_cast<const uint8_t*>(packed_int4_data);
-    }
+
     void set_grouped_scales(size_t gs, size_t ng, void* scales_ptr) {
         group_size = gs;
         num_groups = ng;
         scales_data = scales_ptr;
     }
-    void set_packed_int4(const void* packed_data, size_t packed_size) {
-        packed_int4_data = packed_data;
-        packed_int4_size = packed_size;
+
+    void set_interleaved(bool interleaved, size_t orig_n) {
+        is_interleaved = interleaved;
+        original_N = orig_n;
+    }
+
+    bool has_activation_scales() const {
+        return activation_scales_data != nullptr && num_rows_for_activation_scales > 0;
+    }
+    const float* activation_scales_as_float() const {
+        return reinterpret_cast<const float*>(activation_scales_data);
+    }
+    float* activation_scales_as_float() {
+        return reinterpret_cast<float*>(activation_scales_data);
+    }
+    void allocate_activation_scales(size_t num_rows) {
+        num_rows_for_activation_scales = num_rows;
+        owned_activation_scales = std::make_unique<char[]>(num_rows * sizeof(float));
+        activation_scales_data = owned_activation_scales.get();
+    }
+    void set_activation_scales(void* scales_ptr, size_t num_rows) {
+        activation_scales_data = scales_ptr;
+        num_rows_for_activation_scales = num_rows;
     }
 
     void allocate();
@@ -282,6 +306,7 @@ struct OpParams {
     
     size_t index_value = 0;  
     size_t num_classes = 0; 
+    size_t num_groups = 0;
     size_t dst_height = 0;
     size_t dst_width = 0;
 
@@ -295,6 +320,7 @@ struct OpParams {
     size_t cache_seq_len = 0;
     size_t num_kv_heads = 0;
     size_t head_dim = 0;
+    size_t num_fft_bins = 0;
 };
 
 struct GraphNode {
@@ -324,7 +350,10 @@ void compute_sample_node(GraphNode& node, const std::vector<std::unique_ptr<Grap
 void compute_scatter_topk_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
 void compute_topk_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
 void compute_layernorm_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
+void compute_groupnorm_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
+void compute_persistent_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
 void compute_index_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
+void compute_lstm_cell_node(GraphNode& node, const std::vector<std::unique_ptr<GraphNode>>& nodes, const std::unordered_map<size_t, size_t>& node_index_map);
 
 void shrink_thread_local_buffers();
 
@@ -372,6 +401,7 @@ public:
     
     size_t input(const std::vector<size_t>& shape, Precision precision = Precision::INT8);
     size_t precision_cast(size_t input, Precision target_precision);
+    size_t quantize_activations(size_t input);  
     
     size_t add(size_t input1, size_t input2);
     size_t add_clipped(size_t input1, size_t input2);  
@@ -389,9 +419,12 @@ public:
     size_t scalar_cos(size_t input);
     size_t scalar_sin(size_t input);
     
+    size_t relu(size_t input);
     size_t silu(size_t input);
     size_t gelu(size_t input);
     size_t gelu_erf(size_t input);
+    size_t sigmoid(size_t input);
+    size_t tanh(size_t input);
     
     size_t matmul(size_t input1, size_t input2, bool pretransposed_rhs = false, ComputeBackend backend = ComputeBackend::CPU);
     size_t transpose(size_t input, ComputeBackend backend = ComputeBackend::CPU);
@@ -409,8 +442,8 @@ public:
     size_t gather(size_t embeddings, size_t indices);
     size_t mmap_embeddings(const std::string& filename);
     size_t mmap_weights(const std::string& filename);
-    size_t load_weights(const std::string& filename);
     void set_grouped_scales(size_t node_id, size_t group_size, size_t num_groups, void* scales_ptr);
+    void set_interleaved(size_t node_id, bool interleaved, size_t original_N);
 
     void release_weight_pages(size_t node_id);
     void prefetch_weight_pages(size_t node_id);
@@ -420,9 +453,12 @@ public:
     size_t bilinear_interpolation(size_t pos_embeds, size_t dst_height, size_t dst_width);
 
     size_t layernorm(size_t input, size_t weight, size_t bias, float epsilon = 1e-5f);
+    size_t layernorm(size_t input, size_t weight, float epsilon = 1e-5f);  // No bias version
+    size_t groupnorm(size_t input, size_t weight, size_t bias, size_t num_groups = 32, float epsilon = 1e-5f);
     size_t topk(size_t input, size_t k);
     size_t rms_norm(size_t input, size_t weight, float epsilon = 1e-5f);
     size_t rope(size_t input, float theta, size_t position_offset = 0, ComputeBackend backend = ComputeBackend::CPU);
+    size_t rope_gptj(size_t input, float theta, size_t position_offset = 0, size_t rot_dim = 0, ComputeBackend backend = ComputeBackend::CPU);
     size_t softmax(size_t input, int axis = -1);
     size_t attention(size_t query, size_t key, size_t value, float scale, bool is_causal = true, ComputeBackend backend = ComputeBackend::CPU);
     size_t attention(size_t query, size_t key, size_t value, float scale, size_t position_offset, ComputeBackend backend = ComputeBackend::CPU);
@@ -431,11 +467,17 @@ public:
     size_t attention_int8_hybrid(size_t query, size_t key_new, size_t value_new, float scale, size_t position_offset,
                                  const int8_t* cached_keys, const int8_t* cached_values,
                                  const float* k_scales, const float* v_scales,
-                                 size_t cache_len, size_t num_kv_heads, size_t head_dim);
+                                 size_t cache_len, size_t num_kv_heads, size_t head_dim, size_t window_size = 0);
 
     size_t conv1d_causal(size_t input, size_t weight, size_t kernel_size, size_t dilation = 1);
     size_t conv1d_k3(size_t input, size_t weight, size_t stride);
-    
+    size_t conv1d_k7s3(size_t input, size_t weight, size_t bias);
+    size_t conv1d(size_t input, size_t weight, size_t stride);
+    size_t conv1d(size_t input, size_t weight, size_t bias, size_t stride);
+
+    size_t lstm_cell(size_t input, size_t h_prev, size_t c_prev, size_t weight_ih, size_t weight_hh, size_t bias_ih, size_t bias_hh);
+    size_t stft_magnitude(size_t input, size_t weight, size_t stride, size_t num_fft_bins);
+
     size_t sample(size_t logits, float temperature = 0.6f, float top_p = 0.95f, size_t top_k = 20,
                   const std::unordered_map<uint32_t, float>& logit_bias = {});
     
@@ -462,6 +504,10 @@ public:
     void allocate_buffers();
     size_t get_node_count() const;
 
+    size_t persistent(size_t source_node);
+    bool is_populated(size_t persistent_node_id) const;
+    void invalidate_persistent(size_t persistent_node_id);
+
     std::vector<std::unique_ptr<GraphNode>> nodes_;
     std::unordered_map<size_t, size_t> node_index_map_;
 
@@ -473,6 +519,9 @@ private:
     std::vector<DebugNodeEntry> debug_nodes_;
     BufferPool buffer_pool_;
     bool prefill_mode_ = false;
+    
+    std::unordered_set<size_t> persistent_node_ids_;
+    std::unordered_set<size_t> populated_node_ids_;
 };
 
 
@@ -485,7 +534,6 @@ namespace GraphFile {
     };
     
     void save_node(CactusGraph& graph, size_t node_id, const std::string& filename);
-    LoadedNode load_into_graph(CactusGraph& graph, const std::string& filename);
     
     class MappedFile {
     public:
@@ -499,24 +547,20 @@ namespace GraphFile {
 
         const std::vector<size_t>& shape() const;
         Precision precision() const;
-        Precision effective_precision() const {
-            return is_int4_ ? Precision::INT8 : precision_;
-        }
         size_t byte_size() const;
 
         size_t group_size() const { return group_size_; }
         size_t num_groups() const { return num_groups_; }
         const void* scales_data() const;
-        const void* raw_packed_data() const;  // Get raw mmap'd data without unpacking (for INT4)
-        bool is_int4() const { return is_int4_; }
+
+        bool is_interleaved() const { return is_interleaved_; }
+        size_t original_N() const { return original_N_; }
 
         void* data();
         const void* data() const;
 
         template<typename T>
         const T* typed_data() const;
-
-        LoadedNode load_into_graph(CactusGraph& graph) const;
 
         void release_pages();
         void prefetch_pages();
@@ -532,16 +576,17 @@ namespace GraphFile {
         size_t num_groups_ = 0;
         size_t scales_offset_ = 0;
         size_t scales_bytes_ = 0;
-        uint32_t version_ = 1;
         uint32_t alignment_ = 32;
-        bool is_int4_ = false;
-        mutable std::unique_ptr<int8_t[]> unpacked_int4_data_;
+
+        bool is_interleaved_ = false;
+        size_t original_N_ = 0;
+
+        std::unique_ptr<int8_t[]> unpacked_data_;  
+
         void parse_header();
         void apply_madvise_hints();
-        void unpack_int4_if_needed() const;
+        void unpack_int4_data();
     };
-
-    MappedFile mmap_load(const std::string& filename);
 }
 
 #endif 

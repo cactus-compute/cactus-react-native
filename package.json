@@ -1,6 +1,6 @@
 {
   "name": "cactus-react-native",
-  "version": "1.5.0",
+  "version": "1.7.0",
   "description": "Run AI models locally on mobile devices",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -83,7 +83,7 @@
     "react": "19.1.0",
     "react-native": "0.81.1",
     "react-native-builder-bob": "^0.40.14",
-    "react-native-nitro-modules": "^0.31.10",
+    "react-native-nitro-modules": "^0.33.9",
     "release-it": "^19.0.4",
     "turbo": "^2.5.6",
     "typescript": "^5.9.2"
@@ -91,7 +91,7 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-nitro-modules": "^0.31.3"
+    "react-native-nitro-modules": "^0.33.9"
   },
   "workspaces": [
     "example"

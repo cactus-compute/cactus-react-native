@@ -15,14 +15,11 @@
 #include <fbjni/fbjni.h>
 #include <NitroModules/HybridObjectRegistry.hpp>
 
-#include "JHybridCactusCryptoSpec.hpp"
-#include "JHybridCactusDeviceInfoSpec.hpp"
 #include "JHybridCactusFileSystemSpec.hpp"
 #include "JFunc_void_double.hpp"
 #include "JHybridCactusImageSpec.hpp"
 #include "HybridCactus.hpp"
 #include "HybridCactusIndex.hpp"
-#include "HybridCactusUtil.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
 
 namespace margelo::nitro::cactus {
@@ -34,8 +31,6 @@ int initialize(JavaVM* vm) {
 
   return facebook::jni::initialize(vm, [] {
     // Register native JNI methods
-    margelo::nitro::cactus::JHybridCactusCryptoSpec::registerNatives();
-    margelo::nitro::cactus::JHybridCactusDeviceInfoSpec::registerNatives();
     margelo::nitro::cactus::JHybridCactusFileSystemSpec::registerNatives();
     margelo::nitro::cactus::JFunc_void_double_cxx::registerNatives();
     margelo::nitro::cactus::JHybridCactusImageSpec::registerNatives();
@@ -60,34 +55,9 @@ int initialize(JavaVM* vm) {
       }
     );
     HybridObjectRegistry::registerHybridObjectConstructor(
-      "CactusUtil",
-      []() -> std::shared_ptr<HybridObject> {
-        static_assert(std::is_default_constructible_v<HybridCactusUtil>,
-                      "The HybridObject \"HybridCactusUtil\" is not default-constructible! "
-                      "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
-        return std::make_shared<HybridCactusUtil>();
-      }
-    );
-    HybridObjectRegistry::registerHybridObjectConstructor(
       "CactusFileSystem",
       []() -> std::shared_ptr<HybridObject> {
         static DefaultConstructableObject<JHybridCactusFileSystemSpec::javaobject> object("com/margelo/nitro/cactus/HybridCactusFileSystem");
-        auto instance = object.create();
-        return instance->cthis()->shared();
-      }
-    );
-    HybridObjectRegistry::registerHybridObjectConstructor(
-      "CactusCrypto",
-      []() -> std::shared_ptr<HybridObject> {
-        static DefaultConstructableObject<JHybridCactusCryptoSpec::javaobject> object("com/margelo/nitro/cactus/HybridCactusCrypto");
-        auto instance = object.create();
-        return instance->cthis()->shared();
-      }
-    );
-    HybridObjectRegistry::registerHybridObjectConstructor(
-      "CactusDeviceInfo",
-      []() -> std::shared_ptr<HybridObject> {
-        static DefaultConstructableObject<JHybridCactusDeviceInfoSpec::javaobject> object("com/margelo/nitro/cactus/HybridCactusDeviceInfo");
         auto instance = object.create();
         return instance->cthis()->shared();
       }

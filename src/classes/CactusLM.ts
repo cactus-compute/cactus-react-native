@@ -13,19 +13,15 @@ import type {
   CactusLMImageEmbedResult,
   CactusLMParams,
 } from '../types/CactusLM';
-import { Telemetry } from '../telemetry/Telemetry';
-import { CactusConfig } from '../config/CactusConfig';
-import { getErrorMessage } from '../utils/error';
-import { RemoteLM } from '../api/RemoteLM';
-import models from '../models';
+import { getRegistry } from '../modelRegistry';
 import type { CactusModel } from '../types/common';
 
 export class CactusLM {
   private readonly cactus = new Cactus();
 
   private readonly model: string;
-  private readonly contextSize: number;
   private readonly corpusDir?: string;
+  private readonly cacheIndex: boolean;
   private readonly options: {
     quantization: 'int4' | 'int8';
     pro: boolean;
@@ -36,9 +32,8 @@ export class CactusLM {
   private isGenerating = false;
 
   private static readonly defaultModel = 'qwen3-0.6b';
-  private static readonly defaultContextSize = 2048;
   private static readonly defaultOptions = {
-    quantization: 'int4' as const,
+    quantization: 'int8' as const,
     pro: false,
   };
   private static readonly quantizationExceptions: {
@@ -50,15 +45,12 @@ export class CactusLM {
   private static readonly defaultCompleteOptions = {
     maxTokens: 512,
   };
-  private static readonly defaultCompleteMode = 'local';
   private static readonly defaultEmbedBufferSize = 2048;
 
-  constructor({ model, contextSize, corpusDir, options }: CactusLMParams = {}) {
-    Telemetry.init(CactusConfig.telemetryToken);
-
+  constructor({ model, corpusDir, cacheIndex, options }: CactusLMParams = {}) {
     this.model = model ?? CactusLM.defaultModel;
-    this.contextSize = contextSize ?? CactusLM.defaultContextSize;
     this.corpusDir = corpusDir;
+    this.cacheIndex = cacheIndex ?? false;
     this.options = {
       quantization:
         options?.quantization ??
@@ -88,8 +80,9 @@ export class CactusLM {
 
     this.isDownloading = true;
     try {
+      const registry = await getRegistry();
       const modelConfig =
-        models[this.model]?.quantization[this.options.quantization];
+        registry[this.model]?.quantization[this.options.quantization];
       const url = this.options.pro ? modelConfig?.pro?.apple : modelConfig?.url;
 
       if (!url) {
@@ -124,14 +117,10 @@ export class CactusLM {
       modelPath = await CactusFileSystem.getModelPath(this.getModelName());
     }
 
-    try {
-      await this.cactus.init(modelPath, this.contextSize, this.corpusDir);
-      Telemetry.logInit(this.model, true);
-      this.isInitialized = true;
-    } catch (error) {
-      Telemetry.logInit(this.model, false, getErrorMessage(error));
-      throw error;
-    }
+    const cacheDir = await CactusFileSystem.getCactusDirectory();
+    await this.cactus.setTelemetryEnvironment(cacheDir);
+    await this.cactus.init(modelPath, this.corpusDir, this.cacheIndex);
+    this.isInitialized = true;
   }
 
   public async complete({
@@ -139,7 +128,6 @@ export class CactusLM {
     options,
     tools,
     onToken,
-    mode,
   }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
@@ -150,49 +138,22 @@ export class CactusLM {
       type: 'function' as const,
       function: tool,
     }));
-    mode = mode ?? CactusLM.defaultCompleteMode;
 
     const responseBufferSize =
       8 * (options.maxTokens ?? CactusLM.defaultCompleteOptions.maxTokens) +
       256;
 
-    try {
-      await this.init();
+    await this.init();
 
-      this.isGenerating = true;
-      const result = await this.cactus.complete(
+    this.isGenerating = true;
+    try {
+      return await this.cactus.complete(
         messages,
         responseBufferSize,
         options,
         toolsInternal,
         onToken
       );
-      Telemetry.logCompletion(
-        this.model,
-        result.success,
-        result.success ? undefined : result.response,
-        result
-      );
-      return result;
-    } catch (localError) {
-      if (mode === 'local') {
-        Telemetry.logCompletion(this.model, false, getErrorMessage(localError));
-        throw localError;
-      }
-
-      Telemetry.logCompletion(
-        this.model,
-        false,
-        `Local completion error: ${getErrorMessage(localError)}. Falling back to remote completion.`
-      );
-
-      try {
-        return RemoteLM.complete(messages, options, toolsInternal, onToken);
-      } catch (remoteError) {
-        throw new Error(
-          `Remote completion error: ${getErrorMessage(remoteError)}`
-        );
-      }
     } finally {
       this.isGenerating = false;
     }
@@ -232,11 +193,7 @@ export class CactusLM {
         CactusLM.defaultEmbedBufferSize,
         normalize
       );
-      Telemetry.logEmbedding(this.model, true);
       return { embedding };
-    } catch (error) {
-      Telemetry.logEmbedding(this.model, false, getErrorMessage(error));
-      throw error;
     } finally {
       this.isGenerating = false;
     }
@@ -257,11 +214,7 @@ export class CactusLM {
         imagePath,
         CactusLM.defaultEmbedBufferSize
       );
-      Telemetry.logImageEmbedding(this.model, true);
       return { embedding };
-    } catch (error) {
-      Telemetry.logImageEmbedding(this.model, false, getErrorMessage(error));
-      throw error;
     } finally {
       this.isGenerating = false;
     }
@@ -287,15 +240,15 @@ export class CactusLM {
     this.isInitialized = false;
   }
 
-  public getModels(): CactusModel[] {
-    return Object.values(models).filter((model) => model.completion);
+  public async getModels(): Promise<CactusModel[]> {
+    return Object.values(await getRegistry());
   }
 
   private isModelPath(model: string): boolean {
     return model.startsWith('file://') || model.startsWith('/');
   }
 
-  private getModelName(): string {
+  public getModelName(): string {
     return `${this.model}-${this.options.quantization}${this.options.pro ? '-pro' : ''}`;
   }
 }

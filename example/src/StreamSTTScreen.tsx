@@ -57,28 +57,18 @@ const StreamSTTScreen = () => {
   const handleStreamTranscribe = async () => {
     if (!audioFile) return;
     try {
-      // Initialize streaming
-      await cactusSTT.streamTranscribeInit();
+      await cactusSTT.streamTranscribeStart({ confirmationThreshold: 0.99 });
 
-      // Read audio file
       const pcmData = await readAudioFile(audioFile);
 
-      // Stream audio in 3-second chunks
       for (let i = 0; i < pcmData.length; i += CHUNK_SIZE) {
         const chunk = pcmData.slice(i, i + CHUNK_SIZE);
-        const pcmSamples = Array.from(chunk);
-
-        // Insert chunk
-        await cactusSTT.streamTranscribeInsert({ audio: pcmSamples });
-
-        // Process and get results
         await cactusSTT.streamTranscribeProcess({
-          options: { confirmationThreshold: 0.95 },
+          audio: Array.from(chunk),
         });
       }
 
-      // Finalize to get remaining text
-      await cactusSTT.streamTranscribeFinalize();
+      await cactusSTT.streamTranscribeStop();
     } catch (err) {
       console.error('Stream error:', err);
     }
@@ -86,7 +76,7 @@ const StreamSTTScreen = () => {
 
   const handleStop = async () => {
     try {
-      await cactusSTT.streamTranscribeDestroy();
+      await cactusSTT.destroy();
     } catch (err) {
       console.error('Stop error:', err);
     }

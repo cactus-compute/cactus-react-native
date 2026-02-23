@@ -8,12 +8,12 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useCactusLM, type Message } from 'cactus-react-native';
+import { useCactusLM, type CactusLMMessage } from 'cactus-react-native';
 
 const ChatScreen = () => {
   const cactusLM = useCactusLM();
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<CactusLMMessage[]>([
     { role: 'system', content: 'You are a helpful assistant.' },
   ]);
 
@@ -27,7 +27,7 @@ const ChatScreen = () => {
   const handleSend = () => {
     if (!input.trim()) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: CactusLMMessage = { role: 'user', content: input };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput('');

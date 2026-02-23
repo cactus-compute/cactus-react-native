@@ -3,7 +3,7 @@ import type { CactusIndex as CactusIndexSpec } from '../specs/CactusIndex.nitro'
 import type {
   CactusIndexGetResult,
   CactusIndexQueryResult,
-  IndexQueryOptions,
+  CactusIndexQueryOptions,
 } from '../types/CactusIndex';
 
 export class CactusIndex {
@@ -33,7 +33,7 @@ export class CactusIndex {
 
   public query(
     embeddings: number[][],
-    options?: IndexQueryOptions
+    options?: CactusIndexQueryOptions
   ): Promise<CactusIndexQueryResult> {
     const optionsJson = options
       ? JSON.stringify({

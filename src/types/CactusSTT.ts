@@ -1,39 +1,47 @@
-import { type ModelOptions } from './common';
+import { type CactusModelOptions } from './common';
 
 export interface CactusSTTParams {
   model?: string;
-  contextSize?: number;
-  options?: ModelOptions;
+  options?: CactusModelOptions;
 }
 
 export interface CactusSTTDownloadParams {
   onProgress?: (progress: number) => void;
 }
 
-export interface TranscribeOptions {
+export interface CactusSTTTranscribeOptions {
   temperature?: number;
   topP?: number;
   topK?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  useVad?: boolean;
+  telemetryEnabled?: boolean;
+  confidenceThreshold?: number;
+  cloudHandoffThreshold?: number;
+  includeStopSequences?: boolean;
 }
 
 export interface CactusSTTTranscribeParams {
   audio: string | number[];
   prompt?: string;
-  options?: TranscribeOptions;
+  options?: CactusSTTTranscribeOptions;
   onToken?: (token: string) => void;
 }
 
 export interface CactusSTTTranscribeResult {
   success: boolean;
   response: string;
+  cloudHandoff?: boolean;
+  confidence?: number;
   timeToFirstTokenMs: number;
   totalTimeMs: number;
-  tokensPerSecond: number;
   prefillTokens: number;
+  prefillTps: number;
   decodeTokens: number;
+  decodeTps: number;
   totalTokens: number;
+  ramUsageMb?: number;
 }
 
 export interface CactusSTTAudioEmbedParams {
@@ -44,25 +52,37 @@ export interface CactusSTTAudioEmbedResult {
   embedding: number[];
 }
 
-export interface CactusSTTStreamTranscribeInsertParams {
-  audio: number[];
-}
-
-export interface StreamTranscribeProcessOptions {
+export interface CactusSTTStreamTranscribeStartOptions {
   confirmationThreshold?: number;
+  minChunkSize?: number;
+  telemetryEnabled?: boolean;
 }
 
 export interface CactusSTTStreamTranscribeProcessParams {
-  options?: StreamTranscribeProcessOptions;
+  audio: number[];
 }
 
 export interface CactusSTTStreamTranscribeProcessResult {
   success: boolean;
   confirmed: string;
   pending: string;
+  bufferDurationMs?: number;
+  confidence?: number;
+  cloudHandoff?: boolean;
+  cloudResult?: string;
+  cloudJobId?: number;
+  cloudResultJobId?: number;
+  timeToFirstTokenMs?: number;
+  totalTimeMs?: number;
+  prefillTokens?: number;
+  prefillTps?: number;
+  decodeTokens?: number;
+  decodeTps?: number;
+  totalTokens?: number;
+  ramUsageMb?: number;
 }
 
-export interface CactusSTTStreamTranscribeFinalizeResult {
+export interface CactusSTTStreamTranscribeStopResult {
   success: boolean;
   confirmed: string;
 }

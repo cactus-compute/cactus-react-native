@@ -1,32 +1,37 @@
-import { type ModelOptions } from './common';
+import { type CactusModelOptions } from './common';
 
 export interface CactusLMParams {
   model?: string;
-  contextSize?: number;
   corpusDir?: string;
-  options?: ModelOptions;
+  cacheIndex?: boolean;
+  options?: CactusModelOptions;
 }
 
 export interface CactusLMDownloadParams {
   onProgress?: (progress: number) => void;
 }
 
-export interface Message {
+export interface CactusLMMessage {
   role: 'user' | 'assistant' | 'system';
   content?: string;
   images?: string[];
 }
 
-export interface CompleteOptions {
+export interface CactusLMCompleteOptions {
   temperature?: number;
   topP?: number;
   topK?: number;
   maxTokens?: number;
   stopSequences?: string[];
   forceTools?: boolean;
+  telemetryEnabled?: boolean;
+  confidenceThreshold?: number;
+  toolRagTopK?: number;
+  includeStopSequences?: boolean;
+  useVad?: boolean;
 }
 
-export interface Tool {
+export interface CactusLMTool {
   name: string;
   description: string;
   parameters: {
@@ -42,11 +47,10 @@ export interface Tool {
 }
 
 export interface CactusLMCompleteParams {
-  messages: Message[];
-  options?: CompleteOptions;
-  tools?: Tool[];
+  messages: CactusLMMessage[];
+  options?: CactusLMCompleteOptions;
+  tools?: CactusLMTool[];
   onToken?: (token: string) => void;
-  mode?: 'local' | 'hybrid';
 }
 
 export interface CactusLMCompleteResult {
@@ -56,12 +60,16 @@ export interface CactusLMCompleteResult {
     name: string;
     arguments: { [key: string]: any };
   }[];
+  cloudHandoff?: boolean;
+  confidence?: number;
   timeToFirstTokenMs: number;
   totalTimeMs: number;
-  tokensPerSecond: number;
   prefillTokens: number;
+  prefillTps: number;
   decodeTokens: number;
+  decodeTps: number;
   totalTokens: number;
+  ramUsageMb?: number;
 }
 
 export interface CactusLMTokenizeParams {

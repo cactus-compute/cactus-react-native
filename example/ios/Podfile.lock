@@ -1,6 +1,6 @@
 PODS:
   - boost (1.84.0)
-  - Cactus (1.5.0):
+  - Cactus (1.7.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -39,7 +39,7 @@ PODS:
   - hermes-engine (0.81.1):
     - hermes-engine/Pre-built (= 0.81.1)
   - hermes-engine/Pre-built (0.81.1)
-  - NitroModules (0.31.4):
+  - NitroModules (0.33.9):
     - boost
     - DoubleConversion
     - fast_float
@@ -2643,14 +2643,14 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  Cactus: 336fab89b318d196bcc0f87cf4634acd57c83bad
+  Cactus: d549ac2651ab939a9b5bbcfd6827a1a4e7fa2d81
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: b8f1312d48447cca7b4abc21ed155db14742bd03
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 4f8246b1f6d79f625e0d99472d1f3a71da4d28ca
-  NitroModules: b2a738b643842e817d7bb8a3b157b5223a92a2fa
+  NitroModules: 7268cbdc66d6ead3200894003724f9dce9405b7d
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: c4b9e2fd0ab200e3af72b013ed6113187c607077
   RCTRequired: e97dd5dafc1db8094e63bc5031e0371f092ae92a

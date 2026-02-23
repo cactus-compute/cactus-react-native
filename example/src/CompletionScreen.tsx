@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {
   useCactusLM,
-  type Message,
+  type CactusLMMessage,
   type CactusLMCompleteResult,
   type CactusLMEmbedResult,
 } from 'cactus-react-native';
@@ -35,7 +35,7 @@ const CompletionScreen = () => {
   };
 
   const handleComplete = async () => {
-    const messages: Message[] = [
+    const messages: CactusLMMessage[] = [
       { role: 'system', content: 'You are a helpful assistant.' },
       { role: 'user', content: input },
     ];
@@ -163,21 +163,28 @@ const CompletionScreen = () => {
             </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
-              tokensPerSecond:
-            </Text>
-            <Text style={styles.resultFieldValue}>
-              {result.tokensPerSecond.toFixed(2)}
-            </Text>
-
-            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               prefillTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.prefillTokens}</Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              prefillTps:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {result.prefillTps.toFixed(2)}
+            </Text>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               decodeTokens:
             </Text>
             <Text style={styles.resultFieldValue}>{result.decodeTokens}</Text>
+
+            <Text style={[styles.resultFieldLabel, styles.marginTop]}>
+              decodeTps:
+            </Text>
+            <Text style={styles.resultFieldValue}>
+              {result.decodeTps.toFixed(2)}
+            </Text>
 
             <Text style={[styles.resultFieldLabel, styles.marginTop]}>
               totalTokens:

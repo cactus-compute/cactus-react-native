@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
     "cpp/**/*.{h,hpp,cpp}",
   ]
 
-  s.vendored_frameworks = ["ios/cactus.xcframework", "ios/cactus_util.xcframework"]
+  s.vendored_frameworks = ["ios/cactus.xcframework"]
 
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
