@@ -85,11 +85,11 @@ Choose model quantization and NPU acceleration with Pro models.
 ```typescript
 import { CactusLM } from 'cactus-react-native';
 
-// Use int4 for faster performance and smaller file size
+// Use int8 for better accuracy (default)
 const cactusLM = new CactusLM({
   model: 'lfm2-vl-450m',
   options: {
-    quantization: 'int4', // 'int4' or 'int8'
+    quantization: 'int8', // 'int4' or 'int8'
     pro: false
   }
 });
@@ -98,7 +98,7 @@ const cactusLM = new CactusLM({
 const cactusPro = new CactusLM({
   model: 'lfm2-vl-450m',
   options: {
-    quantization: 'int4',
+    quantization: 'int8',
     pro: true
   }
 });
@@ -470,7 +470,7 @@ const App = () => {
 
 ## Speech-to-Text (STT)
 
-The `CactusSTT` class provides audio transcription and audio embedding capabilities using Whisper models.
+The `CactusSTT` class provides audio transcription and audio embedding capabilities using speech-to-text models such as Whisper and Moonshine.
 
 ### Transcription
 
@@ -585,7 +585,8 @@ const App = () => {
     <>
       <Button onPress={handleStart} title="Start" />
       <Button onPress={handleStop} title="Stop" />
-      <Text>{cactusSTT.streamTranscription}</Text>
+      <Text>{cactusSTT.streamTranscribeConfirmed}</Text>
+      <Text>{cactusSTT.streamTranscribePending}</Text>
     </>
   );
 };
@@ -932,7 +933,7 @@ const App = () => {
 - `corpusDir` - Directory containing text files for RAG (default: `undefined`).
 - `cacheIndex` - Whether to cache the RAG corpus index on disk (default: `false`).
 - `options` - Model options for quantization and NPU acceleration:
-  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int8'`).
   - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
@@ -1024,7 +1025,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 #### State
 
 - `completion: string` - Current generated text. Automatically accumulated during streaming. Cleared before each new completion and when calling `reset()` or `destroy()`.
-- `isGenerating: boolean` - Whether the model is currently generating (completion or embedding). Both operations share this flag.
+- `isGenerating: boolean` - Whether the model is currently running an operation. Shared by `complete`, `tokenize`, `scoreWindow`, `embed`, and `imageEmbed`.
 - `isInitializing: boolean` - Whether the model is initializing.
 - `isDownloaded: boolean` - Whether the model is downloaded locally. Automatically checked when the hook mounts or model changes.
 - `isDownloading: boolean` - Whether the model is being downloaded.
@@ -1054,7 +1055,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 **Parameters:**
 - `model` - Model slug or absolute path to a model file (default: `'whisper-small'`).
 - `options` - Model options for quantization and NPU acceleration:
-  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int8'`).
   - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
@@ -1140,7 +1141,8 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 #### State
 
 - `transcription: string` - Current transcription text. Automatically accumulated during streaming. Cleared before each new transcription and when calling `reset()` or `destroy()`.
-- `streamTranscription: string` - Latest confirmed text from the active streaming session. Updated after each successful `streamTranscribeProcess` call and finalized by `streamTranscribeStop`.
+- `streamTranscribeConfirmed: string` - Accumulated confirmed text from the active streaming session. Updated after each successful `streamTranscribeProcess` call and finalized by `streamTranscribeStop`.
+- `streamTranscribePending: string` - Uncommitted (in-progress) text from the current audio chunk. Cleared when the session stops.
 - `isGenerating: boolean` - Whether the model is currently transcribing or embedding. Both operations share this flag.
 - `isStreamTranscribing: boolean` - Whether a streaming transcription session is currently active.
 - `isInitializing: boolean` - Whether the model is initializing.
@@ -1155,12 +1157,12 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 - `init(): Promise<void>` - Initializes the model for inference. Sets `isInitializing` to `true` during initialization.
 - `transcribe(params: CactusSTTTranscribeParams): Promise<CactusSTTTranscribeResult>` - Transcribes audio to text. Automatically accumulates tokens in the `transcription` state during streaming. Sets `isGenerating` to `true` while generating. Clears `transcription` before starting.
 - `audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>` - Generates embeddings for the given audio. Sets `isGenerating` to `true` during operation.
-- `streamTranscribeStart(options?: CactusSTTStreamTranscribeStartOptions): Promise<void>` - Starts a streaming transcription session. If a session is already active, returns immediately. Clears `streamTranscription` before starting. Sets `isStreamTranscribing` to `true`.
-- `streamTranscribeProcess(params: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>` - Feeds audio and returns incremental results. Updates `streamTranscription` with the latest confirmed text.
-- `streamTranscribeStop(): Promise<CactusSTTStreamTranscribeStopResult>` - Stops the session and returns the final result. Sets `isStreamTranscribing` to `false`. Updates `streamTranscription` with the final confirmed text.
+- `streamTranscribeStart(options?: CactusSTTStreamTranscribeStartOptions): Promise<void>` - Starts a streaming transcription session. If a session is already active, returns immediately. Clears `streamTranscribeConfirmed` and `streamTranscribePending` before starting. Sets `isStreamTranscribing` to `true`.
+- `streamTranscribeProcess(params: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>` - Feeds audio and returns incremental results. Appends confirmed text to `streamTranscribeConfirmed` and updates `streamTranscribePending`.
+- `streamTranscribeStop(): Promise<CactusSTTStreamTranscribeStopResult>` - Stops the session and returns the final result. Sets `isStreamTranscribing` to `false`. Appends final confirmed text to `streamTranscribeConfirmed` and clears `streamTranscribePending`.
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state. Also clears the `transcription` state.
-- `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription` and `streamTranscription` state. Automatically called when the component unmounts.
+- `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription`, `streamTranscribeConfirmed`, and `streamTranscribePending` state. Automatically called when the component unmounts.
 - `getModels(): Promise<CactusModel[]>` - Returns available speech-to-text models.
 
 ### CactusVAD Class
@@ -1172,7 +1174,7 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 **Parameters:**
 - `model` - Model slug or absolute path to a VAD model file (default: `'silero-vad'`).
 - `options` - Model options:
-  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int4'`).
+  - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int8'`).
   - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
