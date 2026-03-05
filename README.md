@@ -1018,6 +1018,10 @@ Releases all resources associated with the model. Automatically calls `stop()` f
 
 Returns available models.
 
+**`getModelName(): string`**
+
+Returns the model slug or path the instance was created with.
+
 ### useCactusLM Hook
 
 The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When model parameters (`model`, `corpusDir`, `cacheIndex`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
@@ -1111,6 +1115,15 @@ Feeds audio samples into the streaming session and returns the current transcrip
 
 Stops the streaming session and returns the final confirmed transcription text. Throws an error if no session is active.
 
+**`detectLanguage(params: CactusSTTDetectLanguageParams): Promise<CactusSTTDetectLanguageResult>`**
+
+Detects the spoken language in the given audio. Automatically calls `init()` if not already initialized. Throws an error if a generation is already in progress.
+
+**Parameters:**
+- `audio` - Path to the audio file or raw PCM samples as a byte array.
+- `options`:
+  - `useVad` - Whether to apply VAD before detection (default: `true`).
+
 **`audioEmbed(params: CactusSTTAudioEmbedParams): Promise<CactusSTTAudioEmbedResult>`**
 
 Generates embeddings for the given audio file. Automatically calls `init()` if not already initialized. Throws an error if a generation is already in progress.
@@ -1133,6 +1146,10 @@ Releases all resources associated with the model. Stops any active streaming ses
 **`getModels(): Promise<CactusModel[]>`**
 
 Returns available speech-to-text models.
+
+**`getModelName(): string`**
+
+Returns the model slug or path the instance was created with.
 
 ### useCactusSTT Hook
 
@@ -1215,6 +1232,10 @@ Releases all resources associated with the model. Safe to call even if the model
 **`getModels(): Promise<CactusModel[]>`**
 
 Returns available VAD models.
+
+**`getModelName(): string`**
+
+Returns the model slug or path the instance was created with.
 
 ### useCactusVAD Hook
 
@@ -1313,6 +1334,20 @@ The `useCactusIndex` hook manages a `CactusIndex` instance with reactive state. 
 - `delete(params: CactusIndexDeleteParams): Promise<void>` - Deletes documents. Sets `isProcessing` to `true` during operation.
 - `compact(): Promise<void>` - Optimizes the index. Sets `isProcessing` to `true` during operation.
 - `destroy(): Promise<void>` - Releases all resources. Automatically called when the component unmounts.
+
+### getRegistry
+
+**`getRegistry(): Promise<{ [key: string]: CactusModel }>`**
+
+Returns all available models from HuggingFace, keyed by model slug. Result is cached across calls.
+
+```typescript
+import { getRegistry } from 'cactus-react-native';
+
+const registry = await getRegistry();
+const model = registry['qwen3-0.6b'];
+console.log(model.quantization.int4.url);
+```
 
 ## Type Definitions
 
@@ -1644,6 +1679,32 @@ interface CactusSTTStreamTranscribeProcessResult {
 interface CactusSTTStreamTranscribeStopResult {
   success: boolean;
   confirmed: string;
+}
+```
+
+### CactusSTTDetectLanguageOptions
+
+```typescript
+interface CactusSTTDetectLanguageOptions {
+  useVad?: boolean;
+}
+```
+
+### CactusSTTDetectLanguageParams
+
+```typescript
+interface CactusSTTDetectLanguageParams {
+  audio: string | number[];
+  options?: CactusSTTDetectLanguageOptions;
+}
+```
+
+### CactusSTTDetectLanguageResult
+
+```typescript
+interface CactusSTTDetectLanguageResult {
+  language: string;
+  confidence?: number;
 }
 ```
 

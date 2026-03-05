@@ -1,11 +1,44 @@
 import type { CactusModel } from './types/common';
 
-const VERSION = 'v1.7';
+const RUNTIME_VERSION = '1.10.1';
 
 let registryPromise: Promise<{ [key: string]: CactusModel }> | null = null;
 
 export function getRegistry(): Promise<{ [key: string]: CactusModel }> {
   return (registryPromise ??= fetchRegistry());
+}
+
+function parseVersionTag(tag: string): [number, number, number] | null {
+  const m = tag.match(/^v(\d+)\.(\d+)(?:\.(\d+))?$/);
+  if (!m) return null;
+  return [+m[1]!, +m[2]!, +(m[3] ?? '0')];
+}
+
+function compareVersions(
+  a: [number, number, number],
+  b: [number, number, number]
+): number {
+  return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+}
+
+async function resolveWeightVersion(modelId: string): Promise<string> {
+  const runtime = parseVersionTag(`v${RUNTIME_VERSION}`);
+  if (!runtime) throw new Error(`Invalid runtime version: ${RUNTIME_VERSION}`);
+
+  const res = await fetch(`https://huggingface.co/api/models/${modelId}/refs`);
+  if (!res.ok)
+    throw new Error(`Failed to fetch refs for ${modelId}: ${res.status}`);
+
+  const { tags = [] } = (await res.json()) as { tags: { name: string }[] };
+
+  const compatible = tags
+    .map((t) => t.name)
+    .filter((name) => parseVersionTag(name) !== null)
+    .filter((name) => compareVersions(parseVersionTag(name)!, runtime) <= 0)
+    .sort((a, b) => compareVersions(parseVersionTag(b)!, parseVersionTag(a)!));
+
+  if (!compatible.length) throw new Error('No compatible weight version found');
+  return compatible[0]!;
 }
 
 async function fetchRegistry(): Promise<{ [key: string]: CactusModel }> {
@@ -21,6 +54,13 @@ async function fetchRegistry(): Promise<{ [key: string]: CactusModel }> {
   }
 
   const models: any[] = await response.json();
+  if (!models.length) return {};
+
+  const version = await resolveWeightVersion(models[0]!.id).catch((e) => {
+    registryPromise = null;
+    throw e;
+  });
+
   const registry: { [key: string]: CactusModel } = {};
 
   for (const { id, siblings = [] } of models) {
@@ -39,7 +79,7 @@ async function fetchRegistry(): Promise<{ [key: string]: CactusModel }> {
       .replace('weights/', '')
       .replace('-int4.zip', '');
 
-    const base = `https://huggingface.co/${id}/resolve/${VERSION}/weights/${key}`;
+    const base = `https://huggingface.co/${id}/resolve/${version}/weights/${key}`;
 
     registry[key] = {
       quantization: {

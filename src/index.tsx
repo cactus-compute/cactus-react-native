@@ -10,6 +10,9 @@ export { useCactusSTT } from './hooks/useCactusSTT';
 export { useCactusVAD } from './hooks/useCactusVAD';
 export { useCactusIndex } from './hooks/useCactusIndex';
 
+// Registry
+export { getRegistry } from './modelRegistry';
+
 // Types
 export type { CactusModel, CactusModelOptions } from './types/common';
 export type {
