@@ -14,6 +14,7 @@ import STTScreen from './STTScreen';
 import StreamSTTScreen from './StreamSTTScreen';
 import ChatScreen from './ChatScreen';
 import IndexScreen from './IndexScreen';
+import ModelBrowserScreen from './ModelBrowserScreen';
 
 type Screen =
   | 'Home'
@@ -23,7 +24,8 @@ type Screen =
   | 'STT'
   | 'StreamSTT'
   | 'Chat'
-  | 'Index';
+  | 'Index'
+  | 'ModelBrowser';
 
 const App = () => {
   const [selectedScreen, setSelectedScreen] = useState<Screen>('Home');
@@ -60,6 +62,10 @@ const App = () => {
     setSelectedScreen('Index');
   };
 
+  const handleGoToModelBrowser = () => {
+    setSelectedScreen('ModelBrowser');
+  };
+
   const renderScreen = () => {
     switch (selectedScreen) {
       case 'Completion':
@@ -76,6 +82,8 @@ const App = () => {
         return <ChatScreen />;
       case 'Index':
         return <IndexScreen />;
+      case 'ModelBrowser':
+        return <ModelBrowserScreen />;
       default:
         return null;
     }
@@ -156,6 +164,16 @@ const App = () => {
             <Text style={styles.menuButtonTitle}>Vector Index</Text>
             <Text style={styles.menuButtonDescription}>
               CactusIndex with embeddings
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handleGoToModelBrowser}
+          >
+            <Text style={styles.menuButtonTitle}>Model Browser</Text>
+            <Text style={styles.menuButtonDescription}>
+              Browse available models from the registry
             </Text>
           </TouchableOpacity>
         </ScrollView>
