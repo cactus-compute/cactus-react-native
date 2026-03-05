@@ -39,6 +39,11 @@ public:
                                              double /* tokenId */)>> &callback)
       override;
 
+  std::shared_ptr<Promise<std::string>>
+  detectLanguage(const std::variant<std::vector<double>, std::string> &audio,
+                 double responseBufferSize,
+                 const std::optional<std::string> &optionsJson) override;
+
   std::shared_ptr<Promise<void>>
   streamTranscribeStart(const std::optional<std::string> &optionsJson) override;
 

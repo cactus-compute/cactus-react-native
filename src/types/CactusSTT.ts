@@ -86,3 +86,17 @@ export interface CactusSTTStreamTranscribeStopResult {
   success: boolean;
   confirmed: string;
 }
+
+export interface CactusSTTDetectLanguageOptions {
+  useVad?: boolean;
+}
+
+export interface CactusSTTDetectLanguageParams {
+  audio: string | number[];
+  options?: CactusSTTDetectLanguageOptions;
+}
+
+export interface CactusSTTDetectLanguageResult {
+  language: string;
+  confidence?: number;
+}

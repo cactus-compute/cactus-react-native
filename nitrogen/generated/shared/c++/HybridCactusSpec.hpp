@@ -58,6 +58,7 @@ namespace margelo::nitro::cactus {
       virtual std::shared_ptr<Promise<std::vector<double>>> tokenize(const std::string& text) = 0;
       virtual std::shared_ptr<Promise<std::string>> scoreWindow(const std::vector<double>& tokens, double start, double end, double context) = 0;
       virtual std::shared_ptr<Promise<std::string>> transcribe(const std::variant<std::vector<double>, std::string>& audio, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
+      virtual std::shared_ptr<Promise<std::string>> detectLanguage(const std::variant<std::vector<double>, std::string>& audio, double responseBufferSize, const std::optional<std::string>& optionsJson) = 0;
       virtual std::shared_ptr<Promise<void>> streamTranscribeStart(const std::optional<std::string>& optionsJson) = 0;
       virtual std::shared_ptr<Promise<std::string>> streamTranscribeProcess(const std::vector<double>& audio) = 0;
       virtual std::shared_ptr<Promise<std::string>> streamTranscribeStop() = 0;

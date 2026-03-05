@@ -27,6 +27,11 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
     optionsJson?: string,
     callback?: (token: string, tokenId: number) => void
   ): Promise<string>;
+  detectLanguage(
+    audio: string | number[],
+    responseBufferSize: number,
+    optionsJson?: string
+  ): Promise<string>;
   streamTranscribeStart(optionsJson?: string): Promise<void>;
   streamTranscribeProcess(audio: number[]): Promise<string>;
   streamTranscribeStop(): Promise<string>;

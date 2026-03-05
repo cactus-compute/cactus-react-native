@@ -13,6 +13,8 @@ import type {
   CactusSTTStreamTranscribeStartOptions,
   CactusSTTStreamTranscribeProcessResult,
   CactusSTTStreamTranscribeStopResult,
+  CactusSTTDetectLanguageOptions,
+  CactusSTTDetectLanguageResult,
 } from '../types/CactusSTT';
 import type { CactusVADOptions, CactusVADResult } from '../types/CactusVAD';
 
@@ -225,6 +227,36 @@ export class Cactus {
       };
     } catch {
       throw new Error('Unable to parse stream transcribe process response');
+    }
+  }
+
+  public async detectLanguage(
+    audio: string | number[],
+    options?: CactusSTTDetectLanguageOptions
+  ): Promise<CactusSTTDetectLanguageResult> {
+    if (typeof audio === 'string') {
+      audio = audio.replace('file://', '');
+    }
+
+    const optionsJson = options
+      ? JSON.stringify({ use_vad: options.useVad })
+      : undefined;
+
+    const response = await this.hybridCactus.detectLanguage(
+      audio,
+      1024,
+      optionsJson
+    );
+
+    try {
+      const parsed = JSON.parse(response);
+
+      return {
+        language: parsed.language,
+        confidence: parsed.confidence,
+      };
+    } catch {
+      throw new Error('Unable to parse detect language response');
     }
   }
 
