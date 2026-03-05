@@ -212,6 +212,54 @@ std::shared_ptr<Promise<std::string>> HybridCactus::transcribe(
   });
 }
 
+std::shared_ptr<Promise<std::string>> HybridCactus::detectLanguage(
+    const std::variant<std::vector<double>, std::string> &audio,
+    double responseBufferSize,
+    const std::optional<std::string> &optionsJson) {
+  return Promise<std::string>::async(
+      [this, audio, optionsJson, responseBufferSize]() -> std::string {
+        std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+        if (!this->_model) {
+          throw std::runtime_error("Cactus model is not initialized");
+        }
+
+        std::string responseBuffer;
+        responseBuffer.resize(responseBufferSize);
+
+        int result;
+        if (std::holds_alternative<std::string>(audio)) {
+          result = cactus_detect_language(
+              this->_model, std::get<std::string>(audio).c_str(),
+              responseBuffer.data(), responseBufferSize,
+              optionsJson ? optionsJson->c_str() : nullptr, nullptr, 0);
+        } else {
+          const auto &audioDoubles = std::get<std::vector<double>>(audio);
+
+          std::vector<uint8_t> audioBytes;
+          audioBytes.reserve(audioDoubles.size());
+
+          for (double d : audioDoubles) {
+            d = std::clamp(d, 0.0, 255.0);
+            audioBytes.emplace_back(static_cast<uint8_t>(d));
+          }
+
+          result = cactus_detect_language(
+              this->_model, nullptr, responseBuffer.data(), responseBufferSize,
+              optionsJson ? optionsJson->c_str() : nullptr, audioBytes.data(),
+              audioBytes.size());
+        }
+
+        if (result < 0) {
+          throw std::runtime_error("Cactus detect language failed: " +
+                                   std::string(cactus_get_last_error()));
+        }
+
+        responseBuffer.resize(strlen(responseBuffer.c_str()));
+        return responseBuffer;
+      });
+}
+
 std::shared_ptr<Promise<void>> HybridCactus::streamTranscribeStart(
     const std::optional<std::string> &optionsJson) {
   return Promise<void>::async([this, optionsJson]() -> void {
@@ -477,7 +525,7 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
 std::shared_ptr<Promise<void>>
 HybridCactus::setTelemetryEnvironment(const std::string &cacheDir) {
   return Promise<void>::async([cacheDir]() -> void {
-    cactus_set_telemetry_environment("react-native-v1.7", cacheDir.c_str());
+    cactus_set_telemetry_environment("react-native", cacheDir.c_str(), "1.10.0");
   });
 }
 

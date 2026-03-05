@@ -41,6 +41,9 @@ export type {
   CactusSTTStreamTranscribeProcessParams,
   CactusSTTStreamTranscribeProcessResult,
   CactusSTTStreamTranscribeStopResult,
+  CactusSTTDetectLanguageOptions,
+  CactusSTTDetectLanguageParams,
+  CactusSTTDetectLanguageResult,
 } from './types/CactusSTT';
 export type {
   CactusVADParams,

@@ -10,6 +10,8 @@ import type {
   CactusSTTStreamTranscribeProcessParams,
   CactusSTTStreamTranscribeProcessResult,
   CactusSTTStreamTranscribeStopResult,
+  CactusSTTDetectLanguageParams,
+  CactusSTTDetectLanguageResult,
 } from '../types/CactusSTT';
 import { getRegistry } from '../modelRegistry';
 import type { CactusModel } from '../types/common';
@@ -176,6 +178,24 @@ export class CactusSTT {
       return await this.cactus.streamTranscribeStop();
     } finally {
       this.isStreamTranscribing = false;
+    }
+  }
+
+  public async detectLanguage({
+    audio,
+    options,
+  }: CactusSTTDetectLanguageParams): Promise<CactusSTTDetectLanguageResult> {
+    if (this.isGenerating) {
+      throw new Error('CactusSTT is already generating');
+    }
+
+    await this.init();
+
+    this.isGenerating = true;
+    try {
+      return await this.cactus.detectLanguage(audio, options);
+    } finally {
+      this.isGenerating = false;
     }
   }
 
