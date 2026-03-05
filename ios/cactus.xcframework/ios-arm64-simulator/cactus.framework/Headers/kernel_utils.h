@@ -44,6 +44,34 @@ inline void stream_store_f16x8(__fp16* dst, float16x8_t val) {
 #endif
 }
 
+inline bool cpu_has_sme2() {
+#if defined(__aarch64__)
+	static std::once_flag once;
+	static bool has = false;
+	
+	std::call_once(once, []() {
+
+#if defined(__APPLE__)
+	int ret = 0;
+	size_t size = sizeof(ret);
+	if (sysctlbyname("hw.optional.arm.FEAT_SME2", &ret, &size, nullptr, 0) == 0) {
+		has = ret == 1;
+	}
+
+#elif defined(__ANDROID__)
+	unsigned long hwcap2 = getauxval(AT_HWCAP2);
+#ifdef HWCAP2_SME2
+	has = (hwcap2 & HWCAP2_SME2) != 0;
+#endif
+
+#endif
+	});
+	
+	return has;
+#else
+	return false;
+#endif
+}
 
 inline float32x4_t fast_exp_f32x4(float32x4_t x) {
     const float32x4_t log2e = vdupq_n_f32(1.4426950408889634f);
@@ -100,6 +128,12 @@ inline float32x4_t fast_tanh_f32x4(float32x4_t x) {
     result = vbslq_f32(neg_sat, neg_one, result);
 
     return result;
+}
+
+inline void unpack_int4_as_int8x16x2(const uint8_t* ptr, int8x16_t& high_decoded, int8x16_t& low_decoded) {
+    int8x16_t packed = vreinterpretq_s8_u8(vld1q_u8(ptr));
+    high_decoded = vshrq_n_s8(packed, 4);
+    low_decoded = vshrq_n_s8(vshlq_n_s8(packed, 4), 4);
 }
 
 namespace CactusThreading {
@@ -297,7 +331,7 @@ namespace CactusThreading {
         }
         static size_t get_gemv_threads(size_t N_blocks, size_t pool_size) {
             if (N_blocks < GEMV_MIN_N_BLOCKS) return 1;
-            return std::min(pool_size, static_cast<size_t>(2));
+            return std::min(pool_size, static_cast<size_t>(3));
         }
         #else 
         static constexpr size_t GEMV_MIN_N_BLOCKS = 256;  
@@ -308,7 +342,7 @@ namespace CactusThreading {
         static size_t get_gemv_threads(size_t N_blocks, size_t pool_size) {
             if (N_blocks < GEMV_MIN_N_BLOCKS) return 1;
             if (N_blocks < 512) return std::min(pool_size, static_cast<size_t>(2));
-            return std::min(pool_size, static_cast<size_t>(4));
+            return std::min(pool_size, static_cast<size_t>(5));
         }
         #endif
     };
