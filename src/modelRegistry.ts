@@ -1,6 +1,6 @@
 import type { CactusModel } from './types/common';
 
-const RUNTIME_VERSION = '1.10.1';
+const RUNTIME_VERSION = '1.10.2';
 
 let registryPromise: Promise<{ [key: string]: CactusModel }> | null = null;
 
