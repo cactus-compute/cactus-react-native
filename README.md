@@ -631,6 +631,24 @@ const App = () => {
 };
 ```
 
+### Language Detection
+
+Detect the spoken language in an audio file. Only available on the class, not the hook.
+
+```typescript
+import { CactusSTT } from 'cactus-react-native';
+
+const cactusSTT = new CactusSTT({ model: 'whisper-small' });
+
+const result = await cactusSTT.detectLanguage({
+  audio: 'path/to/audio.wav',
+  options: { useVad: true },
+});
+
+console.log('Language:', result.language);  // e.g. 'en'
+console.log('Confidence:', result.confidence);
+```
+
 ## Voice Activity Detection (VAD)
 
 The `CactusVAD` class detects speech segments in audio, returning timestamped intervals where speech is present.
@@ -1346,7 +1364,7 @@ import { getRegistry } from 'cactus-react-native';
 
 const registry = await getRegistry();
 const model = registry['qwen3-0.6b'];
-console.log(model.quantization.int4.url);
+console.log(model);
 ```
 
 ## Type Definitions
@@ -1523,6 +1541,8 @@ interface CactusLMImageEmbedResult {
 
 ```typescript
 interface CactusModel {
+  slug: string;
+  capabilities: string[];
   quantization: {
     int4: {
       sizeMb: number;
