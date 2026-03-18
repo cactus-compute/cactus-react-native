@@ -33,5 +33,12 @@ target 'CactusExample' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # cactus.xcframework only ships arm64 slices; exclude x86_64 simulator
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
+      end
+    end
   end
 end
