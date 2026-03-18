@@ -1,6 +1,6 @@
 import type { CactusModel } from './types/common';
 
-const RUNTIME_VERSION = '1.10.3';
+const RUNTIME_VERSION = '1.10.4';
 
 let registryPromise: Promise<{ [key: string]: CactusModel }> | null = null;
 
@@ -60,9 +60,9 @@ async function fetchRegistry(): Promise<{ [key: string]: CactusModel }> {
 
   await Promise.all(
     models.map(async ({ id, siblings = [], tags = [] }) => {
-      const weights: string[] = siblings
-        .map((s: any) => s.rfilename)
-        .filter((f: string) => f.startsWith('weights/') && f.endsWith('.zip'));
+      const weights: string[] = (siblings as any[])
+        .map((s: any) => s.rfilename as string)
+        .filter((f) => f.startsWith('weights/') && f.endsWith('.zip'));
 
       if (
         !weights.some((f) => f.endsWith('-int4.zip')) ||
@@ -80,19 +80,33 @@ async function fetchRegistry(): Promise<{ [key: string]: CactusModel }> {
 
       const base = `https://huggingface.co/${id}/resolve/${version}/weights/${key}`;
 
+      const tree = await fetch(
+        `https://huggingface.co/api/models/${id}/tree/${version}/weights`
+      )
+        .then((r) =>
+          r.ok ? (r.json() as Promise<{ path: string; size?: number }[]>) : null
+        )
+        .catch(() => null);
+
+      const sizeMb = (suffix: string) =>
+        Math.round(
+          (tree?.find((f) => f.path === `weights/${key}${suffix}`)?.size ?? 0) /
+            (1024 * 1024)
+        );
+
       registry[key] = {
         slug: key,
         capabilities: (tags as string[]).filter((t) => !t.includes(':')),
         quantization: {
           int4: {
-            sizeMb: 0,
+            sizeMb: sizeMb('-int4.zip'),
             url: `${base}-int4.zip`,
             ...(weights.some((f) => f.endsWith('-int4-apple.zip'))
               ? { pro: { apple: `${base}-int4-apple.zip` } }
               : {}),
           },
           int8: {
-            sizeMb: 0,
+            sizeMb: sizeMb('-int8.zip'),
             url: `${base}-int8.zip`,
             ...(weights.some((f) => f.endsWith('-int8-apple.zip'))
               ? { pro: { apple: `${base}-int8-apple.zip` } }

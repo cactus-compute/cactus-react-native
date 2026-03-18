@@ -86,8 +86,18 @@ const ModelBrowserScreen = () => {
                 </View>
               )}
               <View style={styles.variants}>
-                <VariantRow label="int4" url={int4.url} pro={int4.pro?.apple} />
-                <VariantRow label="int8" url={int8.url} pro={int8.pro?.apple} />
+                <VariantRow
+                  label="int4"
+                  sizeMb={int4.sizeMb}
+                  url={int4.url}
+                  pro={int4.pro?.apple}
+                />
+                <VariantRow
+                  label="int8"
+                  sizeMb={int8.sizeMb}
+                  url={int8.url}
+                  pro={int8.pro?.apple}
+                />
               </View>
             </View>
           );
@@ -99,10 +109,12 @@ const ModelBrowserScreen = () => {
 
 const VariantRow = ({
   label,
+  sizeMb,
   url,
   pro,
 }: {
   label: string;
+  sizeMb: number;
   url: string;
   pro?: string;
 }) => (
@@ -110,6 +122,9 @@ const VariantRow = ({
     <View style={styles.variantBadge}>
       <Text style={styles.variantLabel}>{label}</Text>
     </View>
+    <Text style={styles.variantSize}>
+      {sizeMb >= 1024 ? `${(sizeMb / 1024).toFixed(1)} GB` : `${sizeMb} MB`}
+    </Text>
     <Text style={styles.variantUrl} numberOfLines={1}>
       {url.replace('https://huggingface.co/', '')}
     </Text>
@@ -212,6 +227,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#fff',
     fontWeight: '600',
+  },
+  variantSize: {
+    fontSize: 11,
+    color: '#444',
+    fontWeight: '500',
   },
   variantUrl: {
     flex: 1,
