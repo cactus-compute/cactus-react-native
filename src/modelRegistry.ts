@@ -1,6 +1,6 @@
 import type { CactusModel } from './types/common';
 
-const RUNTIME_VERSION = '1.10.2';
+const RUNTIME_VERSION = '1.10.3';
 
 let registryPromise: Promise<{ [key: string]: CactusModel }> | null = null;
 
@@ -56,50 +56,52 @@ async function fetchRegistry(): Promise<{ [key: string]: CactusModel }> {
   const models: any[] = await response.json();
   if (!models.length) return {};
 
-  const version = await resolveWeightVersion(models[0]!.id).catch((e) => {
-    registryPromise = null;
-    throw e;
-  });
-
   const registry: { [key: string]: CactusModel } = {};
 
-  for (const { id, siblings = [] } of models) {
-    const weights: string[] = siblings
-      .map((s: any) => s.rfilename)
-      .filter((f: string) => f.startsWith('weights/') && f.endsWith('.zip'));
+  await Promise.all(
+    models.map(async ({ id, siblings = [], tags = [] }) => {
+      const weights: string[] = siblings
+        .map((s: any) => s.rfilename)
+        .filter((f: string) => f.startsWith('weights/') && f.endsWith('.zip'));
 
-    if (
-      !weights.some((f) => f.endsWith('-int4.zip')) ||
-      !weights.some((f) => f.endsWith('-int8.zip'))
-    )
-      continue;
+      if (
+        !weights.some((f) => f.endsWith('-int4.zip')) ||
+        !weights.some((f) => f.endsWith('-int8.zip'))
+      )
+        return;
 
-    const key = weights
-      .find((f) => f.endsWith('-int4.zip'))!
-      .replace('weights/', '')
-      .replace('-int4.zip', '');
+      const version = await resolveWeightVersion(id).catch(() => null);
+      if (!version) return;
 
-    const base = `https://huggingface.co/${id}/resolve/${version}/weights/${key}`;
+      const key = weights
+        .find((f) => f.endsWith('-int4.zip'))!
+        .replace('weights/', '')
+        .replace('-int4.zip', '');
 
-    registry[key] = {
-      quantization: {
-        int4: {
-          sizeMb: 0,
-          url: `${base}-int4.zip`,
-          ...(weights.some((f) => f.endsWith('-int4-apple.zip'))
-            ? { pro: { apple: `${base}-int4-apple.zip` } }
-            : {}),
+      const base = `https://huggingface.co/${id}/resolve/${version}/weights/${key}`;
+
+      registry[key] = {
+        slug: key,
+        capabilities: (tags as string[]).filter((t) => !t.includes(':')),
+        quantization: {
+          int4: {
+            sizeMb: 0,
+            url: `${base}-int4.zip`,
+            ...(weights.some((f) => f.endsWith('-int4-apple.zip'))
+              ? { pro: { apple: `${base}-int4-apple.zip` } }
+              : {}),
+          },
+          int8: {
+            sizeMb: 0,
+            url: `${base}-int8.zip`,
+            ...(weights.some((f) => f.endsWith('-int8-apple.zip'))
+              ? { pro: { apple: `${base}-int8-apple.zip` } }
+              : {}),
+          },
         },
-        int8: {
-          sizeMb: 0,
-          url: `${base}-int8.zip`,
-          ...(weights.some((f) => f.endsWith('-int8-apple.zip'))
-            ? { pro: { apple: `${base}-int8-apple.zip` } }
-            : {}),
-        },
-      },
-    };
-  }
+      };
+    })
+  );
 
   return registry;
 }
