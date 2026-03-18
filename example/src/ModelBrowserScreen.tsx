@@ -76,6 +76,15 @@ const ModelBrowserScreen = () => {
           return (
             <View key={key} style={styles.card}>
               <Text style={styles.modelName}>{key}</Text>
+              {model.capabilities.length > 0 && (
+                <View style={styles.capabilities}>
+                  {model.capabilities.map((cap) => (
+                    <View key={cap} style={styles.capBadge}>
+                      <Text style={styles.capLabel}>{cap}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
               <View style={styles.variants}>
                 <VariantRow label="int4" url={int4.url} pro={int4.pro?.apple} />
                 <VariantRow label="int8" url={int8.url} pro={int8.pro?.apple} />
@@ -167,6 +176,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
     marginBottom: 8,
+  },
+  capabilities: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginBottom: 8,
+  },
+  capBadge: {
+    backgroundColor: '#e8f0fe',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  capLabel: {
+    fontSize: 11,
+    color: '#1a73e8',
+    fontWeight: '500',
   },
   variants: {
     gap: 6,

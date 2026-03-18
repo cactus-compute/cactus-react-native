@@ -1,4 +1,6 @@
 export interface CactusModel {
+  slug: string;
+  capabilities: string[];
   quantization: {
     int4: {
       sizeMb: number;
