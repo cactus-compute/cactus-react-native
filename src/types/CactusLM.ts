@@ -29,6 +29,7 @@ export interface CactusLMCompleteOptions {
   toolRagTopK?: number;
   includeStopSequences?: boolean;
   useVad?: boolean;
+  enableThinking?: boolean;
 }
 
 export interface CactusLMTool {
@@ -53,9 +54,25 @@ export interface CactusLMCompleteParams {
   onToken?: (token: string) => void;
 }
 
+export interface CactusLMPrefillParams {
+  messages: CactusLMMessage[];
+  options?: CactusLMCompleteOptions;
+  tools?: CactusLMTool[];
+}
+
+export interface CactusLMPrefillResult {
+  success: boolean;
+  error: string | null;
+  prefillTokens: number;
+  prefillTps: number;
+  totalTimeMs: number;
+  ramUsageMb: number;
+}
+
 export interface CactusLMCompleteResult {
   success: boolean;
   response: string;
+  thinking?: string;
   functionCalls?: {
     name: string;
     arguments: { [key: string]: any };

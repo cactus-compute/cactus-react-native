@@ -13,6 +13,12 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
     toolsJson?: string,
     callback?: (token: string, tokenId: number) => void
   ): Promise<string>;
+  prefill(
+    messagesJson: string,
+    responseBufferSize: number,
+    optionsJson?: string,
+    toolsJson?: string
+  ): Promise<string>;
   tokenize(text: string): Promise<number[]>;
   scoreWindow(
     tokens: number[],
@@ -47,6 +53,16 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
   ): Promise<number[]>;
   imageEmbed(imagePath: string, embeddingBufferSize: number): Promise<number[]>;
   audioEmbed(audioPath: string, embeddingBufferSize: number): Promise<number[]>;
+  diarize(
+    audio: string | number[],
+    responseBufferSize: number,
+    optionsJson?: string
+  ): Promise<string>;
+  embedSpeaker(
+    audio: string | number[],
+    responseBufferSize: number,
+    optionsJson?: string
+  ): Promise<string>;
   reset(): Promise<void>;
   stop(): Promise<void>;
   destroy(): Promise<void>;

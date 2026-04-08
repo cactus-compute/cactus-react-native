@@ -1,14 +1,18 @@
 import { Cactus, CactusFileSystem } from '../native';
 import type {
-  CactusVADParams,
-  CactusVADDownloadParams,
-  CactusVADVadParams,
-  CactusVADResult,
-} from '../types/CactusVAD';
+  CactusAudioParams,
+  CactusAudioDownloadParams,
+  CactusAudioVADParams,
+  CactusAudioVADResult,
+  CactusAudioDiarizeParams,
+  CactusAudioDiarizeResult,
+  CactusAudioEmbedSpeakerParams,
+  CactusAudioEmbedSpeakerResult,
+} from '../types/CactusAudio';
 import { getRegistry } from '../modelRegistry';
 import type { CactusModel } from '../types/common';
 
-export class CactusVAD {
+export class CactusAudio {
   private readonly cactus = new Cactus();
 
   private readonly model: string;
@@ -26,25 +30,25 @@ export class CactusVAD {
     pro: false,
   };
 
-  constructor({ model, options }: CactusVADParams = {}) {
-    this.model = model ?? CactusVAD.defaultModel;
+  constructor({ model, options }: CactusAudioParams = {}) {
+    this.model = model ?? CactusAudio.defaultModel;
     this.options = {
       quantization:
-        options?.quantization ?? CactusVAD.defaultOptions.quantization,
-      pro: options?.pro ?? CactusVAD.defaultOptions.pro,
+        options?.quantization ?? CactusAudio.defaultOptions.quantization,
+      pro: options?.pro ?? CactusAudio.defaultOptions.pro,
     };
   }
 
   public async download({
     onProgress,
-  }: CactusVADDownloadParams = {}): Promise<void> {
+  }: CactusAudioDownloadParams = {}): Promise<void> {
     if (this.isModelPath(this.model)) {
       onProgress?.(1.0);
       return;
     }
 
     if (this.isDownloading) {
-      throw new Error('CactusVAD is already downloading');
+      throw new Error('CactusAudio is already downloading');
     }
 
     if (await CactusFileSystem.modelExists(this.getModelName())) {
@@ -101,9 +105,24 @@ export class CactusVAD {
   public async vad({
     audio,
     options,
-  }: CactusVADVadParams): Promise<CactusVADResult> {
+  }: CactusAudioVADParams): Promise<CactusAudioVADResult> {
     await this.init();
     return this.cactus.vad(audio, options);
+  }
+
+  public async diarize({
+    audio,
+    options,
+  }: CactusAudioDiarizeParams): Promise<CactusAudioDiarizeResult> {
+    await this.init();
+    return this.cactus.diarize(audio, options);
+  }
+
+  public async embedSpeaker({
+    audio,
+  }: CactusAudioEmbedSpeakerParams): Promise<CactusAudioEmbedSpeakerResult> {
+    await this.init();
+    return this.cactus.embedSpeaker(audio);
   }
 
   public async destroy(): Promise<void> {

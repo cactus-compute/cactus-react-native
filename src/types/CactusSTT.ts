@@ -56,6 +56,7 @@ export interface CactusSTTStreamTranscribeStartOptions {
   confirmationThreshold?: number;
   minChunkSize?: number;
   telemetryEnabled?: boolean;
+  language?: string;
 }
 
 export interface CactusSTTStreamTranscribeProcessParams {

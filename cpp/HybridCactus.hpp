@@ -24,6 +24,11 @@ public:
                                              double /* tokenId */)>> &callback)
       override;
 
+  std::shared_ptr<Promise<std::string>> prefill(
+      const std::string &messagesJson, double responseBufferSize,
+      const std::optional<std::string> &optionsJson,
+      const std::optional<std::string> &toolsJson) override;
+
   std::shared_ptr<Promise<std::vector<double>>>
   tokenize(const std::string &text) override;
 
@@ -66,6 +71,16 @@ public:
 
   std::shared_ptr<Promise<std::vector<double>>>
   audioEmbed(const std::string &audioPath, double embeddingBufferSize) override;
+
+  std::shared_ptr<Promise<std::string>>
+  diarize(const std::variant<std::vector<double>, std::string> &audio,
+          double responseBufferSize,
+          const std::optional<std::string> &optionsJson) override;
+
+  std::shared_ptr<Promise<std::string>>
+  embedSpeaker(const std::variant<std::vector<double>, std::string> &audio,
+               double responseBufferSize,
+               const std::optional<std::string> &optionsJson) override;
 
   std::shared_ptr<Promise<void>> reset() override;
 

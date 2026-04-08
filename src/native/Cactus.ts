@@ -3,6 +3,7 @@ import type { Cactus as CactusSpec } from '../specs/Cactus.nitro';
 import { CactusImage } from './CactusImage';
 import type {
   CactusLMCompleteResult,
+  CactusLMPrefillResult,
   CactusLMMessage,
   CactusLMCompleteOptions,
   CactusLMTool,
@@ -16,7 +17,13 @@ import type {
   CactusSTTDetectLanguageOptions,
   CactusSTTDetectLanguageResult,
 } from '../types/CactusSTT';
-import type { CactusVADOptions, CactusVADResult } from '../types/CactusVAD';
+import type {
+  CactusAudioVADOptions,
+  CactusAudioVADResult,
+  CactusAudioDiarizeOptions,
+  CactusAudioDiarizeResult,
+  CactusAudioEmbedSpeakerResult,
+} from '../types/CactusAudio';
 
 export class Cactus {
   private readonly hybridCactus =
@@ -72,6 +79,7 @@ export class Cactus {
           tool_rag_top_k: options.toolRagTopK,
           include_stop_sequences: options.includeStopSequences,
           use_vad: options.useVad,
+          enable_thinking_if_supported: options.enableThinking,
         })
       : undefined;
     const toolsJson = JSON.stringify(tools);
@@ -90,6 +98,7 @@ export class Cactus {
       return {
         success: parsed.success,
         response: parsed.response,
+        thinking: parsed.thinking,
         functionCalls: parsed.function_calls,
         cloudHandoff: parsed.cloud_handoff,
         confidence: parsed.confidence,
@@ -104,6 +113,54 @@ export class Cactus {
       };
     } catch {
       throw new Error('Unable to parse completion response');
+    }
+  }
+
+  public async prefill(
+    messages: CactusLMMessage[],
+    responseBufferSize: number,
+    options?: CactusLMCompleteOptions,
+    tools?: { type: 'function'; function: CactusLMTool }[]
+  ): Promise<CactusLMPrefillResult> {
+    const messagesJson = JSON.stringify(messages);
+    const optionsJson = options
+      ? JSON.stringify({
+          temperature: options.temperature,
+          top_p: options.topP,
+          top_k: options.topK,
+          max_tokens: options.maxTokens,
+          stop_sequences: options.stopSequences,
+          force_tools: options.forceTools,
+          telemetry_enabled: options.telemetryEnabled,
+          confidence_threshold: options.confidenceThreshold,
+          tool_rag_top_k: options.toolRagTopK,
+          include_stop_sequences: options.includeStopSequences,
+          use_vad: options.useVad,
+          enable_thinking_if_supported: options.enableThinking,
+        })
+      : undefined;
+    const toolsJson = JSON.stringify(tools);
+
+    const response = await this.hybridCactus.prefill(
+      messagesJson,
+      responseBufferSize,
+      optionsJson,
+      toolsJson
+    );
+
+    try {
+      const parsed = JSON.parse(response);
+
+      return {
+        success: parsed.success,
+        error: parsed.error,
+        prefillTokens: parsed.prefill_tokens,
+        prefillTps: parsed.prefill_tps,
+        totalTimeMs: parsed.total_time_ms,
+        ramUsageMb: parsed.ram_usage_mb,
+      };
+    } catch {
+      throw new Error('Unable to parse prefill response');
     }
   }
 
@@ -195,6 +252,7 @@ export class Cactus {
           confirmation_threshold: options.confirmationThreshold,
           min_chunk_size: options.minChunkSize,
           telemetry_enabled: options.telemetryEnabled,
+          language: options.language,
         })
       : undefined;
     return this.hybridCactus.streamTranscribeStart(optionsJson);
@@ -272,8 +330,8 @@ export class Cactus {
 
   public async vad(
     audio: string | number[],
-    options?: CactusVADOptions
-  ): Promise<CactusVADResult> {
+    options?: CactusAudioVADOptions
+  ): Promise<CactusAudioVADResult> {
     if (typeof audio === 'string') {
       audio = audio.replace('file://', '');
     }
@@ -336,6 +394,63 @@ export class Cactus {
       audioPath.replace('file://', ''),
       embeddingBufferSize
     );
+  }
+
+  public async diarize(
+    audio: string | number[],
+    options?: CactusAudioDiarizeOptions
+  ): Promise<CactusAudioDiarizeResult> {
+    if (typeof audio === 'string') {
+      audio = audio.replace('file://', '');
+    }
+    const optionsJson = options
+      ? JSON.stringify({
+          step_ms: options.stepMs,
+          threshold: options.threshold,
+          num_speakers: options.numSpeakers,
+          min_speakers: options.minSpeakers,
+          max_speakers: options.maxSpeakers,
+        })
+      : undefined;
+    const response = await this.hybridCactus.diarize(
+      audio,
+      2 * 1024 * 1024,
+      optionsJson
+    );
+    try {
+      const parsed = JSON.parse(response);
+      return {
+        success: parsed.success,
+        error: parsed.error,
+        numSpeakers: parsed.num_speakers,
+        scores: parsed.scores,
+        totalTimeMs: parsed.total_time_ms,
+        ramUsageMb: parsed.ram_usage_mb,
+      };
+    } catch {
+      throw new Error('Unable to parse diarize response');
+    }
+  }
+
+  public async embedSpeaker(
+    audio: string | number[]
+  ): Promise<CactusAudioEmbedSpeakerResult> {
+    if (typeof audio === 'string') {
+      audio = audio.replace('file://', '');
+    }
+    const response = await this.hybridCactus.embedSpeaker(audio, 65536);
+    try {
+      const parsed = JSON.parse(response);
+      return {
+        success: parsed.success,
+        error: parsed.error,
+        embedding: parsed.embedding,
+        totalTimeMs: parsed.total_time_ms,
+        ramUsageMb: parsed.ram_usage_mb,
+      };
+    } catch {
+      throw new Error('Unable to parse embed speaker response');
+    }
   }
 
   public reset(): Promise<void> {

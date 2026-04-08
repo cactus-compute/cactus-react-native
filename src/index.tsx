@@ -1,13 +1,13 @@
 // Classes
 export { CactusLM } from './classes/CactusLM';
 export { CactusSTT } from './classes/CactusSTT';
-export { CactusVAD } from './classes/CactusVAD';
+export { CactusAudio } from './classes/CactusAudio';
 export { CactusIndex } from './classes/CactusIndex';
 
 // Hooks
 export { useCactusLM } from './hooks/useCactusLM';
 export { useCactusSTT } from './hooks/useCactusSTT';
-export { useCactusVAD } from './hooks/useCactusVAD';
+export { useCactusAudio } from './hooks/useCactusAudio';
 export { useCactusIndex } from './hooks/useCactusIndex';
 
 // Registry
@@ -23,6 +23,8 @@ export type {
   CactusLMTool,
   CactusLMCompleteParams,
   CactusLMCompleteResult,
+  CactusLMPrefillParams,
+  CactusLMPrefillResult,
   CactusLMTokenizeParams,
   CactusLMTokenizeResult,
   CactusLMScoreWindowParams,
@@ -49,13 +51,18 @@ export type {
   CactusSTTDetectLanguageResult,
 } from './types/CactusSTT';
 export type {
-  CactusVADParams,
-  CactusVADDownloadParams,
-  CactusVADVadParams,
-  CactusVADOptions,
-  CactusVADSegment,
-  CactusVADResult,
-} from './types/CactusVAD';
+  CactusAudioParams,
+  CactusAudioDownloadParams,
+  CactusAudioVADOptions,
+  CactusAudioVADSegment,
+  CactusAudioVADParams,
+  CactusAudioVADResult,
+  CactusAudioDiarizeOptions,
+  CactusAudioDiarizeParams,
+  CactusAudioDiarizeResult,
+  CactusAudioEmbedSpeakerParams,
+  CactusAudioEmbedSpeakerResult,
+} from './types/CactusAudio';
 export type {
   CactusIndexParams,
   CactusIndexAddParams,

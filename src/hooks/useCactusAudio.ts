@@ -1,24 +1,28 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { CactusVAD } from '../classes/CactusVAD';
+import { CactusAudio } from '../classes/CactusAudio';
 import { CactusFileSystem } from '../native';
 import { getErrorMessage } from '../utils/error';
 import type {
-  CactusVADParams,
-  CactusVADDownloadParams,
-  CactusVADVadParams,
-  CactusVADResult,
-} from '../types/CactusVAD';
+  CactusAudioParams,
+  CactusAudioDownloadParams,
+  CactusAudioVADParams,
+  CactusAudioVADResult,
+  CactusAudioDiarizeParams,
+  CactusAudioDiarizeResult,
+  CactusAudioEmbedSpeakerParams,
+  CactusAudioEmbedSpeakerResult,
+} from '../types/CactusAudio';
 import type { CactusModel } from '../types/common';
 
-export const useCactusVAD = ({
+export const useCactusAudio = ({
   model = 'silero-vad',
   options: modelOptions = {
     quantization: undefined,
     pro: false,
   },
-}: CactusVADParams = {}) => {
-  const [cactusVAD, setCactusVAD] = useState(
-    () => new CactusVAD({ model, options: modelOptions })
+}: CactusAudioParams = {}) => {
+  const [cactusAudio, setCactusAudio] = useState(
+    () => new CactusAudio({ model, options: modelOptions })
   );
 
   const [isInitializing, setIsInitializing] = useState(false);
@@ -35,14 +39,14 @@ export const useCactusVAD = ({
   }, [model]);
 
   useEffect(() => {
-    const newInstance = new CactusVAD({
+    const newInstance = new CactusAudio({
       model,
       options: {
         quantization: modelOptions.quantization,
         pro: modelOptions.pro,
       },
     });
-    setCactusVAD(newInstance);
+    setCactusAudio(newInstance);
 
     setIsInitializing(false);
     setIsDownloaded(false);
@@ -73,14 +77,14 @@ export const useCactusVAD = ({
 
   useEffect(() => {
     return () => {
-      cactusVAD.destroy().catch(() => {});
+      cactusAudio.destroy().catch(() => {});
     };
-  }, [cactusVAD]);
+  }, [cactusAudio]);
 
   const download = useCallback(
-    async ({ onProgress }: CactusVADDownloadParams = {}) => {
+    async ({ onProgress }: CactusAudioDownloadParams = {}) => {
       if (isDownloading) {
-        const message = 'CactusVAD is already downloading';
+        const message = 'CactusAudio is already downloading';
         setError(message);
         throw new Error(message);
       }
@@ -97,7 +101,7 @@ export const useCactusVAD = ({
       setDownloadProgress(0);
       setIsDownloading(true);
       try {
-        await cactusVAD.download({
+        await cactusAudio.download({
           onProgress: (progress) => {
             if (
               currentModelRef.current !== thisModel ||
@@ -141,12 +145,12 @@ export const useCactusVAD = ({
         setDownloadProgress(0);
       }
     },
-    [cactusVAD, isDownloading, isDownloaded]
+    [cactusAudio, isDownloading, isDownloaded]
   );
 
   const init = useCallback(async () => {
     if (isInitializing) {
-      const message = 'CactusVAD is already initializing';
+      const message = 'CactusAudio is already initializing';
       setError(message);
       throw new Error(message);
     }
@@ -154,50 +158,81 @@ export const useCactusVAD = ({
     setError(null);
     setIsInitializing(true);
     try {
-      await cactusVAD.init();
+      await cactusAudio.init();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     } finally {
       setIsInitializing(false);
     }
-  }, [cactusVAD, isInitializing]);
+  }, [cactusAudio, isInitializing]);
 
   const vad = useCallback(
     async ({
       audio,
       options,
-    }: CactusVADVadParams): Promise<CactusVADResult> => {
+    }: CactusAudioVADParams): Promise<CactusAudioVADResult> => {
       setError(null);
       try {
-        return await cactusVAD.vad({ audio, options });
+        return await cactusAudio.vad({ audio, options });
       } catch (e) {
         setError(getErrorMessage(e));
         throw e;
       }
     },
-    [cactusVAD]
+    [cactusAudio]
+  );
+
+  const diarize = useCallback(
+    async ({
+      audio,
+      options,
+    }: CactusAudioDiarizeParams): Promise<CactusAudioDiarizeResult> => {
+      setError(null);
+      try {
+        return await cactusAudio.diarize({ audio, options });
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      }
+    },
+    [cactusAudio]
+  );
+
+  const embedSpeaker = useCallback(
+    async ({
+      audio,
+    }: CactusAudioEmbedSpeakerParams): Promise<CactusAudioEmbedSpeakerResult> => {
+      setError(null);
+      try {
+        return await cactusAudio.embedSpeaker({ audio });
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      }
+    },
+    [cactusAudio]
   );
 
   const destroy = useCallback(async () => {
     setError(null);
     try {
-      await cactusVAD.destroy();
+      await cactusAudio.destroy();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     }
-  }, [cactusVAD]);
+  }, [cactusAudio]);
 
   const getModels = useCallback(async (): Promise<CactusModel[]> => {
     setError(null);
     try {
-      return await cactusVAD.getModels();
+      return await cactusAudio.getModels();
     } catch (e) {
       setError(getErrorMessage(e));
       throw e;
     }
-  }, [cactusVAD]);
+  }, [cactusAudio]);
 
   return {
     isInitializing,
@@ -209,6 +244,8 @@ export const useCactusVAD = ({
     download,
     init,
     vad,
+    diarize,
+    embedSpeaker,
     destroy,
     getModels,
   };
