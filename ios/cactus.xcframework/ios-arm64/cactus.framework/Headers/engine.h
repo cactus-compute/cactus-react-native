@@ -75,6 +75,7 @@ struct Config {
     bool use_pixel_shuffle = false;
     uint32_t pixel_shuffle_factor = 1;
     bool use_image_tokens = false;
+    uint32_t image_token_id = 0;
     bool use_layout_tags = false;
     uint32_t image_seq_len = 64;
 
@@ -107,6 +108,26 @@ struct Config {
     uint32_t subsampling_factor = 0;
     uint32_t num_mel_bins = 80;
     std::string encoder_hidden_act = "silu";
+    uint32_t linear_num_key_heads = 0;
+    uint32_t linear_key_head_dim = 0;
+    uint32_t linear_num_value_heads = 0;
+    uint32_t linear_value_head_dim = 0;
+    uint32_t linear_q_proj_dim = 0;
+    uint32_t linear_k_proj_dim = 0;
+    uint32_t linear_v_proj_dim = 0;
+
+    uint32_t kv_lora_rank = 0;
+    uint32_t q_lora_rank = 0;
+    uint32_t qk_head_dim = 0;
+    uint32_t qk_nope_head_dim = 0;
+    uint32_t qk_rope_head_dim = 0;
+    uint32_t v_head_dim = 0;
+    uint32_t rope_interleave = 0;
+    bool attention_bias = false;
+    float rope_scaling_factor = 1.0f;
+    float rope_mscale_all_dim = 0.0f;
+
+    enum class ModelType {QWEN = 0, GEMMA = 1, NOMIC = 3, LFM2 = 5, SIGLIP2 = 6, WHISPER = 7, MOONSHINE = 8, SILERO_VAD = 9, PARAKEET = 10, QWEN3P5 = 11, PARAKEET_TDT = 12, GEMMA3N = 13, YOUTU = 14, GEMMA4 = 15, PYANNOTE = 16, WESPEAKER = 17};
     uint32_t predictor_hidden_dim = 0;
     uint32_t predictor_num_layers = 0;
     uint32_t tdt_joint_dim = 0;
@@ -114,7 +135,6 @@ struct Config {
     uint32_t tdt_blank_id = 0;
     std::vector<uint32_t> tdt_durations;
 
-    enum class ModelType {QWEN = 0, GEMMA = 1, NOMIC = 3, LFM2 = 5, SIGLIP2 = 6, WHISPER = 7, MOONSHINE = 8, SILERO_VAD = 9, PARAKEET = 10, PARAKEET_TDT = 11};
     ModelType model_type = ModelType::QWEN;
 
     enum class ModelVariant {DEFAULT = 0, VLM = 1, EXTRACT = 2, RAG = 3};
@@ -138,6 +158,58 @@ struct Config {
     std::vector<std::string> layer_types;
     size_t conv_L_cache = 0;
 
+    uint32_t altup_num_inputs = 4;
+    uint32_t laurel_rank = 64;
+    uint32_t hidden_size_per_layer_input = 256;
+    uint32_t num_kv_shared_layers = 0;
+    uint32_t sliding_window = 512;
+    float rope_local_base_freq = 10000.0f;
+    float final_logit_softcapping = 0.0f;
+    float global_partial_rotary_factor = 1.0f;
+    uint32_t expert_intermediate_size = 0;
+    uint32_t global_head_dim = 0;
+    uint32_t num_global_kv_heads = 0;
+    bool attention_k_eq_v = false;
+    bool enable_moe_block = false;
+    std::vector<float> activation_sparsity_ppf;
+
+    uint32_t vision_head_dim = 64;
+    uint32_t vision_kv_heads = 12;
+    uint32_t vision_intermediate_size = 3072;
+    uint32_t vision_position_embedding_size = 10240;
+    uint32_t vision_pooling_kernel_size = 3;
+    uint32_t vision_default_output_length = 280;
+    float vision_rope_theta = 100.0f;
+
+    uint32_t audio_hidden_dim = 0;
+    uint32_t audio_num_layers = 0;
+    uint32_t audio_num_heads = 0;
+    uint32_t audio_head_dim = 0;
+    uint32_t audio_input_feat_size = 128;
+    uint32_t audio_conf_conv_kernel_size = 5;
+    uint32_t audio_chunk_size = 12;
+    uint32_t audio_context_left = 13;
+    uint32_t audio_context_right = 0;
+    float audio_logit_cap = 50.0f;
+    float audio_residual_weight = 0.5f;
+    uint32_t audio_output_proj_dims = 0;
+    uint32_t audio_vocab_size = 128;
+    uint32_t audio_vocab_offset = 0;
+    uint32_t audio_soft_tokens = 188;
+    uint32_t audio_sscp_conv0_channels = 128;
+    uint32_t audio_sscp_conv1_channels = 32;
+    float audio_sscp_conv_eps = 1e-3f;
+    float audio_rms_norm_eps = 1e-6f;
+    uint32_t audio_fft_length = 1024;
+    uint32_t audio_token_id = 0;
+    bool audio_fft_overdrive = false;
+    uint32_t channel_open_token_id = 100;
+    uint32_t channel_close_token_id = 101;
+
+    static bool is_gemma_family(ModelType t) {
+        return t == ModelType::GEMMA || t == ModelType::GEMMA3N || t == ModelType::GEMMA4;
+    }
+
     bool from_json(const std::string& json_path);
     std::string to_json() const;
 };
@@ -155,14 +227,38 @@ struct MergeRule {
 };
 
 
+struct ToolCallInfo {
+    std::string name;
+    std::string arguments;
+};
+
 struct ChatMessage {
     std::string role;
     std::string content;
     std::string name;
     std::vector<std::string> images;
+    std::vector<std::string> audio;
+    size_t audio_soft_token_count = 0;
+    std::vector<ToolCallInfo> tool_calls;
 };
 
+struct TokenizerRuntimeConfig {
+    enum class TokenizerType { UNKNOWN, BPE, SENTENCEPIECE };
+    enum class VocabFormat { UNKNOWN, ID_TAB_TOKEN, LINE_TOKEN };
+    enum class Normalizer { NONE, METASPACE, BYTE_LEVEL };
+    enum class Decoder { NONE, REPLACE_METASPACE, BYTE_LEVEL };
 
+    TokenizerType tokenizer_type = TokenizerType::UNKNOWN;
+    VocabFormat vocab_format = VocabFormat::UNKNOWN;
+    Normalizer normalizer = Normalizer::NONE;
+    Decoder decoder = Decoder::NONE;
+    bool byte_fallback = false;
+    bool has_chat_template = false;
+};
+
+TokenizerRuntimeConfig load_tokenizer_runtime_config(const std::string& config_file);
+void load_special_tokens_map(const std::string& config_file, std::unordered_map<std::string, uint32_t>& special_tokens);
+std::vector<std::string> split_with_special_tokens(const std::string& text, const std::unordered_map<std::string, uint32_t>& special_tokens);
 
 class Tokenizer {
 public:
@@ -172,7 +268,7 @@ public:
     virtual std::string decode(const std::vector<uint32_t>& tokens) const = 0;
 
     virtual std::vector<uint32_t> apply_chat_template(const std::vector<ChatMessage>& messages, bool add_generation_prompt = true) const;
-    virtual std::string format_chat_prompt(const std::vector<ChatMessage>& messages, bool add_generation_prompt = true, const std::string& tools_json = "") const;
+    virtual std::string format_chat_prompt(const std::vector<ChatMessage>& messages, bool add_generation_prompt = true, const std::string& tools_json = "", bool enable_thinking_if_supported = true) const;
 
     virtual uint32_t get_vocab_size() const = 0;
     virtual uint32_t get_unk_token() const = 0;
@@ -188,7 +284,7 @@ public:
     uint32_t get_global_img_token_id() const { return global_img_token_id_; }
 
 protected:
-    enum class ModelType { UNKNOWN, QWEN, GEMMA, LFM2, BERT, WHISPER, PARAKEET};
+    enum class ModelType { UNKNOWN, QWEN, QWEN3P5, GEMMA, GEMMA4, LFM2, BERT, WHISPER, PARAKEET, YOUTU};
     ModelType model_type_ = ModelType::UNKNOWN;
     enum class ModelVariant { DEFAULT, VLM, EXTRACT, RAG};
     ModelVariant model_variant_ = ModelVariant::DEFAULT;
@@ -199,11 +295,21 @@ protected:
     uint32_t fake_token_id_ = 49189;
     uint32_t global_img_token_id_ = 49152;
 
+
+    uint32_t vision_patch_size_ = 16;
+    uint32_t vision_pooling_kernel_size_ = 3;
+    uint32_t vision_default_output_length_ = 280;
+    uint32_t vision_image_size_ = 768;
+    TokenizerRuntimeConfig runtime_config_;
+
     void detect_model_type(const std::string& config_path);
-    std::string format_qwen_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
+    void load_chat_template(const std::string& template_file);
+    std::string format_qwen_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json, bool enable_thinking_if_supported = true) const;
     std::string format_gemma_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
+    std::string format_gemma4_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json, bool enable_thinking_if_supported = true) const;
     std::string format_lfm2_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
     std::string format_lfm2_vl_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
+    std::string format_youtu_style(const std::vector<ChatMessage>& messages, bool add_generation_prompt, const std::string& tools_json) const;
 };
 
 class BPETokenizer : public Tokenizer {
@@ -245,6 +351,7 @@ private:
     std::string bytes_to_unicode(const std::string& text) const;
     std::string unicode_to_bytes(const std::string& text) const;
     std::vector<std::string> byte_level_split(const std::string& text) const;
+    std::vector<std::string> utf8_split(const std::string& text) const;
 
     void cleanup_mmap();
     
@@ -256,12 +363,6 @@ private:
     std::unordered_map<std::string, uint32_t> special_tokens_;
     std::vector<std::string> split_with_special_tokens(const std::string& text) const;
     void load_special_tokens(const std::string& config_file);
-
-    void load_chat_template(const std::string& template_file);
-
-    std::unordered_map<std::string, uint32_t> tool_tokens_;
-    bool has_tool_support_;
-    void load_tokenizer_config(const std::string& config_file);
 };
 
 class SPTokenizer : public Tokenizer {
@@ -311,8 +412,6 @@ private:
     std::unordered_map<std::string, uint32_t> special_tokens_;
     std::vector<std::string> split_with_special_tokens(const std::string& text) const;
     void load_special_tokens(const std::string& config_file);
-
-    void load_chat_template(const std::string& template_file);
 };
 
 class ConvCache {
@@ -355,8 +454,10 @@ struct KVCache {
     struct LayerCache {
         std::vector<uint8_t> keys;
         std::vector<uint8_t> values;
-        std::vector<float> key_scales;   
-        std::vector<float> value_scales; 
+        std::vector<float> key_scales;
+        std::vector<float> value_scales;
+        size_t head_dim = 0;
+        size_t kv_heads = 0;
     };
 
     std::vector<LayerCache> layer_caches;
@@ -366,8 +467,6 @@ struct KVCache {
     size_t current_seq_len = 0;
     size_t total_seq_len = 0;
     size_t max_seq_len = 2048;
-    size_t num_kv_heads = 0;
-    size_t head_dim = 0;
     size_t num_layers = 0;
     Precision precision;
     size_t element_size = 4;
@@ -375,12 +474,14 @@ struct KVCache {
     void set_window_size(size_t window, size_t sink = DEFAULT_SINK_SIZE);
     size_t get_effective_seq_len() const { return current_seq_len; }
     size_t get_total_seq_len() const { return total_seq_len; }
+    size_t get_layer_head_dim(size_t layer_idx) const { return layer_caches[layer_idx].head_dim; }
+    size_t get_layer_kv_heads(size_t layer_idx) const { return layer_caches[layer_idx].kv_heads; }
 
-    void init(size_t num_layers, size_t max_seq, size_t num_kv_heads, size_t head_dim, Precision model_precision);
+    void init(size_t num_layers, size_t max_seq, const std::vector<size_t>& layer_dims, const std::vector<size_t>& layer_kv_heads, Precision model_precision);
     void reset();
     void update_from_graph(CactusGraph* gb, const std::vector<size_t>& k_nodes,
                           const std::vector<size_t>& v_nodes, size_t seq_len,
-                          size_t num_layers, size_t kv_heads, size_t head_dim);
+                          size_t num_layers);
 
     void update_from_npu(size_t layer_idx, const __fp16* k_data, const __fp16* v_data,
                          size_t num_tokens, size_t kv_heads, size_t head_dim);
@@ -404,6 +505,9 @@ struct KVCache {
     const int8_t* get_values_int8(size_t layer) const;
     const float* get_key_scales(size_t layer) const;
     const float* get_value_scales(size_t layer) const;
+
+    void remove_token_range(size_t start, size_t count);
+    void compact_to_windows(const std::vector<size_t>& target_windows);
 };
 
 class ToolCallConstrainer {
@@ -421,7 +525,7 @@ public:
         QWEN_EXPECT_ARGS_COLON, 
         QWEN_IN_ARGUMENTS,  
         QWEN_EXPECT_CLOSE_BRACE,
-        QWEN_EXPECT_END, 
+        QWEN_EXPECT_END,
 
         LFM_START,              
         LFM_EXPECT_BRACKET, 
@@ -457,12 +561,17 @@ private:
     Config::ModelType model_type_ = Config::ModelType::QWEN;
     Tokenizer* tokenizer_ = nullptr;
 
+    bool is_gemma_family() const { return Config::is_gemma_family(model_type_); }
+
     std::vector<std::string> function_names_;
     std::string generated_text_;
-    int brace_depth_ = 0;  
+    int brace_depth_ = 0;
 
-    std::unordered_set<uint32_t> qwen_tool_call_start_tokens_; 
-    std::unordered_set<uint32_t> qwen_tool_call_end_tokens_;   
+    std::string call_start_tag_;
+    std::string call_end_tag_;
+
+    std::unordered_set<uint32_t> qwen_tool_call_start_tokens_;
+    std::unordered_set<uint32_t> qwen_tool_call_end_tokens_;
     std::unordered_set<uint32_t> open_brace_tokens_;         
     std::unordered_set<uint32_t> close_brace_tokens_;       
     std::unordered_set<uint32_t> colon_tokens_;            
@@ -472,7 +581,7 @@ private:
     std::unordered_set<uint32_t> quote_tokens_;            
     std::unordered_set<uint32_t> backtick_tokens_;   
     std::unordered_set<uint32_t> all_func_name_tokens_;
-    std::unordered_map<std::string, std::vector<uint32_t>> func_name_sequences_;  
+    std::unordered_map<std::string, std::vector<uint32_t>> func_name_sequences_;
 
     std::unordered_set<uint32_t> tool_start_tokens_;
     std::unordered_set<uint32_t> tool_end_tokens_;
@@ -523,12 +632,16 @@ public:
 
     virtual void prefill(const std::vector<uint32_t>& tokens, size_t chunk_size = 256, const std::string& profile_file = "");
 
+    virtual void prefill_with_images(const std::vector<uint32_t>& tokens, const std::vector<std::string>& image_paths,
+                                     const std::string& profile_file = "");
+
     virtual uint32_t decode_with_images(const std::vector<uint32_t>& tokens, const std::vector<std::string>& image_paths,
                                           float temperature = -1.0f, float top_p = -1.0f,
                                           size_t top_k = 0, const std::string& profile_file = "", float* out_entropy = nullptr);
 
     virtual uint32_t decode_with_audio(const std::vector<uint32_t>& tokens, const std::vector<float>& audio_features, float temperature = 0.0f, float top_p = 0.0f,
-                      size_t top_k = 0, const std::string& profile_file = "", float* out_entropy = nullptr);
+                      size_t top_k = 0, const std::string& profile_file = "", float* out_entropy = nullptr,
+                      float* out_token_time_start = nullptr, float* out_token_time_end = nullptr);
 
     std::vector<float> get_embeddings(const std::vector<uint32_t>& tokens, bool pooled = true, bool normalize = false, const std::string& profile_file = "");
     
@@ -548,13 +661,37 @@ public:
     bool has_npu_prefill() const;
     size_t get_prefill_chunk_size() const;
 
+    virtual void remove_thinking_tokens(const std::vector<std::pair<size_t, size_t>>& ranges);
+    virtual void compact_kv_cache() {}
+
     void set_tool_constraints(const std::vector<std::string>& function_names);
     void clear_tool_constraints();
     void update_tool_constraints(uint32_t token_id);
 
     void* graph_handle_;
 
+    void set_vocab_bias(const std::unordered_map<uint32_t, float>& bias) {
+        vocab_bias_ = bias;
+    }
+
+    void clear_vocab_bias() {
+        vocab_bias_.clear();
+    }
+
+    bool has_vocab_bias() const {
+        return !vocab_bias_.empty();
+    }
+
+    const std::unordered_map<uint32_t, float>& get_vocab_bias() const {
+        return vocab_bias_;
+    }
+
 protected:
+    size_t sample_token(CactusGraph* gb, size_t logits_node_id, float temperature, float top_p, size_t top_k,
+                        const std::unordered_map<uint32_t, float>* extra_bias = nullptr) const;
+
+    static void compute_entropy(CactusGraph* gb, size_t logits_node_id, float* out_entropy);
+
     virtual size_t forward(const std::vector<uint32_t>& tokens, bool use_cache = false) = 0;
     
     virtual size_t forward(const std::vector<float>& audio_features, const std::vector<uint32_t>& tokens, bool use_cache = false);
@@ -569,6 +706,12 @@ protected:
     virtual size_t build_transformer_block(CactusGraph* gb, size_t hidden, uint32_t layer_idx,
                                   ComputeBackend backend, bool use_cache = false, size_t position_offset = 0) = 0;
     void update_kv_cache(CactusGraph* gb, size_t seq_len);
+    virtual std::vector<size_t> get_kv_layer_dims() const {
+        return std::vector<size_t>(config_.num_layers, config_.attention_head_dim);
+    }
+    virtual std::vector<size_t> get_kv_layer_heads() const {
+        return std::vector<size_t>(config_.num_layers, config_.attention_kv_heads);
+    }
     virtual void post_init() {}
     virtual void post_execute_updates(CactusGraph*, size_t) {}
     Config config_;
@@ -601,6 +744,9 @@ protected:
     virtual std::vector<__fp16> get_token_embeddings(const std::vector<uint32_t>& tokens);
 
     ToolCallConstrainer tool_constrainer_;
+
+private:
+    std::unordered_map<uint32_t, float> vocab_bias_;
 };
 
 std::unique_ptr<Model> create_model(const std::string& model_folder);
@@ -705,13 +851,17 @@ public:
         bool remove_dc_offset = false;
         float preemphasis = 0.0f;
         bool hann_periodic = true;
+        float window_a0 = 0.5f;
+        size_t fft_override = 0;
+        bool mel_floor_additive = false;
     };
 
     AudioProcessor();
     ~AudioProcessor();
 
     void init_mel_filters(size_t num_frequency_bins, size_t num_mel_filters,
-                          float min_freq, float max_freq, size_t sampling_rate);
+                          float min_freq, float max_freq, size_t sampling_rate,
+                          const char* norm = "slaney", const char* mel_scale = "slaney");
 
     std::vector<float> compute_spectrogram(
         const std::vector<float>& waveform,

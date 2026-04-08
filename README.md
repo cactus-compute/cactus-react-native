@@ -649,18 +649,18 @@ console.log('Language:', result.language);  // e.g. 'en'
 console.log('Confidence:', result.confidence);
 ```
 
-## Voice Activity Detection (VAD)
+## Audio Processing
 
-The `CactusVAD` class detects speech segments in audio, returning timestamped intervals where speech is present.
+The `CactusAudio` class provides voice activity detection (VAD), speaker diarization, and speaker embedding extraction.
 
-### Class
+### Voice Activity Detection
 
 ```typescript
-import { CactusVAD } from 'cactus-react-native';
+import { CactusAudio } from 'cactus-react-native';
 
-const cactusVAD = new CactusVAD({ model: 'silero-vad' });
+const cactusAudio = new CactusAudio({ model: 'silero-vad' });
 
-const result = await cactusVAD.vad({
+const result = await cactusAudio.vad({
   audio: 'path/to/audio.wav',
   options: {
     threshold: 0.5,
@@ -674,22 +674,68 @@ console.log('Speech segments:', result.segments);
 console.log('Total time (ms):', result.totalTime);
 ```
 
+### Speaker Diarization
+
+```typescript
+import { CactusAudio } from 'cactus-react-native';
+
+const cactusAudio = new CactusAudio({ model: 'silero-vad' });
+
+const result = await cactusAudio.diarize({
+  audio: 'path/to/audio.wav',
+  options: {
+    numSpeakers: 2,
+    minSpeakers: 1,
+    maxSpeakers: 4,
+  }
+});
+
+console.log('Number of speakers:', result.numSpeakers);
+console.log('Scores:', result.scores);
+```
+
+### Speaker Embedding
+
+```typescript
+import { CactusAudio } from 'cactus-react-native';
+
+const cactusAudio = new CactusAudio({ model: 'silero-vad' });
+
+const result = await cactusAudio.embedSpeaker({
+  audio: 'path/to/audio.wav',
+});
+
+console.log('Speaker embedding:', result.embedding);
+```
+
 ### Hook
 
 ```tsx
-import { useCactusVAD } from 'cactus-react-native';
+import { useCactusAudio } from 'cactus-react-native';
 
 const App = () => {
-  const cactusVAD = useCactusVAD({ model: 'silero-vad' });
+  const cactusAudio = useCactusAudio({ model: 'silero-vad' });
 
   const handleVAD = async () => {
-    const result = await cactusVAD.vad({
+    const result = await cactusAudio.vad({
       audio: 'path/to/audio.wav',
     });
     console.log('Speech segments:', result.segments);
   };
 
-  return <Button title="Detect Speech" onPress={handleVAD} />;
+  const handleDiarize = async () => {
+    const result = await cactusAudio.diarize({
+      audio: 'path/to/audio.wav',
+    });
+    console.log('Speakers:', result.numSpeakers);
+  };
+
+  return (
+    <>
+      <Button title="Detect Speech" onPress={handleVAD} />
+      <Button title="Diarize" onPress={handleDiarize} />
+    </>
+  );
 };
 ```
 
@@ -985,8 +1031,18 @@ Performs text completion with optional streaming and tool support. Automatically
   - `toolRagTopK` - Number of tools to select via RAG when tool list is large (default: `2`).
   - `includeStopSequences` - Whether to include stop sequences in the response (default: `false`).
   - `useVad` - Whether to use VAD preprocessing (default: `true`).
+  - `enableThinking` - Whether to enable thinking/reasoning output if supported by the model (default: unset).
 - `tools` - Array of `CactusLMTool` objects for function calling.
 - `onToken` - Callback for streaming tokens.
+
+**`prefill(params: CactusLMPrefillParams): Promise<CactusLMPrefillResult>`**
+
+Runs prompt prefill without generating any output tokens. Useful for measuring prefill performance or warming up the model's KV cache. Automatically calls `init()` if not already initialized. Throws an error if a generation is already in progress.
+
+**Parameters:**
+- `messages` - Array of `CactusLMMessage` objects.
+- `options` - Same options as `complete`.
+- `tools` - Array of `CactusLMTool` objects.
 
 **`tokenize(params: CactusLMTokenizeParams): Promise<CactusLMTokenizeResult>`**
 
@@ -1038,7 +1094,7 @@ Returns available models.
 
 **`getModelName(): string`**
 
-Returns the model slug or path the instance was created with.
+Returns the computed model identifier including quantization and pro suffix (e.g., `'qwen3-0.6b-int8'`, `'lfm2-vl-450m-int4-pro'`).
 
 ### useCactusLM Hook
 
@@ -1121,6 +1177,7 @@ Starts a streaming transcription session. Automatically calls `init()` if not al
 - `confirmationThreshold` - Fuzzy match ratio required to confirm a transcription segment (default: `0.99`).
 - `minChunkSize` - Minimum number of audio samples before processing (default: `32000`).
 - `telemetryEnabled` - Enable telemetry for this session (default: `true`).
+- `language` - Language code for transcription (e.g., `'en'`, `'es'`, `'fr'`). If not set, language is auto-detected.
 
 **`streamTranscribeProcess(params: CactusSTTStreamTranscribeProcessParams): Promise<CactusSTTStreamTranscribeProcessResult>`**
 
@@ -1167,7 +1224,7 @@ Returns available speech-to-text models.
 
 **`getModelName(): string`**
 
-Returns the model slug or path the instance was created with.
+Returns the computed model identifier including quantization and pro suffix (e.g., `'whisper-small-int8'`).
 
 ### useCactusSTT Hook
 
@@ -1200,32 +1257,32 @@ The `useCactusSTT` hook manages a `CactusSTT` instance with reactive state. When
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `transcription`, `streamTranscribeConfirmed`, and `streamTranscribePending` state. Automatically called when the component unmounts.
 - `getModels(): Promise<CactusModel[]>` - Returns available speech-to-text models.
 
-### CactusVAD Class
+### CactusAudio Class
 
 #### Constructor
 
-**`new CactusVAD(params?: CactusVADParams)`**
+**`new CactusAudio(params?: CactusAudioParams)`**
 
 **Parameters:**
-- `model` - Model slug or absolute path to a VAD model file (default: `'silero-vad'`).
+- `model` - Model slug or absolute path to an audio model file (default: `'silero-vad'`).
 - `options` - Model options:
   - `quantization` - Quantization type: `'int4'` | `'int8'` (default: `'int8'`).
   - `pro` - Enable NPU-accelerated models (default: `false`).
 
 #### Methods
 
-**`download(params?: CactusVADDownloadParams): Promise<void>`**
+**`download(params?: CactusAudioDownloadParams): Promise<void>`**
 
-Downloads the VAD model. If the model is already downloaded, returns immediately with progress `1`. Throws an error if a download is already in progress.
+Downloads the audio model. If the model is already downloaded, returns immediately with progress `1`. Throws an error if a download is already in progress.
 
 **Parameters:**
 - `onProgress` - Callback for download progress (0-1).
 
 **`init(): Promise<void>`**
 
-Initializes the VAD model. Safe to call multiple times (idempotent). Throws an error if the model is not downloaded yet.
+Initializes the audio model. Safe to call multiple times (idempotent). Throws an error if the model is not downloaded yet.
 
-**`vad(params: CactusVADVadParams): Promise<CactusVADResult>`**
+**`vad(params: CactusAudioVADParams): Promise<CactusAudioVADResult>`**
 
 Runs voice activity detection on the given audio. Automatically calls `init()` if not already initialized.
 
@@ -1243,21 +1300,41 @@ Runs voice activity detection on the given audio. Automatically calls `init()` i
   - `minSilenceAtMaxSpeech` - Minimum silence at max speech duration.
   - `useMaxPossSilAtMaxSpeech` - Whether to use maximum possible silence at max speech.
 
+**`diarize(params: CactusAudioDiarizeParams): Promise<CactusAudioDiarizeResult>`**
+
+Runs speaker diarization on the given audio. Automatically calls `init()` if not already initialized.
+
+**Parameters:**
+- `audio` - Path to the audio file or raw PCM samples as a byte array.
+- `options` - Diarize options:
+  - `stepMs` - Step size in milliseconds.
+  - `threshold` - Diarization threshold.
+  - `numSpeakers` - Expected number of speakers.
+  - `minSpeakers` - Minimum number of speakers.
+  - `maxSpeakers` - Maximum number of speakers.
+
+**`embedSpeaker(params: CactusAudioEmbedSpeakerParams): Promise<CactusAudioEmbedSpeakerResult>`**
+
+Extracts a speaker embedding vector from the given audio. Automatically calls `init()` if not already initialized.
+
+**Parameters:**
+- `audio` - Path to the audio file or raw PCM samples as a byte array.
+
 **`destroy(): Promise<void>`**
 
 Releases all resources associated with the model. Safe to call even if the model is not initialized.
 
 **`getModels(): Promise<CactusModel[]>`**
 
-Returns available VAD models.
+Returns available audio models.
 
 **`getModelName(): string`**
 
-Returns the model slug or path the instance was created with.
+Returns the computed model identifier including quantization and pro suffix (e.g., `'silero-vad-int8'`).
 
-### useCactusVAD Hook
+### useCactusAudio Hook
 
-The `useCactusVAD` hook manages a `CactusVAD` instance with reactive state. When model parameters (`model`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
+The `useCactusAudio` hook manages a `CactusAudio` instance with reactive state. When model parameters (`model`, `options`) change, the hook creates a new instance and resets all state. The hook automatically cleans up resources when the component unmounts.
 
 #### State
 
@@ -1269,11 +1346,13 @@ The `useCactusVAD` hook manages a `CactusVAD` instance with reactive state. When
 
 #### Methods
 
-- `download(params?: CactusVADDownloadParams): Promise<void>` - Downloads the model. Updates `isDownloading` and `downloadProgress` state during download. Sets `isDownloaded` to `true` on success.
+- `download(params?: CactusAudioDownloadParams): Promise<void>` - Downloads the model. Updates `isDownloading` and `downloadProgress` state during download. Sets `isDownloaded` to `true` on success.
 - `init(): Promise<void>` - Initializes the model.
-- `vad(params: CactusVADVadParams): Promise<CactusVADResult>` - Runs voice activity detection.
+- `vad(params: CactusAudioVADParams): Promise<CactusAudioVADResult>` - Runs voice activity detection.
+- `diarize(params: CactusAudioDiarizeParams): Promise<CactusAudioDiarizeResult>` - Runs speaker diarization.
+- `embedSpeaker(params: CactusAudioEmbedSpeakerParams): Promise<CactusAudioEmbedSpeakerResult>` - Extracts a speaker embedding.
 - `destroy(): Promise<void>` - Releases all resources. Automatically called when the component unmounts.
-- `getModels(): Promise<CactusModel[]>` - Returns available VAD models.
+- `getModels(): Promise<CactusModel[]>` - Returns available audio models.
 
 ### CactusIndex Class
 
@@ -1413,6 +1492,7 @@ interface CactusLMCompleteOptions {
   toolRagTopK?: number;
   includeStopSequences?: boolean;
   useVad?: boolean;
+  enableThinking?: boolean;
 }
 ```
 
@@ -1446,12 +1526,36 @@ interface CactusLMCompleteParams {
 }
 ```
 
+### CactusLMPrefillParams
+
+```typescript
+interface CactusLMPrefillParams {
+  messages: CactusLMMessage[];
+  options?: CactusLMCompleteOptions;
+  tools?: CactusLMTool[];
+}
+```
+
+### CactusLMPrefillResult
+
+```typescript
+interface CactusLMPrefillResult {
+  success: boolean;
+  error: string | null;
+  prefillTokens: number;
+  prefillTps: number;
+  totalTimeMs: number;
+  ramUsageMb: number;
+}
+```
+
 ### CactusLMCompleteResult
 
 ```typescript
 interface CactusLMCompleteResult {
   success: boolean;
   response: string;
+  thinking?: string;
   functionCalls?: {
     name: string;
     arguments: { [key: string]: any };
@@ -1658,6 +1762,7 @@ interface CactusSTTStreamTranscribeStartOptions {
   confirmationThreshold?: number;
   minChunkSize?: number;
   telemetryEnabled?: boolean;
+  language?: string;
 }
 ```
 
@@ -1728,27 +1833,27 @@ interface CactusSTTDetectLanguageResult {
 }
 ```
 
-### CactusVADParams
+### CactusAudioParams
 
 ```typescript
-interface CactusVADParams {
+interface CactusAudioParams {
   model?: string;
   options?: CactusModelOptions;
 }
 ```
 
-### CactusVADDownloadParams
+### CactusAudioDownloadParams
 
 ```typescript
-interface CactusVADDownloadParams {
+interface CactusAudioDownloadParams {
   onProgress?: (progress: number) => void;
 }
 ```
 
-### CactusVADOptions
+### CactusAudioVADOptions
 
 ```typescript
-interface CactusVADOptions {
+interface CactusAudioVADOptions {
   threshold?: number;
   negThreshold?: number;
   minSpeechDurationMs?: number;
@@ -1762,31 +1867,85 @@ interface CactusVADOptions {
 }
 ```
 
-### CactusVADSegment
+### CactusAudioVADSegment
 
 ```typescript
-interface CactusVADSegment {
+interface CactusAudioVADSegment {
   start: number;
   end: number;
 }
 ```
 
-### CactusVADResult
+### CactusAudioVADResult
 
 ```typescript
-interface CactusVADResult {
-  segments: CactusVADSegment[];
+interface CactusAudioVADResult {
+  segments: CactusAudioVADSegment[];
   totalTime: number;
   ramUsage: number;
 }
 ```
 
-### CactusVADVadParams
+### CactusAudioVADParams
 
 ```typescript
-interface CactusVADVadParams {
+interface CactusAudioVADParams {
   audio: string | number[];
-  options?: CactusVADOptions;
+  options?: CactusAudioVADOptions;
+}
+```
+
+### CactusAudioDiarizeOptions
+
+```typescript
+interface CactusAudioDiarizeOptions {
+  stepMs?: number;
+  threshold?: number;
+  numSpeakers?: number;
+  minSpeakers?: number;
+  maxSpeakers?: number;
+}
+```
+
+### CactusAudioDiarizeParams
+
+```typescript
+interface CactusAudioDiarizeParams {
+  audio: string | number[];
+  options?: CactusAudioDiarizeOptions;
+}
+```
+
+### CactusAudioDiarizeResult
+
+```typescript
+interface CactusAudioDiarizeResult {
+  success: boolean;
+  error: string | null;
+  numSpeakers: number;
+  scores: number[];
+  totalTimeMs: number;
+  ramUsageMb: number;
+}
+```
+
+### CactusAudioEmbedSpeakerParams
+
+```typescript
+interface CactusAudioEmbedSpeakerParams {
+  audio: string | number[];
+}
+```
+
+### CactusAudioEmbedSpeakerResult
+
+```typescript
+interface CactusAudioEmbedSpeakerResult {
+  success: boolean;
+  error: string | null;
+  embedding: number[];
+  totalTimeMs: number;
+  ramUsageMb: number;
 }
 ```
 

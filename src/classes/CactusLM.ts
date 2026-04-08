@@ -3,6 +3,8 @@ import type {
   CactusLMDownloadParams,
   CactusLMCompleteParams,
   CactusLMCompleteResult,
+  CactusLMPrefillParams,
+  CactusLMPrefillResult,
   CactusLMTokenizeParams,
   CactusLMTokenizeResult,
   CactusLMScoreWindowParams,
@@ -153,6 +155,40 @@ export class CactusLM {
         options,
         toolsInternal,
         onToken
+      );
+    } finally {
+      this.isGenerating = false;
+    }
+  }
+
+  public async prefill({
+    messages,
+    options,
+    tools,
+  }: CactusLMPrefillParams): Promise<CactusLMPrefillResult> {
+    if (this.isGenerating) {
+      throw new Error('CactusLM is already generating');
+    }
+
+    options = { ...CactusLM.defaultCompleteOptions, ...options };
+    const toolsInternal = tools?.map((tool) => ({
+      type: 'function' as const,
+      function: tool,
+    }));
+
+    const responseBufferSize =
+      8 * (options.maxTokens ?? CactusLM.defaultCompleteOptions.maxTokens) +
+      256;
+
+    await this.init();
+
+    this.isGenerating = true;
+    try {
+      return await this.cactus.prefill(
+        messages,
+        responseBufferSize,
+        options,
+        toolsInternal
       );
     } finally {
       this.isGenerating = false;
