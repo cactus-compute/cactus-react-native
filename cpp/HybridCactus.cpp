@@ -589,7 +589,8 @@ std::shared_ptr<Promise<std::string>> HybridCactus::embedSpeaker(
           result = cactus_embed_speaker(
               this->_model, std::get<std::string>(audio).c_str(),
               responseBuffer.data(), responseBufferSize,
-              optionsJson ? optionsJson->c_str() : nullptr, nullptr, 0);
+              optionsJson ? optionsJson->c_str() : nullptr, nullptr, 0,
+              nullptr, 0);
         } else {
           const auto &audioDoubles = std::get<std::vector<double>>(audio);
 
@@ -604,7 +605,8 @@ std::shared_ptr<Promise<std::string>> HybridCactus::embedSpeaker(
               this->_model, nullptr,
               responseBuffer.data(), responseBufferSize,
               optionsJson ? optionsJson->c_str() : nullptr,
-              audioBytes.data(), audioBytes.size());
+              audioBytes.data(), audioBytes.size(),
+              nullptr, 0);
         }
 
         if (result < 0) {
@@ -654,7 +656,7 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
 std::shared_ptr<Promise<void>>
 HybridCactus::setTelemetryEnvironment(const std::string &cacheDir) {
   return Promise<void>::async([cacheDir]() -> void {
-    cactus_set_telemetry_environment("react-native", cacheDir.c_str(), "1.12.0");
+    cactus_set_telemetry_environment("react-native", cacheDir.c_str(), "1.13.0");
   });
 }
 
