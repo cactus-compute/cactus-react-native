@@ -35,10 +35,11 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
     const std::optional<std::string> &optionsJson,
     const std::optional<std::string> &toolsJson,
     const std::optional<std::function<void(const std::string & /* token */,
-                                           double /* tokenId */)>> &callback) {
+                                           double /* tokenId */)>> &callback,
+    const std::optional<std::vector<double>> &audio) {
   return Promise<std::string>::async([this, messagesJson, optionsJson,
                                       toolsJson, callback,
-                                      responseBufferSize]() -> std::string {
+                                      responseBufferSize, audio]() -> std::string {
     std::lock_guard<std::mutex> lock(this->_modelMutex);
 
     if (!this->_model) {
@@ -61,12 +62,27 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
     std::string responseBuffer;
     responseBuffer.resize(responseBufferSize);
 
+    const uint8_t *pcmData = nullptr;
+    size_t pcmSize = 0;
+    std::vector<uint8_t> audioBytes;
+
+    if (audio.has_value()) {
+      const auto &audioDoubles = *audio;
+      audioBytes.reserve(audioDoubles.size());
+      for (double d : audioDoubles) {
+        d = std::clamp(d, 0.0, 255.0);
+        audioBytes.emplace_back(static_cast<uint8_t>(d));
+      }
+      pcmData = audioBytes.data();
+      pcmSize = audioBytes.size();
+    }
+
     int result = cactus_complete(this->_model, messagesJson.c_str(),
                                  responseBuffer.data(), responseBufferSize,
                                  optionsJson ? optionsJson->c_str() : nullptr,
                                  toolsJson ? toolsJson->c_str() : nullptr,
                                  cactusTokenCallback, &callbackCtx,
-                                 nullptr, 0);
+                                 pcmData, pcmSize);
 
     if (result < 0) {
       throw std::runtime_error("Cactus complete failed: " +
@@ -83,10 +99,11 @@ std::shared_ptr<Promise<std::string>> HybridCactus::complete(
 std::shared_ptr<Promise<std::string>> HybridCactus::prefill(
     const std::string &messagesJson, double responseBufferSize,
     const std::optional<std::string> &optionsJson,
-    const std::optional<std::string> &toolsJson) {
+    const std::optional<std::string> &toolsJson,
+    const std::optional<std::vector<double>> &audio) {
   return Promise<std::string>::async([this, messagesJson, responseBufferSize,
-                                      optionsJson,
-                                      toolsJson]() -> std::string {
+                                      optionsJson, toolsJson,
+                                      audio]() -> std::string {
     std::lock_guard<std::mutex> lock(this->_modelMutex);
 
     if (!this->_model) {
@@ -96,11 +113,26 @@ std::shared_ptr<Promise<std::string>> HybridCactus::prefill(
     std::string responseBuffer;
     responseBuffer.resize(responseBufferSize);
 
+    const uint8_t *pcmData = nullptr;
+    size_t pcmSize = 0;
+    std::vector<uint8_t> audioBytes;
+
+    if (audio.has_value()) {
+      const auto &audioDoubles = *audio;
+      audioBytes.reserve(audioDoubles.size());
+      for (double d : audioDoubles) {
+        d = std::clamp(d, 0.0, 255.0);
+        audioBytes.emplace_back(static_cast<uint8_t>(d));
+      }
+      pcmData = audioBytes.data();
+      pcmSize = audioBytes.size();
+    }
+
     int result = cactus_prefill(this->_model, messagesJson.c_str(),
                                 responseBuffer.data(), responseBufferSize,
                                 optionsJson ? optionsJson->c_str() : nullptr,
                                 toolsJson ? toolsJson->c_str() : nullptr,
-                                nullptr, 0);
+                                pcmData, pcmSize);
 
     if (result < 0) {
       throw std::runtime_error("Cactus prefill failed: " +
@@ -572,9 +604,12 @@ std::shared_ptr<Promise<std::string>> HybridCactus::diarize(
 std::shared_ptr<Promise<std::string>> HybridCactus::embedSpeaker(
     const std::variant<std::vector<double>, std::string> &audio,
     double responseBufferSize,
-    const std::optional<std::string> &optionsJson) {
+    const std::optional<std::string> &optionsJson,
+    const std::optional<std::vector<double>> &maskWeights,
+    std::optional<double> maskNumFrames) {
   return Promise<std::string>::async(
-      [this, audio, responseBufferSize, optionsJson]() -> std::string {
+      [this, audio, responseBufferSize, optionsJson, maskWeights,
+       maskNumFrames]() -> std::string {
         std::lock_guard<std::mutex> lock(this->_modelMutex);
 
         if (!this->_model) {
@@ -584,13 +619,28 @@ std::shared_ptr<Promise<std::string>> HybridCactus::embedSpeaker(
         std::string responseBuffer;
         responseBuffer.resize(responseBufferSize);
 
+        const float *maskPtr = nullptr;
+        size_t maskFrames = 0;
+        std::vector<float> maskFloats;
+
+        if (maskWeights.has_value() && !maskWeights->empty()) {
+          maskFloats.reserve(maskWeights->size());
+          for (double d : *maskWeights) {
+            maskFloats.emplace_back(static_cast<float>(d));
+          }
+          maskPtr = maskFloats.data();
+          maskFrames = maskNumFrames.has_value()
+                           ? static_cast<size_t>(*maskNumFrames)
+                           : maskFloats.size();
+        }
+
         int result;
         if (std::holds_alternative<std::string>(audio)) {
           result = cactus_embed_speaker(
               this->_model, std::get<std::string>(audio).c_str(),
               responseBuffer.data(), responseBufferSize,
               optionsJson ? optionsJson->c_str() : nullptr, nullptr, 0,
-              nullptr, 0);
+              maskPtr, maskFrames);
         } else {
           const auto &audioDoubles = std::get<std::vector<double>>(audio);
 
@@ -606,11 +656,39 @@ std::shared_ptr<Promise<std::string>> HybridCactus::embedSpeaker(
               responseBuffer.data(), responseBufferSize,
               optionsJson ? optionsJson->c_str() : nullptr,
               audioBytes.data(), audioBytes.size(),
-              nullptr, 0);
+              maskPtr, maskFrames);
         }
 
         if (result < 0) {
           throw std::runtime_error("Cactus embed speaker failed: " +
+                                   std::string(cactus_get_last_error()));
+        }
+
+        responseBuffer.resize(strlen(responseBuffer.c_str()));
+        return responseBuffer;
+      });
+}
+
+std::shared_ptr<Promise<std::string>>
+HybridCactus::ragQuery(const std::string &query, double responseBufferSize,
+                       double topK) {
+  return Promise<std::string>::async(
+      [this, query, responseBufferSize, topK]() -> std::string {
+        std::lock_guard<std::mutex> lock(this->_modelMutex);
+
+        if (!this->_model) {
+          throw std::runtime_error("Cactus model is not initialized");
+        }
+
+        std::string responseBuffer;
+        responseBuffer.resize(responseBufferSize);
+
+        int result = cactus_rag_query(
+            this->_model, query.c_str(), responseBuffer.data(),
+            responseBufferSize, static_cast<size_t>(topK));
+
+        if (result < 0) {
+          throw std::runtime_error("Cactus RAG query failed: " +
                                    std::string(cactus_get_last_error()));
         }
 
@@ -656,7 +734,7 @@ std::shared_ptr<Promise<void>> HybridCactus::destroy() {
 std::shared_ptr<Promise<void>>
 HybridCactus::setTelemetryEnvironment(const std::string &cacheDir) {
   return Promise<void>::async([cacheDir]() -> void {
-    cactus_set_telemetry_environment("react-native", cacheDir.c_str(), "1.13.0");
+    cactus_set_telemetry_environment("react-native", cacheDir.c_str(), "1.13.1");
   });
 }
 

@@ -13,6 +13,8 @@ import type {
   CactusLMEmbedResult,
   CactusLMImageEmbedParams,
   CactusLMImageEmbedResult,
+  CactusLMRagQueryParams,
+  CactusLMRagQueryResult,
   CactusLMParams,
 } from '../types/CactusLM';
 import { getRegistry } from '../modelRegistry';
@@ -130,6 +132,7 @@ export class CactusLM {
     options,
     tools,
     onToken,
+    audio,
   }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
@@ -154,7 +157,8 @@ export class CactusLM {
         responseBufferSize,
         options,
         toolsInternal,
-        onToken
+        onToken,
+        audio
       );
     } finally {
       this.isGenerating = false;
@@ -165,6 +169,7 @@ export class CactusLM {
     messages,
     options,
     tools,
+    audio,
   }: CactusLMPrefillParams): Promise<CactusLMPrefillResult> {
     if (this.isGenerating) {
       throw new Error('CactusLM is already generating');
@@ -188,7 +193,8 @@ export class CactusLM {
         messages,
         responseBufferSize,
         options,
-        toolsInternal
+        toolsInternal,
+        audio
       );
     } finally {
       this.isGenerating = false;
@@ -254,6 +260,14 @@ export class CactusLM {
     } finally {
       this.isGenerating = false;
     }
+  }
+
+  public async ragQuery({
+    query,
+    topK = 5,
+  }: CactusLMRagQueryParams): Promise<CactusLMRagQueryResult> {
+    await this.init();
+    return this.cactus.ragQuery(query, topK);
   }
 
   public stop(): Promise<void> {

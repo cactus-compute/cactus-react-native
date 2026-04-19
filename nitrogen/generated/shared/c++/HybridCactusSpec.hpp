@@ -54,8 +54,8 @@ namespace margelo::nitro::cactus {
     public:
       // Methods
       virtual std::shared_ptr<Promise<void>> init(const std::string& modelPath, const std::optional<std::string>& corpusDir, std::optional<bool> cacheIndex) = 0;
-      virtual std::shared_ptr<Promise<std::string>> complete(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
-      virtual std::shared_ptr<Promise<std::string>> prefill(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson) = 0;
+      virtual std::shared_ptr<Promise<std::string>> complete(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback, const std::optional<std::vector<double>>& audio) = 0;
+      virtual std::shared_ptr<Promise<std::string>> prefill(const std::string& messagesJson, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::string>& toolsJson, const std::optional<std::vector<double>>& audio) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> tokenize(const std::string& text) = 0;
       virtual std::shared_ptr<Promise<std::string>> scoreWindow(const std::vector<double>& tokens, double start, double end, double context) = 0;
       virtual std::shared_ptr<Promise<std::string>> transcribe(const std::variant<std::vector<double>, std::string>& audio, const std::string& prompt, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::function<void(const std::string& /* token */, double /* tokenId */)>>& callback) = 0;
@@ -68,7 +68,8 @@ namespace margelo::nitro::cactus {
       virtual std::shared_ptr<Promise<std::vector<double>>> imageEmbed(const std::string& imagePath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<std::vector<double>>> audioEmbed(const std::string& audioPath, double embeddingBufferSize) = 0;
       virtual std::shared_ptr<Promise<std::string>> diarize(const std::variant<std::vector<double>, std::string>& audio, double responseBufferSize, const std::optional<std::string>& optionsJson) = 0;
-      virtual std::shared_ptr<Promise<std::string>> embedSpeaker(const std::variant<std::vector<double>, std::string>& audio, double responseBufferSize, const std::optional<std::string>& optionsJson) = 0;
+      virtual std::shared_ptr<Promise<std::string>> embedSpeaker(const std::variant<std::vector<double>, std::string>& audio, double responseBufferSize, const std::optional<std::string>& optionsJson, const std::optional<std::vector<double>>& maskWeights, std::optional<double> maskNumFrames) = 0;
+      virtual std::shared_ptr<Promise<std::string>> ragQuery(const std::string& query, double responseBufferSize, double topK) = 0;
       virtual std::shared_ptr<Promise<void>> reset() = 0;
       virtual std::shared_ptr<Promise<void>> stop() = 0;
       virtual std::shared_ptr<Promise<void>> destroy() = 0;

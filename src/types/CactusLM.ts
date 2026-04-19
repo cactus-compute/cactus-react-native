@@ -52,12 +52,30 @@ export interface CactusLMCompleteParams {
   options?: CactusLMCompleteOptions;
   tools?: CactusLMTool[];
   onToken?: (token: string) => void;
+  audio?: number[];
 }
 
 export interface CactusLMPrefillParams {
   messages: CactusLMMessage[];
   options?: CactusLMCompleteOptions;
   tools?: CactusLMTool[];
+  audio?: number[];
+}
+
+export interface CactusLMRagQueryParams {
+  query: string;
+  topK?: number;
+}
+
+export interface CactusLMRagQueryChunk {
+  score: number;
+  source: string;
+  content: string;
+}
+
+export interface CactusLMRagQueryResult {
+  chunks: CactusLMRagQueryChunk[];
+  error?: string;
 }
 
 export interface CactusLMPrefillResult {

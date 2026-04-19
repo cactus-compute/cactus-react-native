@@ -11,13 +11,15 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
     responseBufferSize: number,
     optionsJson?: string,
     toolsJson?: string,
-    callback?: (token: string, tokenId: number) => void
+    callback?: (token: string, tokenId: number) => void,
+    audio?: number[]
   ): Promise<string>;
   prefill(
     messagesJson: string,
     responseBufferSize: number,
     optionsJson?: string,
-    toolsJson?: string
+    toolsJson?: string,
+    audio?: number[]
   ): Promise<string>;
   tokenize(text: string): Promise<number[]>;
   scoreWindow(
@@ -61,7 +63,14 @@ export interface Cactus extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
   embedSpeaker(
     audio: string | number[],
     responseBufferSize: number,
-    optionsJson?: string
+    optionsJson?: string,
+    maskWeights?: number[],
+    maskNumFrames?: number
+  ): Promise<string>;
+  ragQuery(
+    query: string,
+    responseBufferSize: number,
+    topK: number
   ): Promise<string>;
   reset(): Promise<void>;
   stop(): Promise<void>;

@@ -276,6 +276,47 @@ const App = () => {
 };
 ```
 
+### Audio Completion
+
+Pass raw PCM audio alongside text prompts for multimodal completion with audio-capable models like Gemma 4.
+
+#### Class
+
+```typescript
+import { CactusLM, type CactusLMMessage } from 'cactus-react-native';
+
+const cactusLM = new CactusLM({ model: 'gemma-4-e2b-it' });
+
+const messages: CactusLMMessage[] = [
+  { role: 'user', content: 'What do you hear in this audio?' },
+];
+
+// Pass raw 16-bit PCM samples as a byte array
+const pcmAudio: number[] = [/* raw PCM bytes */];
+const result = await cactusLM.complete({ messages, audio: pcmAudio });
+console.log(result.response);
+```
+
+#### Hook
+
+```tsx
+import { useCactusLM, type CactusLMMessage } from 'cactus-react-native';
+
+const App = () => {
+  const cactusLM = useCactusLM({ model: 'gemma-4-e2b-it' });
+
+  const handleAudioComplete = async (pcmAudio: number[]) => {
+    const messages: CactusLMMessage[] = [
+      { role: 'user', content: 'Describe this audio.' },
+    ];
+
+    await cactusLM.complete({ messages, audio: pcmAudio });
+  };
+
+  return <Text>{cactusLM.completion}</Text>;
+};
+```
+
 ### RAG (Retrieval Augmented Generation)
 
 RAG allows you to provide a corpus of documents that the model can reference during generation, enabling it to answer questions based on your data.
@@ -295,6 +336,11 @@ const messages: CactusLMMessage[] = [
 
 const result = await cactusLM.complete({ messages });
 console.log(result.response);
+
+// Or query the RAG index directly
+const ragResult = await cactusLM.ragQuery({ query: 'search terms', topK: 5 });
+console.log('Chunks:', ragResult.chunks);
+// [{ score: 0.85, source: 'doc.txt', content: '...' }, ...]
 ```
 
 #### Hook
@@ -315,9 +361,15 @@ const App = () => {
     await cactusLM.complete({ messages });
   };
 
+  const handleRagQuery = async () => {
+    const result = await cactusLM.ragQuery({ query: 'search terms', topK: 3 });
+    console.log('Chunks:', result.chunks);
+  };
+
   return (
     <>
       <Button title="Ask Question" onPress={handleAsk} />
+      <Button title="RAG Query" onPress={handleRagQuery} />
       <Text>{cactusLM.completion}</Text>
     </>
   );
@@ -696,6 +748,8 @@ console.log('Scores:', result.scores);
 
 ### Speaker Embedding
 
+Extract a speaker embedding vector from audio, optionally with mask weights for speaker-specific segments from diarization.
+
 ```typescript
 import { CactusAudio } from 'cactus-react-native';
 
@@ -706,6 +760,15 @@ const result = await cactusAudio.embedSpeaker({
 });
 
 console.log('Speaker embedding:', result.embedding);
+
+// With mask weights from diarization
+const maskedResult = await cactusAudio.embedSpeaker({
+  audio: 'path/to/audio.wav',
+  options: {
+    maskWeights: [1.0, 1.0, 0.0, 0.0, 1.0], // per-frame weights
+    maskNumFrames: 5,
+  },
+});
 ```
 
 ### Hook
@@ -1034,6 +1097,7 @@ Performs text completion with optional streaming and tool support. Automatically
   - `enableThinking` - Whether to enable thinking/reasoning output if supported by the model (default: unset).
 - `tools` - Array of `CactusLMTool` objects for function calling.
 - `onToken` - Callback for streaming tokens.
+- `audio` - Optional raw 16-bit PCM audio samples as a byte array for multimodal audio completion (e.g., Gemma 4).
 
 **`prefill(params: CactusLMPrefillParams): Promise<CactusLMPrefillResult>`**
 
@@ -1043,6 +1107,7 @@ Runs prompt prefill without generating any output tokens. Useful for measuring p
 - `messages` - Array of `CactusLMMessage` objects.
 - `options` - Same options as `complete`.
 - `tools` - Array of `CactusLMTool` objects.
+- `audio` - Optional raw 16-bit PCM audio samples as a byte array for multimodal audio prefill.
 
 **`tokenize(params: CactusLMTokenizeParams): Promise<CactusLMTokenizeResult>`**
 
@@ -1075,6 +1140,14 @@ Generates embeddings for the given image. Requires a vision-capable model. Autom
 
 **Parameters:**
 - `imagePath` - Path to the image file.
+
+**`ragQuery(params: CactusLMRagQueryParams): Promise<CactusLMRagQueryResult>`**
+
+Queries the RAG corpus index directly, returning the top matching document chunks with scores. Requires the model to be initialized with a `corpusDir`. Automatically calls `init()` if not already initialized.
+
+**Parameters:**
+- `query` - Search query string.
+- `topK` - Number of top results to return (default: `5`).
 
 **`stop(): Promise<void>`**
 
@@ -1119,6 +1192,7 @@ The `useCactusLM` hook manages a `CactusLM` instance with reactive state. When m
 - `scoreWindow(params: CactusLMScoreWindowParams): Promise<CactusLMScoreWindowResult>` - Calculates log-probability scores for a window of tokens. Sets `isGenerating` to `true` during operation.
 - `embed(params: CactusLMEmbedParams): Promise<CactusLMEmbedResult>` - Generates embeddings for the given text. Sets `isGenerating` to `true` during operation.
 - `imageEmbed(params: CactusLMImageEmbedParams): Promise<CactusLMImageEmbedResult>` - Generates embeddings for the given image. Sets `isGenerating` to `true` while generating.
+- `ragQuery(params: CactusLMRagQueryParams): Promise<CactusLMRagQueryResult>` - Queries the RAG corpus index directly. Sets `isGenerating` to `true` during operation.
 - `stop(): Promise<void>` - Stops ongoing generation. Clears any errors.
 - `reset(): Promise<void>` - Resets the model's internal state, clearing cached context. Also clears the `completion` state.
 - `destroy(): Promise<void>` - Releases all resources associated with the model. Clears the `completion` state. Automatically called when the component unmounts.
@@ -1319,6 +1393,11 @@ Extracts a speaker embedding vector from the given audio. Automatically calls `i
 
 **Parameters:**
 - `audio` - Path to the audio file or raw PCM samples as a byte array.
+- `options` - Optional speaker embedding options:
+  - `stepMs` - Step size in milliseconds.
+  - `threshold` - Embedding threshold.
+  - `maskWeights` - Per-frame mask weights for speaker-specific embedding extraction (from diarization).
+  - `maskNumFrames` - Number of frames for the mask weights.
 
 **`destroy(): Promise<void>`**
 
@@ -1523,6 +1602,7 @@ interface CactusLMCompleteParams {
   options?: CactusLMCompleteOptions;
   tools?: CactusLMTool[];
   onToken?: (token: string) => void;
+  audio?: number[];
 }
 ```
 
@@ -1533,6 +1613,35 @@ interface CactusLMPrefillParams {
   messages: CactusLMMessage[];
   options?: CactusLMCompleteOptions;
   tools?: CactusLMTool[];
+  audio?: number[];
+}
+```
+
+### CactusLMRagQueryParams
+
+```typescript
+interface CactusLMRagQueryParams {
+  query: string;
+  topK?: number;
+}
+```
+
+### CactusLMRagQueryChunk
+
+```typescript
+interface CactusLMRagQueryChunk {
+  score: number;
+  source: string;
+  content: string;
+}
+```
+
+### CactusLMRagQueryResult
+
+```typescript
+interface CactusLMRagQueryResult {
+  chunks: CactusLMRagQueryChunk[];
+  error?: string;
 }
 ```
 
@@ -1929,11 +2038,23 @@ interface CactusAudioDiarizeResult {
 }
 ```
 
+### CactusAudioEmbedSpeakerOptions
+
+```typescript
+interface CactusAudioEmbedSpeakerOptions {
+  stepMs?: number;
+  threshold?: number;
+  maskWeights?: number[];
+  maskNumFrames?: number;
+}
+```
+
 ### CactusAudioEmbedSpeakerParams
 
 ```typescript
 interface CactusAudioEmbedSpeakerParams {
   audio: string | number[];
+  options?: CactusAudioEmbedSpeakerOptions;
 }
 ```
 

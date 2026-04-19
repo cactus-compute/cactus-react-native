@@ -33,6 +33,9 @@ export type {
   CactusLMEmbedResult,
   CactusLMImageEmbedParams,
   CactusLMImageEmbedResult,
+  CactusLMRagQueryParams,
+  CactusLMRagQueryChunk,
+  CactusLMRagQueryResult,
 } from './types/CactusLM';
 export type {
   CactusSTTParams,
@@ -60,6 +63,7 @@ export type {
   CactusAudioDiarizeOptions,
   CactusAudioDiarizeParams,
   CactusAudioDiarizeResult,
+  CactusAudioEmbedSpeakerOptions,
   CactusAudioEmbedSpeakerParams,
   CactusAudioEmbedSpeakerResult,
 } from './types/CactusAudio';

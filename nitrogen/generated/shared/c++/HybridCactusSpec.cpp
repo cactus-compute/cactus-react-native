@@ -30,6 +30,7 @@ namespace margelo::nitro::cactus {
       prototype.registerHybridMethod("audioEmbed", &HybridCactusSpec::audioEmbed);
       prototype.registerHybridMethod("diarize", &HybridCactusSpec::diarize);
       prototype.registerHybridMethod("embedSpeaker", &HybridCactusSpec::embedSpeaker);
+      prototype.registerHybridMethod("ragQuery", &HybridCactusSpec::ragQuery);
       prototype.registerHybridMethod("reset", &HybridCactusSpec::reset);
       prototype.registerHybridMethod("stop", &HybridCactusSpec::stop);
       prototype.registerHybridMethod("destroy", &HybridCactusSpec::destroy);

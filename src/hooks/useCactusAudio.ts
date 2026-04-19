@@ -202,10 +202,11 @@ export const useCactusAudio = ({
   const embedSpeaker = useCallback(
     async ({
       audio,
+      options,
     }: CactusAudioEmbedSpeakerParams): Promise<CactusAudioEmbedSpeakerResult> => {
       setError(null);
       try {
-        return await cactusAudio.embedSpeaker({ audio });
+        return await cactusAudio.embedSpeaker({ audio, options });
       } catch (e) {
         setError(getErrorMessage(e));
         throw e;

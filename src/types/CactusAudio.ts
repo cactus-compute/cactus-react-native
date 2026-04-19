@@ -60,8 +60,16 @@ export interface CactusAudioDiarizeResult {
   ramUsageMb: number;
 }
 
+export interface CactusAudioEmbedSpeakerOptions {
+  stepMs?: number;
+  threshold?: number;
+  maskWeights?: number[];
+  maskNumFrames?: number;
+}
+
 export interface CactusAudioEmbedSpeakerParams {
   audio: string | number[];
+  options?: CactusAudioEmbedSpeakerOptions;
 }
 
 export interface CactusAudioEmbedSpeakerResult {

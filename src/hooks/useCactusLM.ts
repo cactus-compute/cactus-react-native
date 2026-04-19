@@ -14,6 +14,8 @@ import type {
   CactusLMEmbedResult,
   CactusLMImageEmbedParams,
   CactusLMImageEmbedResult,
+  CactusLMRagQueryParams,
+  CactusLMRagQueryResult,
   CactusLMDownloadParams,
 } from '../types/CactusLM';
 import type { CactusModel } from '../types/common';
@@ -192,6 +194,7 @@ export const useCactusLM = ({
       options,
       tools,
       onToken,
+      audio,
     }: CactusLMCompleteParams): Promise<CactusLMCompleteResult> => {
       if (isGenerating) {
         const message = 'CactusLM is already generating';
@@ -211,6 +214,7 @@ export const useCactusLM = ({
             setCompletion((prev) => prev + token);
             onToken?.(token);
           },
+          audio,
         });
       } catch (e) {
         setError(getErrorMessage(e));
@@ -322,6 +326,31 @@ export const useCactusLM = ({
     [cactusLM, isGenerating]
   );
 
+  const ragQuery = useCallback(
+    async ({
+      query,
+      topK,
+    }: CactusLMRagQueryParams): Promise<CactusLMRagQueryResult> => {
+      if (isGenerating) {
+        const message = 'CactusLM is already generating';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setError(null);
+      setIsGenerating(true);
+      try {
+        return await cactusLM.ragQuery({ query, topK });
+      } catch (e) {
+        setError(getErrorMessage(e));
+        throw e;
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [cactusLM, isGenerating]
+  );
+
   const stop = useCallback(async () => {
     setError(null);
     try {
@@ -382,6 +411,7 @@ export const useCactusLM = ({
     scoreWindow,
     embed,
     imageEmbed,
+    ragQuery,
     reset,
     stop,
     destroy,

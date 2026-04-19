@@ -120,9 +120,10 @@ export class CactusAudio {
 
   public async embedSpeaker({
     audio,
+    options,
   }: CactusAudioEmbedSpeakerParams): Promise<CactusAudioEmbedSpeakerResult> {
     await this.init();
-    return this.cactus.embedSpeaker(audio);
+    return this.cactus.embedSpeaker(audio, options);
   }
 
   public async destroy(): Promise<void> {

@@ -21,13 +21,14 @@ public:
       const std::optional<std::string> &optionsJson,
       const std::optional<std::string> &toolsJson,
       const std::optional<std::function<void(const std::string & /* token */,
-                                             double /* tokenId */)>> &callback)
-      override;
+                                             double /* tokenId */)>> &callback,
+      const std::optional<std::vector<double>> &audio) override;
 
   std::shared_ptr<Promise<std::string>> prefill(
       const std::string &messagesJson, double responseBufferSize,
       const std::optional<std::string> &optionsJson,
-      const std::optional<std::string> &toolsJson) override;
+      const std::optional<std::string> &toolsJson,
+      const std::optional<std::vector<double>> &audio) override;
 
   std::shared_ptr<Promise<std::vector<double>>>
   tokenize(const std::string &text) override;
@@ -80,7 +81,13 @@ public:
   std::shared_ptr<Promise<std::string>>
   embedSpeaker(const std::variant<std::vector<double>, std::string> &audio,
                double responseBufferSize,
-               const std::optional<std::string> &optionsJson) override;
+               const std::optional<std::string> &optionsJson,
+               const std::optional<std::vector<double>> &maskWeights,
+               std::optional<double> maskNumFrames) override;
+
+  std::shared_ptr<Promise<std::string>>
+  ragQuery(const std::string &query, double responseBufferSize,
+           double topK) override;
 
   std::shared_ptr<Promise<void>> reset() override;
 

@@ -22,6 +22,7 @@ import type {
   CactusAudioVADResult,
   CactusAudioDiarizeOptions,
   CactusAudioDiarizeResult,
+  CactusAudioEmbedSpeakerOptions,
   CactusAudioEmbedSpeakerResult,
 } from '../types/CactusAudio';
 
@@ -42,7 +43,8 @@ export class Cactus {
     responseBufferSize: number,
     options?: CactusLMCompleteOptions,
     tools?: { type: 'function'; function: CactusLMTool }[],
-    callback?: (token: string, tokenId: number) => void
+    callback?: (token: string, tokenId: number) => void,
+    audio?: number[]
   ): Promise<CactusLMCompleteResult> {
     const messagesInternal: CactusLMMessage[] = [];
     for (const message of messages) {
@@ -89,7 +91,8 @@ export class Cactus {
       responseBufferSize,
       optionsJson,
       toolsJson,
-      callback
+      callback,
+      audio
     );
 
     try {
@@ -120,7 +123,8 @@ export class Cactus {
     messages: CactusLMMessage[],
     responseBufferSize: number,
     options?: CactusLMCompleteOptions,
-    tools?: { type: 'function'; function: CactusLMTool }[]
+    tools?: { type: 'function'; function: CactusLMTool }[],
+    audio?: number[]
   ): Promise<CactusLMPrefillResult> {
     const messagesJson = JSON.stringify(messages);
     const optionsJson = options
@@ -145,7 +149,8 @@ export class Cactus {
       messagesJson,
       responseBufferSize,
       optionsJson,
-      toolsJson
+      toolsJson,
+      audio
     );
 
     try {
@@ -433,12 +438,25 @@ export class Cactus {
   }
 
   public async embedSpeaker(
-    audio: string | number[]
+    audio: string | number[],
+    options?: CactusAudioEmbedSpeakerOptions
   ): Promise<CactusAudioEmbedSpeakerResult> {
     if (typeof audio === 'string') {
       audio = audio.replace('file://', '');
     }
-    const response = await this.hybridCactus.embedSpeaker(audio, 65536);
+    const optionsJson = options
+      ? JSON.stringify({
+          step_ms: options.stepMs,
+          threshold: options.threshold,
+        })
+      : undefined;
+    const response = await this.hybridCactus.embedSpeaker(
+      audio,
+      65536,
+      optionsJson,
+      options?.maskWeights,
+      options?.maskNumFrames
+    );
     try {
       const parsed = JSON.parse(response);
       return {
@@ -450,6 +468,21 @@ export class Cactus {
       };
     } catch {
       throw new Error('Unable to parse embed speaker response');
+    }
+  }
+
+  public async ragQuery(
+    query: string,
+    topK: number = 5
+  ): Promise<{
+    chunks: { score: number; source: string; content: string }[];
+    error?: string;
+  }> {
+    const response = await this.hybridCactus.ragQuery(query, 65536, topK);
+    try {
+      return JSON.parse(response);
+    } catch {
+      throw new Error('Unable to parse RAG query response');
     }
   }
 
